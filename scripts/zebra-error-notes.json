@@ -1,0 +1,428 @@
+{
+  "excludedTypes": {
+    "zebra-chain/src/error.rs::RandError": "key and note generation, never raised while validating a submitted transaction",
+    "zebra-chain/src/error.rs::NoteError": "key and note generation, never raised while validating a submitted transaction",
+    "zebra-chain/src/error.rs::NoteCommitmentError": "key and note generation, never raised while validating a submitted transaction",
+    "zebra-chain/src/error.rs::KeyError": "key and note generation, never raised while validating a submitted transaction",
+    "zebra-chain/src/error.rs::AddressError": "key and note generation, never raised while validating a submitted transaction",
+    "zebra-chain/src/parameters/network/error.rs::ParametersBuilderError": "node configuration for custom testnets, raised at startup",
+    "zebra-chain/src/parameters/network.rs::InvalidNetworkError": "node configuration, raised at startup",
+    "zebra-chain/src/work/equihash.rs::SolverCancelled": "internal miner, not a validation result",
+    "zebra-state/src/error.rs::StateInitError": "node startup with a read-only state",
+    "zebra-state/src/error.rs::CloneError": "internal wrapper that only clones another error",
+    "zebra-state/src/error.rs::LayeredStateError": "internal wrapper that only forwards another error",
+    "zebra-rpc/src/config/mining.rs::ExtraCoinbaseDataTooLong": "node mining configuration, raised at startup",
+    "zebrad/src/components/notify.rs::BlockNotifyError": "internal channel shutdown",
+    "zebrad/src/components/sync/gossip.rs::BlockGossipError": "internal channel shutdown",
+    "zebrad/src/components/inbound.rs::SharedRecvError": "internal channel wrapper"
+  },
+  "stageByType": {
+    "zebra-chain/src/amount.rs::Error": "transaction",
+    "zebra-chain/src/value_balance.rs::ValueBalanceError": "transaction",
+    "zebra-chain/src/error.rs::Error": "transaction",
+    "zebra-chain/src/serialization/error.rs::SerializationError": "rpc",
+    "zebra-chain/src/transaction/unmined/zip317.rs::Error": "mempool",
+    "zebra-chain/src/block/error.rs::BlockError": "block",
+    "zebra-chain/src/block/header.rs::BlockTimeError": "block",
+    "zebra-chain/src/block/height.rs::HeightError": "block",
+    "zebra-chain/src/block/commitment.rs::CommitmentError": "state",
+    "zebra-chain/src/history_tree.rs::HistoryTreeError": "state",
+    "zebra-chain/src/orchard/tree.rs::NoteCommitmentTreeError": "state",
+    "zebra-chain/src/sapling/tree.rs::NoteCommitmentTreeError": "state",
+    "zebra-chain/src/sprout/tree.rs::NoteCommitmentTreeError": "state",
+    "zebra-chain/src/parallel/tree.rs::NoteCommitmentTreeError": "state",
+    "zebra-chain/src/parameters/network/subsidy.rs::SubsidyError": "block",
+    "zebra-chain/src/parameters/network/subsidy/check.rs::CoinbaseTransactionError": "block",
+    "zebra-chain/src/work/equihash.rs::Error": "block",
+    "zebra-consensus/src/router.rs::RouterError": "router",
+    "zebra-consensus/src/checkpoint.rs::VerifyCheckpointError": "router",
+    "zebra-consensus/src/block.rs::VerifyBlockError": "block",
+    "zebra-consensus/src/error.rs::BlockError": "block",
+    "zebra-consensus/src/error.rs::TransactionError": "transaction",
+    "zebra-consensus/src/primitives/halo2.rs::Halo2Error": "proof-signature",
+    "zebra-script/src/lib.rs::Error": "script",
+    "zebra-state/src/error.rs::ValidateContextError": "state",
+    "zebra-state/src/error.rs::CommitBlockError": "state",
+    "zebra-state/src/error.rs::CommitSemanticallyVerifiedError": "state",
+    "zebra-state/src/error.rs::CommitCheckpointVerifiedError": "state",
+    "zebra-state/src/error.rs::InvalidateError": "state",
+    "zebra-state/src/error.rs::ReconsiderError": "state",
+    "zebra-state/src/error.rs::AwaitUtxoError": "state",
+    "zebra-rpc/src/methods/types/get_block_template.rs::MinerParamsError": "rpc",
+    "zebrad/src/components/mempool/error.rs::MempoolError": "mempool",
+    "zebrad/src/components/mempool/storage.rs::ExactTipRejectionError": "mempool",
+    "zebrad/src/components/mempool/storage.rs::SameEffectsTipRejectionError": "mempool",
+    "zebrad/src/components/mempool/storage.rs::SameEffectsChainRejectionError": "mempool",
+    "zebrad/src/components/mempool/storage.rs::RejectionError": "mempool",
+    "zebrad/src/components/mempool/storage.rs::NonStandardTransactionError": "mempool",
+    "zebrad/src/components/mempool/downloads.rs::TransactionDownloadVerifyError": "mempool",
+    "zebrad/src/components/inbound/downloads.rs::HeightLimitError": "block",
+    "zebrad/src/components/sync/downloads.rs::BlockDownloadVerifyError": "block"
+  },
+  "stageByVariant": {
+    "TransactionError::CoinbasePosition": {
+      "stage": "block",
+      "raisedAt": "zebra-consensus/src/block/check.rs"
+    },
+    "TransactionError::CoinbaseAfterFirst": {
+      "stage": "block",
+      "raisedAt": "zebra-consensus/src/block/check.rs"
+    },
+    "TransactionError::Subsidy": {
+      "stage": "block",
+      "raisedAt": "zebra-consensus/src/block/check.rs"
+    },
+    "TransactionError::CoinbaseConstruction": {
+      "stage": "rpc",
+      "raisedAt": "zebra-rpc/src/methods/types/transaction.rs"
+    },
+    "TransactionError::CoinbaseInMempool": {
+      "stage": "mempool",
+      "raisedAt": "zebra-consensus/src/transaction.rs (mempool request path)"
+    },
+    "TransactionError::TooManyShieldedActions": {
+      "stage": "mempool",
+      "raisedAt": "zebra-consensus/src/transaction.rs (mempool request path)"
+    },
+    "TransactionError::Zip317": {
+      "stage": "mempool",
+      "raisedAt": "zebra-consensus/src/transaction.rs (mempool request path)"
+    },
+    "TransactionError::NonStandardScriptSigSize": {
+      "stage": "mempool",
+      "raisedAt": "zebra-consensus/src/transaction/check.rs mempool_standard_input_scripts"
+    },
+    "TransactionError::NonStandardScriptSigNotPushOnly": {
+      "stage": "mempool",
+      "raisedAt": "zebra-consensus/src/transaction/check.rs mempool_standard_input_scripts"
+    },
+    "TransactionError::NonStandardInputs": {
+      "stage": "mempool",
+      "raisedAt": "zebra-consensus/src/transaction/check.rs, zebrad/src/components/mempool/storage.rs"
+    },
+    "TransactionError::ValidateMempoolLockTimeError": {
+      "stage": "mempool",
+      "raisedAt": "zebra-consensus/src/transaction.rs (mempool request path)"
+    },
+    "TransactionError::Script": {
+      "stage": "script",
+      "raisedAt": "zebra-consensus/src/script.rs, zebra-consensus/src/transaction/check.rs"
+    },
+    "TransactionError::SmallOrder": {
+      "stage": "proof-signature"
+    },
+    "TransactionError::Groth16": {
+      "stage": "proof-signature",
+      "raisedAt": "zebra-consensus/src/primitives/groth16.rs"
+    },
+    "TransactionError::MalformedGroth16": {
+      "stage": "proof-signature",
+      "raisedAt": "zebra-consensus/src/primitives/groth16.rs"
+    },
+    "TransactionError::Ed25519": {
+      "stage": "proof-signature",
+      "raisedAt": "zebra-consensus/src/error.rs From<BoxError> (async ed25519 verifier)"
+    },
+    "TransactionError::RedJubjub": {
+      "stage": "proof-signature",
+      "raisedAt": "zebra-consensus/src/error.rs From<BoxError> (async redjubjub verifier)"
+    },
+    "TransactionError::RedPallas": {
+      "stage": "proof-signature",
+      "raisedAt": "zebra-consensus/src/error.rs From<BoxError> (async redpallas verifier)"
+    },
+    "TransactionError::SaplingVerificationFailed": {
+      "stage": "proof-signature",
+      "raisedAt": "zebra-consensus/src/primitives/sapling.rs"
+    },
+    "TransactionError::Halo2VerificationFailed": {
+      "stage": "proof-signature",
+      "raisedAt": "zebra-consensus/src/primitives/halo2.rs"
+    },
+    "TransactionError::InternalDowncastError": {
+      "stage": "proof-signature",
+      "raisedAt": "zebra-consensus/src/error.rs From<BoxError> (async verifier results)"
+    },
+    "TransactionError::ValidateContextError": {
+      "stage": "state",
+      "raisedAt": "zebra-consensus/src/error.rs From<ValidateContextError>"
+    },
+    "TransactionError::TransparentInputNotFound": {
+      "stage": "state",
+      "raisedAt": "zebra-consensus/src/transaction.rs UTXO lookups"
+    },
+    "TransactionError::ImmatureTransparentCoinbaseSpend": {
+      "stage": "state"
+    },
+    "TransactionError::UnshieldedTransparentCoinbaseSpend": {
+      "stage": "state"
+    }
+  },
+  "notes": {
+    "TransactionError::WrongConsensusBranchId": {
+      "zips": [
+        200,
+        225,
+        244
+      ],
+      "plain": "The transaction's nConsensusBranchId (v5 and v6 header) is not the branch ID of the network upgrade active at the height Zebra verifies it for. Zebra compares the two in zebra-consensus/src/transaction/check.rs consensus_branch_id. This usually means the wallet signed for the previous upgrade, for example NU6.2 (0x5437f330) after NU6.3 Ironwood (0x37a5165b) activated on mainnet at 3,428,143, or the transaction was built for the other network. Rebuild and re-sign it with the current branch ID; the signature hashes (ZIP 244) commit to the branch ID, so editing the header alone is not enough."
+    },
+    "TransactionError::MissingConsensusBranchId": {
+      "zips": [
+        225
+      ],
+      "plain": "A version 5 or later transaction must carry nConsensusBranchId, and Zebra could not map it to a known network upgrade. Check that the transaction bytes are complete and were serialized for the current network; rebuild it with a current wallet library."
+    },
+    "TransactionError::UnsupportedByNetworkUpgrade": {
+      "zips": [
+        225,
+        229
+      ],
+      "plain": "This transaction version is not valid at the network upgrade active at the verification height. Version 6 transactions (ZIP 229) are only valid from NU6.3 Ironwood; version 5 from NU5. Build the transaction with the version the current upgrade accepts, or wait until the upgrade that introduces it activates."
+    },
+    "TransactionError::WrongVersion": {
+      "zips": [],
+      "plain": "Zebra only verifies transactions with version 4 or later in this path. Older formats (v1 to v3) cannot be submitted any more; rebuild the transaction with a current wallet."
+    },
+    "TransactionError::ExpiredTransaction": {
+      "zips": [
+        203
+      ],
+      "plain": "The transaction's nExpiryHeight is lower than the height of the block it would be mined in, so it can never be mined (ZIP 203). Rebuild it with an expiry height above the current tip; wallets normally use the tip plus a small delta."
+    },
+    "TransactionError::MaximumExpiryHeight": {
+      "zips": [
+        203
+      ],
+      "plain": "nExpiryHeight is above the maximum allowed value of 499,999,999 (Height::MAX_EXPIRY_HEIGHT in zebra-chain/src/block/height.rs). Set a normal expiry height, or 0 for no expiry."
+    },
+    "SameEffectsChainRejectionError::Expired": {
+      "zips": [
+        203
+      ],
+      "plain": "The mempool dropped or refused the transaction because the best chain tip reached its expiry height. It will not be mined. Build and broadcast a new transaction with a later expiry height."
+    },
+    "TransactionError::LockedUntilAfterBlockHeight": {
+      "zips": [],
+      "plain": "The transaction's nLockTime is a block height that the next block has not passed yet (zebra-consensus/src/transaction/check.rs lock_time_has_passed). Wait until the chain is past that height, or rebuild with nLockTime 0 or with every input's sequence set to final."
+    },
+    "TransactionError::LockedUntilAfterBlockTime": {
+      "zips": [],
+      "plain": "The transaction's nLockTime is a timestamp that is not yet in the past for the next block (Zebra uses the median time past rule from zcashd's mempool). Wait until that time has passed, or rebuild with nLockTime 0."
+    },
+    "TransactionError::Zip317": {
+      "zips": [
+        317,
+        2009
+      ],
+      "plain": "The mempool applies the ZIP 317 relay rules before proof verification and refused the transaction. The inner message says which rule: unpaid actions above the limit, or a fee below the minimum fee rate. Pay at least the conventional fee, marginal_fee times max(2, logical actions). Note the marginal fee differs by node version: Zebra 6.4.x and 7.0.0-rc.0 use 1,000 zatoshi (ZIP 2009), while Zebra 6.3.0, ZIP 317 as first written and zcash_primitives use 5,000 zatoshi. Paying the 5,000 rate is accepted by both."
+    },
+    "transaction::unmined::zip317::Error::UnpaidActions": {
+      "zips": [
+        317,
+        2009
+      ],
+      "plain": "The fee does not pay for every logical action. Zebra's block_unpaid_action_limit is 0 (BLOCK_UNPAID_ACTION_LIMIT in zebra-chain/src/transaction/unmined/zip317.rs), so any unpaid action means the default block template would never include it, and the mempool drops it. Raise the fee to marginal_fee times max(2, logical actions); the marginal fee is 1,000 zatoshi on Zebra 6.4.x and later (ZIP 2009) and 5,000 on older nodes."
+    },
+    "transaction::unmined::zip317::Error::FeeBelowMinimumRate": {
+      "zips": [
+        317
+      ],
+      "plain": "The fee is below Zebra's legacy minimum relay rate: 100 zatoshi per 1,000 bytes of serialized size, clamped to the range 100 to 1,000 zatoshi (zebra-chain/src/transaction/unmined/zip317.rs mempool_checks). Pay at least the ZIP 317 conventional fee."
+    },
+    "TransactionError::IncorrectFee": {
+      "zips": [],
+      "plain": "Zebra could not compute the miner fee from the transaction's inputs, outputs and shielded value balances, for example because the sum overflows or is negative. Check that the transparent inputs are worth at least the outputs plus the fee, and that the value balances are correct."
+    },
+    "TransactionError::TransparentInputNotFound": {
+      "zips": [],
+      "plain": "A transparent input spends an output that Zebra cannot find in the best chain or the mempool. The parent transaction may not be mined or broadcast yet, may be on a different network, or the output was already spent. Broadcast the parent first, or check the prevout txid (display byte order) and index."
+    },
+    "SameEffectsTipRejectionError::MissingOutput": {
+      "zips": [],
+      "plain": "The transaction spends an output that another mempool transaction was expected to create, and that output is missing. Make sure the parent transaction is accepted into the mempool first, then resubmit."
+    },
+    "SameEffectsTipRejectionError::SpendConflict": {
+      "zips": [],
+      "plain": "Another transaction already in the mempool spends at least one of the same transparent outputs or reveals the same nullifier. Only one of them can be mined. Wait for the first to confirm or expire instead of resubmitting a conflicting spend."
+    },
+    "SameEffectsChainRejectionError::DuplicateSpend": {
+      "zips": [],
+      "plain": "The transaction's transparent inputs were already spent, or its nullifiers already revealed, in the best chain. The funds are gone from this note or output; the wallet needs to rescan and build a new transaction from unspent funds."
+    },
+    "ValidateContextError::DuplicateSaplingNullifier": {
+      "zips": [],
+      "plain": "A Sapling nullifier in this transaction is already in the chain state (or repeated in the same block), so the note was already spent. The wallet is out of sync; rescan and build a new transaction."
+    },
+    "ValidateContextError::DuplicateOrchardNullifier": {
+      "zips": [],
+      "plain": "An Orchard nullifier in this transaction is already in the chain state, so the note was already spent. The wallet is out of sync; rescan and build a new transaction."
+    },
+    "ValidateContextError::DuplicateIronwoodNullifier": {
+      "zips": [
+        229
+      ],
+      "plain": "An Ironwood nullifier in this transaction is already in the chain state, so the Ironwood note was already spent. The wallet is out of sync; rescan and build a new transaction."
+    },
+    "ValidateContextError::DuplicateTransparentSpend": {
+      "zips": [],
+      "plain": "The same transparent output is spent twice, either inside one transaction or by two transactions in the same block. Remove the repeated input or wait for the conflicting transaction to settle."
+    },
+    "ValidateContextError::MissingTransparentOutput": {
+      "zips": [],
+      "plain": "The spent transparent output does not exist in the chain state when the block is checked, which Zebra reports as a possible double spend. The output may already be spent or never existed on this chain."
+    },
+    "TransactionError::DuplicateSaplingNullifier": {
+      "zips": [],
+      "plain": "The same Sapling nullifier appears twice inside this one transaction, so it would spend one note twice. This is a wallet construction bug; rebuild the transaction."
+    },
+    "TransactionError::Script": {
+      "zips": [],
+      "plain": "A transparent input's scriptSig did not satisfy the scriptPubKey of the output it spends; the inner message is the zcash_script result. Usually the signature was made for different sighash data (wrong prevout value, wrong branch ID or a modified transaction) or with the wrong key. Re-sign the transaction after every field is final."
+    },
+    "zebra_script::Error::ScriptInvalid": {
+      "zips": [
+        244
+      ],
+      "plain": "The transparent script interpreter returned failure for an input. For v5 and v6 transactions the signature hash is the ZIP 244 digest, which commits to all prevout values and scripts; a wrong prevout value in the signer makes the signature invalid. Re-sign with the correct inputs."
+    },
+    "TransactionError::Groth16": {
+      "zips": [],
+      "plain": "A Sapling spend or output Groth16 proof does not verify against its public inputs. The proof was made for different data (for example the transaction changed after proving) or the proving parameters are wrong. Rebuild and re-prove the transaction."
+    },
+    "TransactionError::SaplingVerificationFailed": {
+      "zips": [],
+      "plain": "Zebra's batched Sapling verifier rejected a proof or a signature (spendAuthSig or bindingSig) in this transaction. Rebuild the transaction so that proofs and signatures are computed over the final transaction data."
+    },
+    "TransactionError::Halo2VerificationFailed": {
+      "zips": [
+        224,
+        229
+      ],
+      "plain": "The Halo 2 proof of the Orchard or Ironwood bundle does not verify. The bundle was changed after proving, or the prover used different circuit parameters. Rebuild and re-prove the bundle with a current orchard crate."
+    },
+    "TransactionError::RedJubjub": {
+      "zips": [],
+      "plain": "The Sapling binding signature (or a spend authorization signature) does not verify over the transaction's signature hash. Usually the value balance or another field changed after signing. Re-sign the final transaction."
+    },
+    "TransactionError::RedPallas": {
+      "zips": [
+        224
+      ],
+      "plain": "The Orchard or Ironwood binding signature (or a spend authorization signature) does not verify over the transaction's signature hash. Usually a field changed after signing. Re-sign the final transaction."
+    },
+    "TransactionError::OrchardProofSize": {
+      "zips": [
+        257
+      ],
+      "plain": "The Orchard proof is not the canonical size of 2720 + 2272 times nActionsOrchard bytes. Zebra enforces this from NU6.2 (ZIP 257) in zebra-consensus/src/transaction.rs. A correct prover always emits the canonical size; extra or missing bytes mean the bundle was assembled incorrectly."
+    },
+    "TransactionError::IronwoodProofSize": {
+      "zips": [
+        229
+      ],
+      "plain": "The Ironwood proof is not the canonical size for its number of actions. Zebra enforces this unconditionally for every Ironwood bundle (zebra-consensus/src/transaction.rs). Rebuild the bundle with a correct prover."
+    },
+    "TransactionError::NegativeOrchardValueBalance": {
+      "zips": [
+        258
+      ],
+      "plain": "From NU6.3 the Orchard pool is closed to new value: valueBalanceOrchard must be zero or positive (ZIP 258). A negative balance would move value into Orchard. Send new shielded value to Ironwood instead; spending Orchard notes out of the pool is still allowed."
+    },
+    "TransactionError::OrchardHasEnableCrossAddress": {
+      "zips": [
+        258,
+        229
+      ],
+      "plain": "From NU6.3 the enableCrossAddress bit of flagsOrchard must be 0 (ZIP 258); only the Ironwood pool may set it. Rebuild the Orchard bundle with a current wallet library."
+    },
+    "TransactionError::NotEnoughOrchardFlags": {
+      "zips": [
+        224
+      ],
+      "plain": "The transaction has Orchard actions but neither enableSpendsOrchard nor enableOutputsOrchard is set, so the actions could do nothing. Rebuild the bundle with the right flags or drop the empty Orchard bundle."
+    },
+    "TransactionError::NotEnoughIronwoodFlags": {
+      "zips": [
+        229
+      ],
+      "plain": "The transaction has Ironwood actions but neither enableSpendsIronwood nor enableOutputsIronwood is set. Rebuild the Ironwood bundle with the right flags or drop it."
+    },
+    "TransactionError::CoinbaseHasOrchardActions": {
+      "zips": [
+        229,
+        258
+      ],
+      "plain": "From NU6.3 a coinbase transaction must not have Orchard actions (ZIP 229, ZIP 258); new shielded coinbase value goes to Ironwood. Mining software must build the coinbase with an Ironwood or Sapling output instead."
+    },
+    "ValidateContextError::ImmatureTransparentCoinbaseSpend": {
+      "zips": [],
+      "plain": "The transaction spends a transparent coinbase output fewer than 100 blocks after it was mined (MIN_TRANSPARENT_COINBASE_MATURITY in zebra-chain/src/transparent.rs). Wait until the reported minimum spend height, then resubmit."
+    },
+    "ValidateContextError::UnshieldedTransparentCoinbaseSpend": {
+      "zips": [
+        213
+      ],
+      "plain": "A transparent coinbase output may only be spent by a transaction that has no transparent outputs; its value must go to shielded outputs. Rebuild the transaction to shield the coinbase funds."
+    },
+    "TransactionError::CoinbaseInMempool": {
+      "zips": [],
+      "plain": "Coinbase transactions are only valid inside a block, so the mempool refuses them. Only miners create coinbase transactions; submit the block instead."
+    },
+    "MempoolError::InMempool": {
+      "zips": [],
+      "plain": "This exact transaction is already in the node's mempool. Nothing is wrong; wait for it to be mined."
+    },
+    "SameEffectsChainRejectionError::Mined": {
+      "zips": [],
+      "plain": "The transaction was already committed to the best chain. Nothing to resend; look it up by txid."
+    },
+    "MempoolError::Disabled": {
+      "zips": [],
+      "plain": "Zebra disables its mempool while it is still syncing far behind the chain tip. Wait until the node is synced, or submit through another node."
+    },
+    "TransactionError::InternalDowncastError": {
+      "zips": [],
+      "plain": "An asynchronous proof or signature verifier returned an error type Zebra did not recognise, so the original reason is inside the message. If the message mentions Elapsed, the verifier timed out (a node load problem, not an invalid transaction); otherwise read the original error text in the message."
+    },
+    "NonStandardTransactionError::IsDust": {
+      "zips": [],
+      "plain": "A transparent output (other than OP_RETURN) is below the dust threshold, so the mempool refuses to relay it. This is policy, not consensus. Raise the output value or remove the output."
+    },
+    "TransactionError::NoInputs": {
+      "zips": [],
+      "plain": "The transaction has no transparent inputs, no Sapling spends, no enabled Orchard or Ironwood spends and no JoinSplits, so it spends nothing. Add an input."
+    },
+    "TransactionError::NoOutputs": {
+      "zips": [],
+      "plain": "The transaction has no transparent outputs, no Sapling outputs, no enabled Orchard or Ironwood outputs and no JoinSplits. Add an output, including a change output if needed."
+    },
+    "ValidateContextError::UnknownSaplingAnchor": {
+      "zips": [],
+      "plain": "The Sapling anchor (note commitment tree root) used by the spends is not a root Zebra knows on this chain. The wallet built witnesses against a different or reorged chain; rescan and rebuild."
+    },
+    "ValidateContextError::UnknownOrchardAnchor": {
+      "zips": [],
+      "plain": "The Orchard anchor used by the actions is not a root Zebra knows on this chain. The wallet's witness data is stale or from another chain; rescan and rebuild."
+    },
+    "ValidateContextError::UnknownIronwoodAnchor": {
+      "zips": [
+        229
+      ],
+      "plain": "The Ironwood anchor used by the actions is not a root Zebra knows on this chain. The wallet's witness data is stale or from another chain; rescan and rebuild."
+    },
+    "TransactionError::DisabledAddToSproutPool": {
+      "zips": [
+        211
+      ],
+      "plain": "Adding value to the Sprout pool is disabled since Canopy (ZIP 211): JoinSplits may only take value out (vpub_old must be 0). Move Sprout funds out instead."
+    },
+    "SerializationError::Parse": {
+      "zips": [
+        225,
+        229
+      ],
+      "plain": "sendrawtransaction could not deserialize the hex into a transaction; Zebra returns RPC code -22 for this. The bytes are truncated, contain a field Zebra does not accept (for example reserved flag bits) or are not a transaction. Paste the hex into Anatomy to see where parsing stops."
+    }
+  }
+}
