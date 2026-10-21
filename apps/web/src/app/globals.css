@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+:root {
+  --canvas: #0e0e10;
+  --dot: #232327;
+  --card-top: #2b2b2f;
+  --card-bot: #1e1e21;
+  --inner-top: #262629;
+  --inner-bot: #1b1b1e;
+  --surface: #1e1e21;
+  --raised: #252528;
+  --hover: #2e2e33;
+  --inset: #1c1c1f;
+  --field: #1a1a1d;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --fg: #e6e6e8;
+  --text: #dcdcde;
+  --body: #b9b9be;
+  --port: #a3a3a9;
+  --muted: #9b9ba1;
+  --dim: #6f6f76;
+  --primary: #f4f4f5;
+  --primary-fg: #0e0e10;
+  --wire: #7d7d84;
+  --wire-on: #f4f4f5;
+  --green: #4ade80;
+  --yellow: #facc15;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --mint: #86efac;
+  --pink: #f472b6;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-dot: var(--dot);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-hover: var(--hover);
+  --color-inset: var(--inset);
+  --color-field: var(--field);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-fg: var(--fg);
+  --color-text: var(--text);
+  --color-body: var(--body);
+  --color-port: var(--port);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --color-wire: var(--wire);
+  --color-green: var(--green);
+  --color-yellow: var(--yellow);
+  --color-red: var(--red);
+  --color-blue: var(--blue);
+  --color-mint: var(--mint);
+
+  --radius-chip: 8px;
+  --radius-tile: 10px;
+  --radius-inner: 12px;
+  --radius-card: 18px;
+
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --shadow-float: 0 14px 40px rgba(0, 0, 0, 0.55);
+
+  --text-ui-xs: 12.5px;
+  --text-ui-sm: 13px;
+  --text-ui-md: 14px;
+  --text-ui-lg: 15px;
+  --text-ui-display: 34px;
+  --text-ui-display--line-height: 1.12;
+  --text-ui-display--letter-spacing: -0.02em;
+
+  --font-sans: var(--font-outfit);
+  --font-mono: var(--font-geist-mono);
+  --animate-rise: rise 0.35s ease-out both;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes pulse-dim {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@utility bg-card-grad {
+  background: linear-gradient(180deg, var(--card-top) 0%, var(--card-bot) 100%);
+}
+
+@utility bg-inner-grad {
+  background: linear-gradient(180deg, var(--inner-top) 0%, var(--inner-bot) 100%);
+}
+
+@utility select-caret {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239b9ba1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+@utility dot-grid {
+  background-color: var(--canvas);
+  background-image: radial-gradient(circle, var(--dot) 1px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+
+@utility glow-top {
+  position: relative;
+  isolation: isolate;
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 12%;
+    right: 12%;
+    top: -10px;
+    height: 46px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(244, 114, 182, 0.35), rgba(96, 165, 250, 0.35));
+    filter: blur(22px);
+    pointer-events: none;
+  }
+}
+
+@utility loading-pulse {
+  animation: pulse-dim 1.4s ease-in-out infinite;
+}
+
+@layer base {
+  html {
+    background: var(--canvas);
+  }
+
+  body {
+    background: var(--canvas);
+    color: var(--fg);
+    letter-spacing: -0.01em;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  a.link {
+    color: var(--body);
+    border-bottom: 1px solid var(--border-strong);
+    transition: color 0.15s;
+  }
+
+  a.link:hover {
+    color: var(--fg);
+  }
+}
+
+.wire {
+  fill: none;
+  stroke: var(--wire);
+  stroke-width: 1;
+}
+
+.wire.on {
+  stroke: var(--wire-on);
+}
+
+.wire.bad {
+  stroke: rgba(248, 113, 113, 0.7);
+}

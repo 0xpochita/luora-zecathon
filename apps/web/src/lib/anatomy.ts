@@ -1,0 +1,136 @@
+import type { Check, DecodedTx } from "@contract/types";
+import { formatInt, formatZec, shortHash } from "./format";
+
+export type NodeId = "tx" | "header" | "transparent" | "sapling" | "orchard" | "ironwood" | "fee";
+
+export interface AnatomyNode {
+  id: NodeId;
+  title: string;
+  subtitle: string;
+  empty: boolean;
+  failing: boolean;
+}
+
+export const BUNDLE_IDS = ["header", "transparent", "sapling", "orchard", "ironwood"] as const;
+export const POOL_IDS = ["transparent", "sapling", "orchard", "ironwood"] as const;
+
+const NODE_KEYWORDS: Record<NodeId, string[]> = {
+  tx: ["txid", "size"],
+  header: ["branch", "version", "expiry", "lock", "upgrade", "header", "group"],
+  transparent: ["transparent", "coinbase", "script"],
+  sapling: ["sapling", "groth"],
+  orchard: ["orchard", "turnstile", "cross"],
+  ironwood: ["ironwood"],
+  fee: ["fee", "zip317", "zip-317", "balance"],
+};
+
+export function nodeForCheck(check: Check): NodeId | null {
+  const id = check.id.toLowerCase();
+  for (const node of ["ironwood", "orchard", "sapling", "transparent", "fee", "header", "tx"] as NodeId[]) {
+    if (NODE_KEYWORDS[node].some((keyword) => id.includes(keyword))) return node;
+  }
+  return null;
+}
+
+export function failingNodes(checks: Check[] | null): Set<NodeId> {
+  const nodes = new Set<NodeId>();
+  for (const check of checks ?? []) {
+    if (check.status !== "fail") continue;
+    const node = nodeForCheck(check);
+    if (node) nodes.add(node);
+  }
+  return nodes;
+}
+
+export function buildNodes(tx: DecodedTx, feeZat: number | null, failing: Set<NodeId>): AnatomyNode[] {
+  const transparentEmpty = tx.transparent.inputs.length === 0 && tx.transparent.outputs.length === 0;
+  const saplingEmpty = !tx.sapling || (tx.sapling.spends === 0 && tx.sapling.outputs === 0);
+  return [
+    { id: "tx", title: "Transaction", subtitle: shortHash(tx.txid), empty: false, failing: failing.has("tx") },
+    {
+      id: "header",
+      title: "Header",
+      subtitle: `v${tx.version}${tx.upgrade ? " · " + tx.upgrade : ""}`,
+      empty: false,
+      failing: failing.has("header"),
+    },
+    {
+      id: "transparent",
+      title: "Transparent",
+      subtitle: transparentEmpty ? "empty" : `${tx.transparent.inputs.length} in · ${tx.transparent.outputs.length} out`,
+      empty: transparentEmpty,
+      failing: failing.has("transparent"),
+    },
+    {
+      id: "sapling",
+      title: "Sapling",
+      subtitle: saplingEmpty || !tx.sapling ? "empty" : `${tx.sapling.spends} spends · ${tx.sapling.outputs} outputs`,
+      empty: saplingEmpty,
+      failing: failing.has("sapling"),
+    },
+    {
+      id: "orchard",
+      title: "Orchard",
+      subtitle: tx.orchard && tx.orchard.actions > 0 ? `${tx.orchard.actions} actions` : "empty",
+      empty: !tx.orchard || tx.orchard.actions === 0,
+      failing: failing.has("orchard"),
+    },
+    {
+      id: "ironwood",
+      title: "Ironwood",
+      subtitle: tx.ironwood && tx.ironwood.actions > 0 ? `${tx.ironwood.actions} actions` : tx.version >= 6 ? "empty" : "v6 only",
+      empty: !tx.ironwood || tx.ironwood.actions === 0,
+      failing: failing.has("ironwood"),
+    },
+    {
+      id: "fee",
+      title: "Fee",
+      subtitle: feeZat === null ? "needs input values" : formatZec(feeZat),
+      empty: false,
+      failing: failing.has("fee"),
+    },
+  ];
+}
+
+export interface PoolFlow {
+  id: (typeof POOL_IDS)[number] | "fee";
+  label: string;
+  valueZat: number | null;
+  note: string;
+}
+
+export function poolFlows(tx: DecodedTx, inputValues: (number | null)[] | null, feeZat: number | null): PoolFlow[] {
+  const outputsZat = tx.transparent.outputs.reduce((sum, output) => sum + output.valueZat, 0);
+  const knownInputs = inputValues && inputValues.length === tx.transparent.inputs.length && inputValues.every((value) => value !== null);
+  const inputsZat = knownInputs ? (inputValues as number[]).reduce((sum, value) => sum + value, 0) : null;
+  const transparentBalance = tx.transparent.inputs.length === 0 ? -outputsZat : inputsZat === null ? null : inputsZat - outputsZat;
+  return [
+    {
+      id: "transparent",
+      label: "Transparent",
+      valueZat: transparentBalance,
+      note:
+        transparentBalance === null
+          ? `outputs ${formatZec(outputsZat)}, input values unknown`
+          : `inputs − outputs`,
+    },
+    { id: "sapling", label: "Sapling", valueZat: tx.sapling?.valueBalanceZat ?? 0, note: "valueBalanceSapling" },
+    { id: "orchard", label: "Orchard", valueZat: tx.orchard?.valueBalanceZat ?? 0, note: "valueBalanceOrchard" },
+    { id: "ironwood", label: "Ironwood", valueZat: tx.ironwood?.valueBalanceZat ?? 0, note: "valueBalanceIronwood" },
+    { id: "fee", label: "Fee", valueZat: feeZat, note: feeZat === null ? "needs transparent input values" : "sum of balances" },
+  ];
+}
+
+export function describeFlags(flags: { spendsEnabled: boolean; outputsEnabled: boolean; crossAddressEnabled: boolean | null; reservedBitsZero: boolean }) {
+  const parts = [
+    `spends ${flags.spendsEnabled ? "on" : "off"}`,
+    `outputs ${flags.outputsEnabled ? "on" : "off"}`,
+  ];
+  if (flags.crossAddressEnabled !== null) parts.push(`cross-address ${flags.crossAddressEnabled ? "on" : "off"}`);
+  parts.push(flags.reservedBitsZero ? "reserved bits zero" : "reserved bits set");
+  return parts.join(" · ");
+}
+
+export function proofSummary(proofBytes: number, canonical: number) {
+  return `${formatInt(proofBytes)} B (canonical ${formatInt(canonical)} B)`;
+}
