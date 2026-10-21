@@ -3,6 +3,8 @@ pub mod decode;
 pub mod model;
 pub mod network;
 pub mod pczt_view;
+#[cfg(feature = "verify")]
+pub mod verify;
 #[cfg(target_arch = "wasm32")]
 mod wasm;
 
@@ -37,4 +39,9 @@ pub fn inspect_pczt(base64_or_hex: &str, network: &str) -> Result<PcztView, Core
 
 pub fn upgrade_at(network: &str, height: u32) -> Result<UpgradeInfo, CoreError> {
     Ok(network::upgrade_at(Net::parse(network)?, height))
+}
+
+#[cfg(feature = "verify")]
+pub fn verify_tx(hex: &str) -> Result<verify::VerifyReport, CoreError> {
+    verify::verify(&decode::hex_to_bytes(hex)?)
 }

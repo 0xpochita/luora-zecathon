@@ -1,4 +1,4 @@
-use luora_z_core::{Check, CheckStatus, DecodedTx, check_tx, decode_tx, fee_zat, upgrade_at};
+use luora_z_core::{Check, CheckStatus, DecodedTx, check_tx, decode_tx, fee_zat, inspect_pczt, upgrade_at};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -16,7 +16,8 @@ fn fixture(name: &str) -> Fixture {
     serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
 }
 
-const ALL: [&str; 6] = [
+const ALL: [&str; 7] = [
+    "v6-testnet-ironwood-pczt",
     "v4-transparent",
     "v4-coinbase",
     "v5-sapling",
@@ -186,4 +187,81 @@ fn bad_input_is_a_typed_error() {
     let fx = fixture("v6-ironwood");
     assert_eq!(decode_tx(&fx.hex[..200], "main").unwrap_err().code, "parse-failed");
     assert_eq!(decode_tx(&format!("{}00", fx.hex), "main").unwrap_err().code, "trailing-bytes");
+}
+
+fn pczt_fixture(name: &str) -> String {
+    let path = format!("{}/tests/fixtures/pczt/{name}.pczt", env!("CARGO_MANIFEST_DIR"));
+    hex::encode(std::fs::read(path).unwrap())
+}
+
+fn role_done(view: &luora_z_core::PcztView, name: &str) -> bool {
+    view.roles.iter().find(|r| r.name == name).unwrap().done
+}
+
+fn pczt_check(view: &luora_z_core::PcztView, id: &str) -> CheckStatus {
+    status_of(&view.checks, id)
+}
+
+#[test]
+fn pczt_created_by_devtool() {
+    let view = inspect_pczt(&pczt_fixture("1-created"), "test").unwrap();
+    assert!(role_done(&view, "Creator") && role_done(&view, "Constructor"));
+    assert!(role_done(&view, "IO Finalizer") && role_done(&view, "Updater"));
+    assert!(!role_done(&view, "Prover") && !role_done(&view, "Signer"));
+    assert_eq!(view.actions.len(), 5);
+    assert!(view.actions.iter().all(|a| a.pool == "ironwood"));
+    let paid: Vec<_> = view.actions.iter().filter(|a| a.user_address.is_some()).collect();
+    assert_eq!(paid.len(), 1);
+    assert_eq!(paid[0].value_zat, Some(10_000_000));
+    assert_eq!(pczt_check(&view, "user-address-matches-recipient"), CheckStatus::Pass);
+    assert_eq!(pczt_check(&view, "dummy-keys-cleared"), CheckStatus::Pass);
+    assert_eq!(pczt_check(&view, "all-signatures-present"), CheckStatus::Warn);
+    let fee = view.checks.iter().find(|c| c.id == "fee-and-expiry").unwrap();
+    assert_eq!(fee.status, CheckStatus::Pass);
+    assert!(fee.detail.contains("25,000 zat"), "{}", fee.detail);
+}
+
+#[test]
+fn pczt_proven_then_signed_then_combined() {
+    let proven = inspect_pczt(&pczt_fixture("2-proven"), "test").unwrap();
+    assert!(role_done(&proven, "Prover") && !role_done(&proven, "Signer"));
+    let signed = inspect_pczt(&pczt_fixture("3-signed"), "test").unwrap();
+    assert!(!role_done(&signed, "Prover") && role_done(&signed, "Signer"));
+    let combined = inspect_pczt(&pczt_fixture("5-combined-signed"), "test").unwrap();
+    assert!(role_done(&combined, "Prover") && role_done(&combined, "Signer"));
+    assert_eq!(pczt_check(&combined, "all-signatures-present"), CheckStatus::Pass);
+    let extractor = combined.roles.iter().find(|r| r.name == "Extractor").unwrap();
+    assert!(extractor.evidence.contains("ready to extract"), "{}", extractor.evidence);
+}
+
+#[test]
+fn pczt_signer_that_skipped_ironwood_is_caught() {
+    let view = inspect_pczt(&pczt_fixture("4-combined-unsigned"), "test").unwrap();
+    assert!(role_done(&view, "Prover") && !role_done(&view, "Signer"));
+    let sigs = view.checks.iter().find(|c| c.id == "all-signatures-present").unwrap();
+    assert_eq!(sigs.status, CheckStatus::Warn);
+    assert!(sigs.detail.contains("Ironwood action 3"), "{}", sigs.detail);
+}
+
+#[test]
+fn pczt_accepts_base64_and_rejects_garbage() {
+    use base64::Engine as _;
+    let bytes = hex::decode(pczt_fixture("1-created")).unwrap();
+    let b64 = base64::engine::general_purpose::STANDARD.encode(bytes);
+    assert_eq!(inspect_pczt(&b64, "test").unwrap().actions.len(), 5);
+    assert_eq!(inspect_pczt("0011", "test").unwrap_err().code, "not-pczt");
+    let mainnet = inspect_pczt(&b64, "main").unwrap();
+    assert!(mainnet.checks.iter().any(|c| c.id == "coin-type" && c.status == CheckStatus::Warn));
+}
+
+#[test]
+fn testnet_ironwood_tx_built_from_the_pczt() {
+    let fx = fixture("v6-testnet-ironwood-pczt");
+    let tx = decode_tx(&fx.hex, "test").unwrap();
+    assert_eq!(tx.txid, fx.txid);
+    assert_eq!(tx.upgrade.as_deref(), Some("NU7"));
+    let ironwood = tx.ironwood.unwrap();
+    assert_eq!(ironwood.actions, 5);
+    assert_eq!(ironwood.value_balance_zat, 25_000);
+    assert_eq!(fee_zat(&fx.hex, &[]).unwrap(), Some(25_000));
 }
