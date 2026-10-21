@@ -1,0 +1,11 @@
+# local research notes for the Zecathon idea; never push
+research/
+
+# agent briefs live in each worktree, never committed
+AGENT_TASK.md
+node_modules/
+.next/
+target/
+.env*
+!.env.example
+.DS_Store
