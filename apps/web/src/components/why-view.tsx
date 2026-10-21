@@ -15,9 +15,14 @@ export type CatalogState =
 
 const ZEBRA_REPO = "https://github.com/ZcashFoundation/zebra";
 
+function gitRef(zebraVersion: string): string {
+  const commit = zebraVersion.match(/\(([0-9a-f]{7,40})\)/);
+  return commit ? commit[1] : zebraVersion.split(/\s+/)[0];
+}
+
 function sourceUrl(entry: ZebraErrorEntry): string {
   const path = entry.file.startsWith(`${entry.crate}/`) ? entry.file : `${entry.crate}/${entry.file}`;
-  return `${ZEBRA_REPO}/blob/${entry.zebraVersion}/${path}#L${entry.line}`;
+  return `${ZEBRA_REPO}/blob/${gitRef(entry.zebraVersion)}/${path}#L${entry.line}`;
 }
 
 function StageStrip({ stage }: { stage: ZebraErrorEntry["stage"] }) {
