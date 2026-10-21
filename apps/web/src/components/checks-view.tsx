@@ -124,3 +124,19 @@ export function ChecksView({ checks }: { checks: Check[] }) {
     </div>
   );
 }
+
+export function RulesSkeleton() {
+  return (
+    <div aria-busy aria-label="Running the rules" className="flex flex-col gap-1.5">
+      {[0, 1, 2, 3].map((index) => (
+        <Inner key={index} className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 px-3 py-2.5">
+          <span className="skeleton mt-0.5 h-3 w-10 rounded-full" />
+          <span className="flex flex-col gap-2">
+            <span className="skeleton h-3.5 w-40 rounded-full" />
+            <span className="skeleton h-3 w-[80%] rounded-full" />
+          </span>
+        </Inner>
+      ))}
+    </div>
+  );
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { ArrowsIn, ArrowsOut } from "@phosphor-icons/react";
 import type { DecodedTx } from "@contract/types";
 import { buildNodes, poolFlows, type AnatomyNode, type NodeId } from "@/lib/anatomy";
@@ -81,6 +81,25 @@ function wirePath(layout: Layout, from: NodeId, to: NodeId): string {
   return `M${x1},${y1} C${rail},${y1} ${rail},${y1 + 20} ${rail},${y1 + 30} L${rail},${y2 - 30} C${rail},${y2 - 10} ${rail},${y2} ${x2},${y2}`;
 }
 
+const GRAPH_START_MS = 120;
+
+const NODE_DELAY_MS: Record<NodeId, number> = {
+  tx: GRAPH_START_MS,
+  header: GRAPH_START_MS + 180,
+  transparent: GRAPH_START_MS + 220,
+  sapling: GRAPH_START_MS + 260,
+  orchard: GRAPH_START_MS + 300,
+  ironwood: GRAPH_START_MS + 340,
+  fee: GRAPH_START_MS + 820,
+};
+
+const TX_WIRE_DELAY_MS = GRAPH_START_MS + 120;
+const FEE_WIRE_DELAY_MS = GRAPH_START_MS + 480;
+
+export function delayStyle(ms: number): CSSProperties {
+  return { "--d": `${ms}ms` } as CSSProperties;
+}
+
 function GraphNode({ node, layout, selected, onSelect }: { node: AnatomyNode; layout: Layout; selected: boolean; onSelect: () => void }) {
   const position = layout.positions[node.id];
   const Icon = NODE_ICON[node.id];
@@ -102,6 +121,7 @@ function GraphNode({ node, layout, selected, onSelect }: { node: AnatomyNode; la
         }
       }}
     >
+      <g className="node-in" style={delayStyle(NODE_DELAY_MS[node.id])}>
       <circle cx={5} cy={-TITLE_GAP - 4} r={3} fill={node.failing ? "var(--red)" : "var(--fg)"} />
       <text x={15} y={-TITLE_GAP} fill="var(--fg)" fontFamily="var(--font-outfit)" fontSize={13} fontWeight={500}>
         {node.title}
@@ -119,6 +139,7 @@ function GraphNode({ node, layout, selected, onSelect }: { node: AnatomyNode; la
       <text x={38} y={27} fill="var(--port)" fontFamily="var(--font-geist-mono)" fontSize={11.5}>
         {node.subtitle}
       </text>
+      </g>
     </g>
   );
 }
@@ -144,6 +165,7 @@ function NodeGraph({
       on: selected === id,
       bad: byId[id].failing,
       faint: byId[id].empty,
+      delay: TX_WIRE_DELAY_MS,
     })),
     ...POOLS.filter((id) => !byId[id].empty).map((id) => ({
       key: `${id}-fee`,
@@ -151,6 +173,7 @@ function NodeGraph({
       on: selected === "fee" || selected === id,
       bad: false,
       faint: false,
+      delay: FEE_WIRE_DELAY_MS,
     })),
   ];
   return (
@@ -165,7 +188,14 @@ function NodeGraph({
         </filter>
       </defs>
       {wires.map((wire) => (
-        <path key={wire.key} d={wire.d} className={`wire ${wire.bad ? "bad" : wire.on ? "on" : ""}`} opacity={wire.faint && !wire.on ? 0.35 : 1} />
+        <path
+          key={wire.key}
+          d={wire.d}
+          pathLength={1}
+          className={`wire wire-draw ${wire.bad ? "bad" : wire.on ? "on" : ""}`}
+          style={delayStyle(wire.delay)}
+          opacity={wire.faint && !wire.on ? 0.35 : 1}
+        />
       ))}
       {nodes.map((node) => (
         <GraphNode key={node.id} node={node} layout={layout} selected={selected === node.id} onSelect={() => onSelect(node.id)} />
@@ -334,7 +364,7 @@ export function AnatomyView({
                 <div className="truncate font-mono text-[14px] text-fg" title={value === null ? undefined : formatZec(value)}>
                   {value === null ? "unknown" : formatZec(value, flow.id !== "fee")}
                 </div>
-                <Meter value={value === null ? 0 : Math.abs(value) / maxAbs} />
+                <Meter value={value === null ? 0 : Math.abs(value) / maxAbs} fillClassName="meter-fill" />
                 <div className="truncate text-[12.5px] text-dim" title={direction}>
                   {direction}
                 </div>
@@ -348,5 +378,63 @@ export function AnatomyView({
       </div>
     </section>
     </>
+  );
+}
+
+const SKELETON_NODES: NodeId[] = ["tx", "header", "transparent", "sapling", "fee"];
+
+function SkeletonGraph({ layout, className }: { layout: Layout; className: string }) {
+  const middle: NodeId[] = ["header", "transparent", "sapling"];
+  return (
+    <div className={`relative ${className}`} style={{ aspectRatio: `${layout.width} / ${layout.height}` }}>
+      <svg viewBox={`0 0 ${layout.width} ${layout.height}`} className="absolute inset-0 size-full" aria-hidden>
+        {middle.map((id) => (
+          <path key={`tx-${id}`} d={wirePath(layout, "tx", id)} className="wire" opacity={0.25} />
+        ))}
+        {middle.map((id) => (
+          <path key={`${id}-fee`} d={wirePath(layout, id, "fee")} className="wire" opacity={0.25} />
+        ))}
+      </svg>
+      {SKELETON_NODES.map((id) => {
+        const position = layout.positions[id];
+        return (
+          <div
+            key={id}
+            className="skeleton absolute rounded-inner"
+            style={{
+              left: `${(position.x / layout.width) * 100}%`,
+              top: `${(position.y / layout.height) * 100}%`,
+              width: `${(layout.nodeWidth / layout.width) * 100}%`,
+              height: `${(NODE_HEIGHT / layout.height) * 100}%`,
+            }}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+export function AnatomySkeleton() {
+  return (
+    <section aria-label="Loading the anatomy" aria-busy className="flex min-w-0 flex-col rounded-card border border-border bg-card-grad shadow-soft">
+      <header className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 text-[14px]">
+        <span className="size-1.5 flex-none rounded-full bg-dim" />
+        <span className="font-medium text-dim">Anatomy</span>
+        <span className="skeleton ml-auto h-3 w-24 rounded-full" />
+      </header>
+      <div className="flex flex-col gap-3 px-4 pb-4">
+        <SkeletonGraph layout={WIDE_LAYOUT} className="hidden w-full md:block" />
+        <SkeletonGraph layout={NARROW_LAYOUT} className="mx-auto w-full max-w-[360px] md:hidden" />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+          {[0, 1, 2, 3, 4].map((index) => (
+            <div key={index} className="flex flex-col gap-2 rounded-inner border border-border bg-inner-grad px-3 py-2.5">
+              <span className="skeleton h-3 w-20 rounded-full" />
+              <span className="skeleton h-4 w-24 rounded-full" />
+              <span className="skeleton h-1.5 w-full rounded-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }

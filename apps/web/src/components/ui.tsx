@@ -242,11 +242,21 @@ export function Select({ className = "", ...props }: SelectHTMLAttributes<HTMLSe
   return <select className={`select-caret h-9 rounded-tile bg-inset pr-8 pl-3 text-[13px] text-[#f0f0f2] ${FOCUS_RING} ${className}`} {...props} />;
 }
 
-export function Meter({ value, bad = false, className = "w-full" }: { value: number; bad?: boolean; className?: string }) {
+export function Meter({
+  value,
+  bad = false,
+  className = "w-full",
+  fillClassName = "",
+}: {
+  value: number;
+  bad?: boolean;
+  className?: string;
+  fillClassName?: string;
+}) {
   return (
     <i className={`block h-1.5 flex-none overflow-hidden rounded-full bg-[#151517] shadow-[inset_0_0_0_1px_var(--border)] ${className}`}>
       <b
-        className={`block h-full rounded-full ${bad ? "bg-red" : "bg-[#d4d4d8]"}`}
+        className={`block h-full rounded-full ${bad ? "bg-red" : "bg-[#d4d4d8]"} ${fillClassName}`}
         style={{ width: `${value <= 0 ? 0 : Math.max(2, Math.min(1, value) * 100)}%` }}
       />
     </i>

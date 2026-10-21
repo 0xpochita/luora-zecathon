@@ -132,9 +132,9 @@ export function InspectBox({
             className={`min-w-0 flex-1 font-mono text-xs ${compact ? "" : "break-all"} ${compact ? "h-9 resize-none! py-2" : "min-h-24"}`}
           />
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <Button type="submit" variant="accent" disabled={lookup.status === "loading"}>
-              <Sparkle weight="fill" />
-              Inspect
+            <Button type="submit" variant="accent" disabled={lookup.status === "loading"} aria-busy={lookup.status === "loading"}>
+              <Sparkle weight="fill" className={lookup.status === "loading" ? "loading-pulse" : ""} />
+              {lookup.status === "loading" ? "Inspecting…" : "Inspect"}
             </Button>
             {!compact && (
               <span id="tx-input-hint" className="min-w-0 text-[12.5px] text-dim">

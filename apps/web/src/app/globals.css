@@ -228,3 +228,79 @@
     opacity: 0;
   }
 }
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.enter {
+  animation: enter 240ms ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+.node-in {
+  animation: enter 240ms ease-out backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.wire-draw {
+  stroke-dasharray: 1;
+  animation: draw 420ms ease-out backwards;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.meter-fill {
+  transform-origin: left center;
+  animation: grow 600ms ease-out backwards;
+  animation-delay: var(--d, 300ms);
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #252528 0%, #2e2e33 50%, #252528 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter,
+  .node-in,
+  .wire-draw,
+  .meter-fill,
+  .drawer,
+  .animate-rise,
+  .loading-pulse {
+    animation: none !important;
+  }
+
+  .skeleton {
+    animation: none;
+    background: #252528;
+  }
+}

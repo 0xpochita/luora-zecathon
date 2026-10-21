@@ -1,4 +1,4 @@
-# Handoff: Task D, simpler UX (branch `Bimajadivaaa/z-ux`)
+# Handoff: Task D, simpler UX (Luora) (branch `Bimajadivaaa/z-ux`)
 
 Goal from the user: "simplify the UX so I am not overwhelmed; learn from good UX on Pinterest", plus a later request to make
 the Anatomy card full screen. Only `apps/web/src/app/**` (pages), `apps/web/src/components/**` and `apps/web/src/lib/**`
@@ -24,6 +24,23 @@ The Luora DESIGN.md tokens stay as they were (dot grid, graphite cards, white fo
 | D6 plain words | Pool labels "Transparent (public)", "Sapling (shielded)", "Ironwood (new pool)"; "value leaves / enters the pool", "no net change", "paid to the miner". Consensus field names (`valueBalanceIronwood`…) move to tooltips; ZIP numbers, branch IDs and bytes stay in the drawer and the Rules rows. | R7 R8 |
 | D8 header | Brand (click = back to the empty state), one live chip "Mainnet · 3,525,604", About link. Nothing else. | R5 |
 | D9 full screen Anatomy (in page) | Monochrome `ArrowsOut`/`ArrowsIn` icon button ("Full screen" / "Exit full screen") next to "v6 · 6,340 bytes". The card grows **inside the page**: it becomes a `position: fixed` overlay at 16 px inset (0 under 640 px) over a dark scrim (`rgba(0,0,0,.6)` + slight blur), animated from the card's own rect to full size with a FLIP transform (Web Animations API, 280 ms ease-out) and back the same way on close. A placeholder keeps the page from jumping. The browser Fullscreen API is not used at all (user request: Chrome must not go full screen). Close with the button, Esc or a click on the scrim; Esc closes an open drawer first. Body scroll is locked while open. Node clicks still open the drawer above the overlay (modal dialog, top layer). `prefers-reduced-motion` skips the animation. | R16 R17 |
+
+### Motion and loading (second round)
+
+| Decision | Change | Refs |
+|---|---|---|
+| D10 skeleton, not spinner | While a txid lookup runs (and while the WASM decoder loads) the result area shows skeletons with the exact shape of the verdict card (2 text lines + 4 fact boxes), the view tabs and the Anatomy card (5 node boxes on faint wires, pool-flow boxes). While the spent-output values (prevouts) load, the verdict card and the Rules list stay skeletons, because both depend on those values; the graph is already real. Shimmer is a CSS gradient `#252528 → #2e2e33` (`.skeleton`). Inspect turns into "Inspecting…" (disabled, `aria-busy`). | R18 R19 R20 |
+| D11 stagger | Verdict, tabs and the view enter one by one: fade + 8 px rise, 240 ms ease-out, 60 ms apart (`.enter`, `--i`). Pool-flow bars grow from 0 (`.meter-fill`). A new result remounts (`key`), so the entrance replays per result, not per re-render. | R21 R22 |
+| D12 graph draws | Nodes appear left to right (Transaction, then the five bundles 40 ms apart, then Fee); wires are drawn with `pathLength=1` + `stroke-dashoffset`, Transaction → pools first, pools → Fee after. | R23 R24 |
+
+All of it is CSS keyframes, no new dependency. Animations use `animation-fill-mode: backwards`, so no transform stays on an
+ancestor after the entrance (a lingering transform would trap the in-page full-screen overlay). Under
+`prefers-reduced-motion: reduce` every entrance, draw, grow, drawer and pulse animation is off and the skeleton is a flat
+`#252528` without shimmer; the expand overlay skips its FLIP animation too.
+
+Verified with `document.getAnimations()` right after a result appeared (1440 iframe, "Coinbase reward" sample): `enter`
+at 0 / 60 / 120 ms for the three blocks, node `enter` from 120 to 940 ms, `draw` at 240 ms (Transaction → pools) and 600 ms
+(pools → Fee), `grow` on the five bars. Skeletons were captured by delaying `/api/tx` and `/api/prevouts` in the page.
 
 ### Adjustment argued by the references (differs from the brief)
 
@@ -69,7 +86,8 @@ At 1440 px (iframe) and 390 px (iframe), real data via `zec.rocks:443` and `test
 Screens in `docs/screens/ux/`: `before-1440-empty`, `before-1440-result`, `before-390-empty`; `after-1440-empty`,
 `after-1440-result`, `after-1440-drawer`, `after-1440-rules-at-tip`, `after-1440-expanded`, `after-1440-expanded-drawer`,
 `after-1440-testnet-autodetect`, `after-1440-pczt`, `after-1440-zebra-error`, `after-1440-privacy-popover`,
-`after-390-empty`, `after-390-result`, `after-390-expanded`.
+`after-390-empty`, `after-390-result`, `after-390-expanded`, `after-1440-skeleton`, `after-1440-skeleton-prevouts`,
+`after-390-skeleton`.
 
 ## Commands
 

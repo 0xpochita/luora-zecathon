@@ -149,3 +149,25 @@ export function VerdictCard({
     </section>
   );
 }
+
+export function VerdictSkeleton() {
+  return (
+    <section aria-label="Loading the verdict" aria-busy className="flex flex-col gap-3 rounded-card border border-border bg-card-grad p-4 shadow-soft">
+      <div className="flex items-start gap-3">
+        <span className="mt-[9px] size-2 flex-none rounded-full bg-dim" />
+        <div className="flex min-w-0 flex-1 flex-col gap-2.5 pt-1">
+          <span className="skeleton h-4 w-[72%] rounded-full" />
+          <span className="skeleton h-3.5 w-[48%] rounded-full" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {[0, 1, 2, 3].map((index) => (
+          <Inner key={index} className="flex flex-col gap-2 px-3 py-2.5">
+            <span className="skeleton h-3 w-14 rounded-full" />
+            <span className="skeleton h-3.5 w-24 rounded-full" />
+          </Inner>
+        ))}
+      </div>
+    </section>
+  );
+}

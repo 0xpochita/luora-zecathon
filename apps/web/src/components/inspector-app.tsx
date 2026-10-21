@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { Warning } from "@phosphor-icons/react";
 import type { Check, DecodedTx, Network, PcztView as PcztData, Sample } from "@contract/types";
@@ -10,14 +10,14 @@ import { failingNodes, type NodeId } from "@/lib/anatomy";
 import { classifyInput, isTxid } from "@/lib/input";
 import { formatInt, NETWORK_LABEL } from "@/lib/format";
 import { describeMovement, summarizeRules } from "@/lib/summary";
-import { AnatomyView } from "./anatomy-view";
-import { CheckAtControl, ChecksView, type CheckAt } from "./checks-view";
+import { AnatomySkeleton, AnatomyView } from "./anatomy-view";
+import { CheckAtControl, ChecksView, RulesSkeleton, type CheckAt } from "./checks-view";
 import { InspectBox, type Endpoints, type LookupState, type SamplesState } from "./input-panel";
 import { NodeInspector } from "./node-inspector";
 import { PcztPanel } from "./pczt-view";
 import { TopBar, type ChainState } from "./top-bar";
-import { Drawer, EmptyState, LoadingLine, Panel, Select, Tabs, type TabOption } from "./ui";
-import { VerdictCard, type RulesLine } from "./verdict-card";
+import { Drawer, EmptyState, Hint, LoadingLine, Panel, Select, Tabs, type TabOption } from "./ui";
+import { VerdictCard, VerdictSkeleton, type RulesLine } from "./verdict-card";
 import { WhyView, type CatalogState } from "./why-view";
 
 type Mode = "tx" | "pczt" | "error";
@@ -56,6 +56,10 @@ function autoNote(index: number): string {
 
 function endpointLabel(endpoints: Endpoints, network: Network): string {
   return endpoints[network === "test" ? "test" : "main"] ?? `the ${NETWORK_LABEL[network]} indexer`;
+}
+
+function stagger(index: number): CSSProperties {
+  return { "--i": index } as CSSProperties;
 }
 
 function parseNetwork(value: string | null): Network | null {
@@ -103,6 +107,7 @@ export function InspectorApp() {
   const [selectedNode, setSelectedNode] = useState<NodeId | null>(null);
   const [checkAtChoice, setCheckAtChoice] = useState<CheckAt | null>(null);
   const [heightText, setHeightText] = useState("");
+  const [resultId, setResultId] = useState(0);
   const lookupAbort = useRef<AbortController | null>(null);
   const endpointsRef = useRef<Endpoints>({ main: null, test: null });
 
@@ -147,6 +152,7 @@ export function InspectorApp() {
 
   const showResult = useCallback((next: Mode) => {
     setMode(next);
+    setResultId((current) => current + 1);
     setView("overview");
     setSelectedNode(null);
     setCheckAtChoice(null);
@@ -391,8 +397,26 @@ export function InspectorApp() {
     </Select>
   );
 
+  const looking = lookup.status === "loading";
+  const txSkeleton = (
+    <>
+      <div className="enter" style={stagger(0)}>
+        <VerdictSkeleton />
+      </div>
+      <div className="enter flex gap-1.5" style={stagger(1)} aria-hidden>
+        <span className="skeleton h-9 w-24 rounded-tile" />
+        <span className="skeleton h-9 w-20 rounded-tile" />
+      </div>
+      <div className="enter" style={stagger(2)}>
+        <AnatomySkeleton />
+      </div>
+    </>
+  );
+
   let result: ReactNode = null;
-  if (mode === "tx") {
+  if (looking || (mode === "tx" && coreState.status === "loading")) {
+    result = txSkeleton;
+  } else if (mode === "tx") {
     if (coreBlocker) result = coreBlocker;
     else if (decoded && "error" in decoded)
       result = (
@@ -408,6 +432,12 @@ export function InspectorApp() {
       ];
       result = (
         <>
+          {inputsPending ? (
+            <div className="enter" style={stagger(0)}>
+              <VerdictSkeleton />
+            </div>
+          ) : (
+          <div className="enter" style={stagger(0)}>
           <VerdictCard
             tx={tx}
             movement={describeMovement(tx, inputValues, inputsPending)}
@@ -432,8 +462,12 @@ export function InspectorApp() {
             onShowRules={() => setView("rules")}
             onShowDetails={() => setSelectedNode("tx")}
           />
-          <Tabs label="Views" idPrefix="view" value={view} options={viewOptions} onChange={setView} />
-          <div role="tabpanel" id={`view-panel-${view}`} aria-labelledby={`view-tab-${view}`}>
+          </div>
+          )}
+          <div className="enter" style={stagger(1)}>
+            <Tabs label="Views" idPrefix="view" value={view} options={viewOptions} onChange={setView} />
+          </div>
+          <div role="tabpanel" id={`view-panel-${view}`} aria-labelledby={`view-tab-${view}`} className="enter" style={stagger(2)}>
             {view === "overview" ? (
               <AnatomyView
                 tx={tx}
@@ -460,17 +494,19 @@ export function InspectorApp() {
                   <EmptyState icon={<Warning />} title="Rules failed to run">
                     <span className="font-mono text-xs break-all">{checks.error}</span>
                   </EmptyState>
-                ) : checkList ? (
+                ) : chosenHeight === null ? (
+                  <Hint>{rulesLine.status === "pending" ? rulesLine.text : "Pick a height to run the rules."}</Hint>
+                ) : checkList && !inputsPending ? (
                   <ChecksView checks={checkList} />
                 ) : (
-                  <LoadingLine>{rulesLine.status === "pending" ? rulesLine.text : "Running the rules…"}</LoadingLine>
+                  <RulesSkeleton />
                 )}
               </Panel>
             )}
           </div>
         </>
       );
-    } else result = <LoadingLine>Decoding…</LoadingLine>;
+    } else result = txSkeleton;
   } else if (mode === "pczt") {
     const done = pczt && "view" in pczt ? pczt.view.roles.filter((role) => role.done).length : 0;
     result = (
@@ -512,7 +548,7 @@ export function InspectorApp() {
   return (
     <div className="flex min-h-dvh flex-col font-sans text-[13px] text-fg dot-grid">
       <TopBar network={network} chain={chain} onHome={goHome} />
-      {mode === null ? (
+      {mode === null && !looking ? (
         <main className="flex flex-1 flex-col items-center justify-center px-4 pt-6 pb-16">
           <div className="flex w-full max-w-2xl flex-col gap-5">
             <div className="flex flex-col gap-1.5 px-1 text-center">
@@ -553,7 +589,9 @@ export function InspectorApp() {
             onPickError={pickError}
             compact
           />
-          {result}
+          <div key={resultId} className="contents">
+            {result}
+          </div>
         </main>
       )}
       {tx && (
