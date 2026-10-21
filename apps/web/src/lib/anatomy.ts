@@ -24,6 +24,10 @@ const NODE_KEYWORDS: Record<NodeId, string[]> = {
   fee: ["fee", "zip317", "zip-317", "balance"],
 };
 
+function plural(count: number, noun: string): string {
+  return `${formatInt(count)} ${noun}${count === 1 ? "" : "s"}`;
+}
+
 export function nodeForCheck(check: Check): NodeId | null {
   const id = check.id.toLowerCase();
   for (const node of ["ironwood", "orchard", "sapling", "transparent", "fee", "header", "tx"] as NodeId[]) {
@@ -42,7 +46,7 @@ export function failingNodes(checks: Check[] | null): Set<NodeId> {
   return nodes;
 }
 
-export function buildNodes(tx: DecodedTx, feeZat: number | null, failing: Set<NodeId>): AnatomyNode[] {
+export function buildNodes(tx: DecodedTx, feeZat: number | null, failing: Set<NodeId>, inputsPending: boolean): AnatomyNode[] {
   const transparentEmpty = tx.transparent.inputs.length === 0 && tx.transparent.outputs.length === 0;
   const saplingEmpty = !tx.sapling || (tx.sapling.spends === 0 && tx.sapling.outputs === 0);
   return [
@@ -64,28 +68,28 @@ export function buildNodes(tx: DecodedTx, feeZat: number | null, failing: Set<No
     {
       id: "sapling",
       title: "Sapling",
-      subtitle: saplingEmpty || !tx.sapling ? "empty" : `${tx.sapling.spends} spends · ${tx.sapling.outputs} outputs`,
+      subtitle: saplingEmpty || !tx.sapling ? "empty" : `${plural(tx.sapling.spends, "spend")} · ${plural(tx.sapling.outputs, "output")}`,
       empty: saplingEmpty,
       failing: failing.has("sapling"),
     },
     {
       id: "orchard",
       title: "Orchard",
-      subtitle: tx.orchard && tx.orchard.actions > 0 ? `${tx.orchard.actions} actions` : "empty",
+      subtitle: tx.orchard && tx.orchard.actions > 0 ? plural(tx.orchard.actions, "action") : "empty",
       empty: !tx.orchard || tx.orchard.actions === 0,
       failing: failing.has("orchard"),
     },
     {
       id: "ironwood",
       title: "Ironwood",
-      subtitle: tx.ironwood && tx.ironwood.actions > 0 ? `${tx.ironwood.actions} actions` : tx.version >= 6 ? "empty" : "v6 only",
+      subtitle: tx.ironwood && tx.ironwood.actions > 0 ? plural(tx.ironwood.actions, "action") : tx.version >= 6 ? "empty" : "v6 only",
       empty: !tx.ironwood || tx.ironwood.actions === 0,
       failing: failing.has("ironwood"),
     },
     {
       id: "fee",
       title: "Fee",
-      subtitle: feeZat === null ? "needs input values" : formatZec(feeZat),
+      subtitle: feeZat !== null ? formatZec(feeZat) : inputsPending ? "fetching input values…" : "needs input values",
       empty: false,
       failing: failing.has("fee"),
     },
@@ -99,7 +103,7 @@ export interface PoolFlow {
   note: string;
 }
 
-export function poolFlows(tx: DecodedTx, inputValues: (number | null)[] | null, feeZat: number | null): PoolFlow[] {
+export function poolFlows(tx: DecodedTx, inputValues: (number | null)[] | null, feeZat: number | null, inputsPending: boolean): PoolFlow[] {
   const outputsZat = tx.transparent.outputs.reduce((sum, output) => sum + output.valueZat, 0);
   const knownInputs = inputValues && inputValues.length === tx.transparent.inputs.length && inputValues.every((value) => value !== null);
   const inputsZat = knownInputs ? (inputValues as number[]).reduce((sum, value) => sum + value, 0) : null;
@@ -111,13 +115,15 @@ export function poolFlows(tx: DecodedTx, inputValues: (number | null)[] | null, 
       valueZat: transparentBalance,
       note:
         transparentBalance === null
-          ? `outputs ${formatZec(outputsZat)}, input values unknown`
+          ? inputsPending
+            ? "fetching input values…"
+            : `outputs ${formatZec(outputsZat)}, input values unknown`
           : `inputs − outputs`,
     },
     { id: "sapling", label: "Sapling", valueZat: tx.sapling?.valueBalanceZat ?? 0, note: "valueBalanceSapling" },
     { id: "orchard", label: "Orchard", valueZat: tx.orchard?.valueBalanceZat ?? 0, note: "valueBalanceOrchard" },
     { id: "ironwood", label: "Ironwood", valueZat: tx.ironwood?.valueBalanceZat ?? 0, note: "valueBalanceIronwood" },
-    { id: "fee", label: "Fee", valueZat: feeZat, note: feeZat === null ? "needs transparent input values" : "sum of balances" },
+    { id: "fee", label: "Fee", valueZat: feeZat, note: feeZat !== null ? "sum of balances" : inputsPending ? "fetching input values…" : "needs transparent input values" },
   ];
 }
 

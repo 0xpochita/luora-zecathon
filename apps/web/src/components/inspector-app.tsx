@@ -266,9 +266,8 @@ export function InspectorApp() {
   const endpoint = chain.status === "ready" ? chain.data.endpoint : null;
   const needsPrevoutLookup =
     tx !== null &&
-    loaded?.origin === "pasted" &&
     tx.transparent.inputs.some((item) => !item.isCoinbase) &&
-    prevouts.status !== "ready";
+    (loaded?.origin === "pasted" ? prevouts.status !== "ready" : prevouts.status === "error");
 
   const coreBlocker = (() => {
     if (coreState.status === "loading") return <LoadingLine>Loading the WASM decoder…</LoadingLine>;
@@ -309,7 +308,7 @@ export function InspectorApp() {
 
   let centre: ReactNode;
   if (view === "anatomy") {
-    centre = txBlocker ?? (tx && <AnatomyView tx={tx} feeZat={feeZat} inputValues={inputValues} failing={failing} selected={selectedNode} onSelect={setSelectedNode} />);
+    centre = txBlocker ?? (tx && <AnatomyView tx={tx} feeZat={feeZat} inputValues={inputValues} inputsPending={prevouts.status === "loading"} failing={failing} selected={selectedNode} onSelect={setSelectedNode} />);
   } else if (view === "checks") {
     centre =
       txBlocker ??

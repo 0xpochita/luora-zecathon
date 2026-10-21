@@ -14,10 +14,19 @@ interface Field {
   value: ReactNode;
   mono?: boolean;
   copy?: string;
+  wrap?: boolean;
 }
 
 function Row({ field }: { field: Field }) {
   const plain = typeof field.value === "string" ? field.value : undefined;
+  if (field.wrap) {
+    return (
+      <div className="flex min-w-0 flex-col gap-0.5 py-1">
+        <dt className="text-[13px] text-muted">{field.label}</dt>
+        <dd className={`break-words text-text ${field.mono ? "font-mono text-xs" : "text-[13px]"}`}>{field.value}</dd>
+      </div>
+    );
+  }
   return (
     <div className="flex min-w-0 items-center gap-3 py-1">
       <dt className="flex-none text-[13px] text-muted">{field.label}</dt>
@@ -56,8 +65,9 @@ function HashList({ label, hashes }: { label: string; hashes: string[] }) {
 function orchardLikeFields(bundle: OrchardLikeBundle): Field[] {
   return [
     { label: "actions", value: formatInt(bundle.actions) },
-    { label: "flags", value: describeFlags(bundle.flags) },
-    { label: "value balance", value: `${formatZec(bundle.valueBalanceZat, true)} (${formatZat(bundle.valueBalanceZat)})`, mono: true },
+    { label: "flags", value: describeFlags(bundle.flags), wrap: true },
+    { label: "value balance", value: formatZec(bundle.valueBalanceZat, true), mono: true },
+    { label: "in zatoshi", value: formatZat(bundle.valueBalanceZat), mono: true },
     { label: "anchor", value: bundle.anchor, mono: true, copy: bundle.anchor },
     { label: "Halo 2 proof", value: proofSummary(bundle.proofBytes, bundle.canonicalProofBytes), mono: true },
   ];
@@ -162,11 +172,8 @@ function sectionFor(node: NodeId, tx: DecodedTx, feeZat: number | null): Section
         fields: [
           { label: "spends", value: formatInt(tx.sapling.spends) },
           { label: "outputs", value: formatInt(tx.sapling.outputs) },
-          {
-            label: "value balance",
-            value: `${formatZec(tx.sapling.valueBalanceZat, true)} (${formatZat(tx.sapling.valueBalanceZat)})`,
-            mono: true,
-          },
+          { label: "value balance", value: formatZec(tx.sapling.valueBalanceZat, true), mono: true },
+          { label: "in zatoshi", value: formatZat(tx.sapling.valueBalanceZat), mono: true },
           ...(tx.sapling.anchor ? [{ label: "anchor", value: tx.sapling.anchor, mono: true, copy: tx.sapling.anchor }] : []),
           { label: "Groth16 proof", value: `${formatInt(tx.sapling.proofBytesEach)} B each`, mono: true },
         ],
@@ -187,7 +194,7 @@ function sectionFor(node: NodeId, tx: DecodedTx, feeZat: number | null): Section
       if (!bundle || bundle.actions === 0) {
         return {
           title,
-          fields: [{ label: "status", value: node === "ironwood" && tx.version < 6 ? "only v6 transactions carry an Ironwood bundle" : "empty" }],
+          fields: [{ label: "status", value: node === "ironwood" && tx.version < 6 ? "only v6 transactions carry an Ironwood bundle" : "empty", wrap: true }],
           lists: [],
           specs,
         };
@@ -208,16 +215,17 @@ function sectionFor(node: NodeId, tx: DecodedTx, feeZat: number | null): Section
         fields: [
           {
             label: "paid",
-            value: feeZat === null ? "unknown: needs every transparent input value" : `${formatZec(feeZat)} (${formatZat(feeZat)})`,
+            value: feeZat === null ? "unknown: needs every transparent input value" : `${formatZec(feeZat)} · ${formatZat(feeZat)}`,
             mono: feeZat !== null,
+            wrap: feeZat === null,
           },
           { label: "logical actions", value: formatInt(tx.zip317.logicalActions), mono: true },
           {
             label: "conventional",
-            value: `${formatZec(tx.zip317.conventionalFeeZat)} (${formatZat(tx.zip317.conventionalFeeZat)})`,
+            value: `${formatZec(tx.zip317.conventionalFeeZat)} · ${formatZat(tx.zip317.conventionalFeeZat)}`,
             mono: true,
           },
-          { label: "formula", value: "transparent in − out + Σ shielded value balances" },
+          { label: "formula", value: "transparent in − out + Σ shielded value balances", wrap: true },
         ],
         lists: [],
         specs: [{ label: "ZIP 317 · conventional fee", url: zipUrl(317) }],

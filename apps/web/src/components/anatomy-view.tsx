@@ -176,6 +176,7 @@ export function AnatomyView({
   tx,
   feeZat,
   inputValues,
+  inputsPending,
   failing,
   selected,
   onSelect,
@@ -183,12 +184,13 @@ export function AnatomyView({
   tx: DecodedTx;
   feeZat: number | null;
   inputValues: (number | null)[] | null;
+  inputsPending: boolean;
   failing: Set<NodeId>;
   selected: NodeId;
   onSelect: (id: NodeId) => void;
 }) {
-  const nodes = buildNodes(tx, feeZat, failing);
-  const flows = poolFlows(tx, inputValues, feeZat);
+  const nodes = buildNodes(tx, feeZat, failing, inputsPending);
+  const flows = poolFlows(tx, inputValues, feeZat, inputsPending);
   const maxAbs = Math.max(1, ...flows.map((flow) => Math.abs(flow.valueZat ?? 0)));
   return (
     <div className="flex flex-col gap-3">
