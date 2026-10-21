@@ -11,3 +11,5 @@ target/
 .DS_Store
 next-env.d.ts
 *.tsbuildinfo
+.vitest/
+apps/web/AGENTS.md
