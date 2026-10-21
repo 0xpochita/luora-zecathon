@@ -127,6 +127,15 @@
   box-shadow: inset 0 1px 12px rgba(0, 0, 0, 0.35);
 }
 
+@utility trace-guides {
+  background-image: repeating-linear-gradient(to right, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 10px);
+  background-position: 4px 0;
+  @media (width >= 40rem) {
+    background-image: repeating-linear-gradient(to right, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 16px);
+    background-position: 7px 0;
+  }
+}
+
 @utility glow-top {
   position: relative;
   isolation: isolate;

@@ -3,14 +3,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { Warning } from "@phosphor-icons/react";
-import type { Check, DecodedTx, Network, PcztView as PcztData, Sample } from "@contract/types";
+import type { Check, DecodedTx, Network, PcztView as PcztData, Sample, TraceNode } from "@contract/types";
 import { api, ApiError, errorText, type ChainInfo } from "@/lib/api";
 import { coreErrorMessage, loadCore, type CoreState } from "@/lib/core";
 import { failingNodes, type NodeId } from "@/lib/anatomy";
+import { failingRows, traceRows } from "@/lib/trace";
 import { classifyInput, isTxid } from "@/lib/input";
 import { formatInt, NETWORK_LABEL } from "@/lib/format";
 import { describeMovement, summarizeRules } from "@/lib/summary";
-import { AnatomySkeleton, AnatomyView } from "./anatomy-view";
+import { AnatomyView } from "./anatomy-view";
+import { TraceDetails, TraceSkeleton, TraceView } from "./trace-view";
 import { CheckAtControl, ChecksView, RulesSkeleton, type CheckAt } from "./checks-view";
 import { InspectBox, type Endpoints, type LookupState, type SamplesState } from "./input-panel";
 import { NodeInspector } from "./node-inspector";
@@ -22,6 +24,12 @@ import { WhyView, type CatalogState } from "./why-view";
 
 type Mode = "tx" | "pczt" | "error";
 type ViewId = "overview" | "rules";
+type OverviewMode = "trace" | "graph";
+
+const OVERVIEW_OPTIONS: TabOption<OverviewMode>[] = [
+  { value: "trace", label: "Trace" },
+  { value: "graph", label: "Graph" },
+];
 
 export interface LoadedTx {
   hex: string;
@@ -105,6 +113,9 @@ export function InspectorApp() {
   const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
   const [view, setView] = useState<ViewId>("overview");
   const [selectedNode, setSelectedNode] = useState<NodeId | null>(null);
+  const [overviewMode, setOverviewMode] = useState<OverviewMode>("trace");
+  const [activeTraceId, setActiveTraceId] = useState<string | null>(null);
+  const [openTraceId, setOpenTraceId] = useState<string | null>(null);
   const [checkAtChoice, setCheckAtChoice] = useState<CheckAt | null>(null);
   const [heightText, setHeightText] = useState("");
   const [resultId, setResultId] = useState(0);
@@ -155,6 +166,8 @@ export function InspectorApp() {
     setResultId((current) => current + 1);
     setView("overview");
     setSelectedNode(null);
+    setActiveTraceId(null);
+    setOpenTraceId(null);
     setCheckAtChoice(null);
     setHeightText("");
   }, []);
@@ -337,6 +350,16 @@ export function InspectorApp() {
 
   const checkList = checks && "list" in checks ? checks.list : null;
   const failing = useMemo(() => failingNodes(checkList), [checkList]);
+  const failingTrace = useMemo(() => failingRows(checkList), [checkList]);
+
+  const trace = useMemo((): { nodes: TraceNode[] } | { error: string } | null => {
+    if (!core || !loaded || !tx) return null;
+    try {
+      return { nodes: core.trace_tx(loaded.hex, network) };
+    } catch (error) {
+      return { error: coreErrorMessage(error) };
+    }
+  }, [core, loaded, tx, network]);
 
   const pczt = useMemo((): { view: PcztData } | { error: string } | null => {
     if (!core || !pcztInput) return null;
@@ -408,10 +431,13 @@ export function InspectorApp() {
         <span className="skeleton h-9 w-20 rounded-tile" />
       </div>
       <div className="enter" style={stagger(2)}>
-        <AnatomySkeleton />
+        <TraceSkeleton />
       </div>
     </>
   );
+
+  const traceRowList = trace && "nodes" in trace ? traceRows(trace.nodes, inputValues, feeZat, inputsPending) : null;
+  const openTraceRow = openTraceId ? traceRowList?.find((row) => row.id === openTraceId) ?? null : null;
 
   let result: ReactNode = null;
   if (looking || (mode === "tx" && coreState.status === "loading")) {
@@ -465,10 +491,31 @@ export function InspectorApp() {
           </div>
           )}
           <div className="enter" style={stagger(1)}>
-            <Tabs label="Views" idPrefix="view" value={view} options={viewOptions} onChange={setView} />
+            <div className="flex flex-wrap items-center gap-2">
+              <Tabs label="Views" idPrefix="view" value={view} options={viewOptions} onChange={setView} />
+              {view === "overview" && (
+                <Tabs label="Overview style" value={overviewMode} options={OVERVIEW_OPTIONS} onChange={setOverviewMode} size="sm" className="ml-auto" />
+              )}
+            </div>
           </div>
           <div role="tabpanel" id={`view-panel-${view}`} aria-labelledby={`view-tab-${view}`} className="enter" style={stagger(2)}>
-            {view === "overview" ? (
+            {view === "overview" && overviewMode === "trace" ? (
+              trace && "nodes" in trace ? (
+                <TraceView
+                  rows={traceRowList!}
+                  failing={failingTrace}
+                  activeId={activeTraceId}
+                  onActiveChange={setActiveTraceId}
+                  onOpen={setOpenTraceId}
+                  aside={`v${tx.version} · ${formatInt(tx.sizeBytes)} bytes`}
+                />
+              ) : (
+                <EmptyState icon={<Warning />} title="Trace not available for this transaction">
+                  <span className="font-mono text-xs break-all">{trace && "error" in trace ? trace.error : "Decoding…"}</span>
+                  <span className="mt-1 block">The Graph view still shows its structure.</span>
+                </EmptyState>
+              )
+            ) : view === "overview" ? (
               <AnatomyView
                 tx={tx}
                 feeZat={feeZat}
@@ -595,8 +642,19 @@ export function InspectorApp() {
         </main>
       )}
       {tx && (
-        <Drawer open={selectedNode !== null} onClose={() => setSelectedNode(null)} title={selectedNode ? NODE_TITLE[selectedNode] : ""}>
-          {selectedNode && <NodeInspector node={selectedNode} tx={tx} feeZat={feeZat} />}
+        <Drawer
+          open={selectedNode !== null || openTraceRow !== null}
+          onClose={() => {
+            setSelectedNode(null);
+            setOpenTraceId(null);
+          }}
+          title={openTraceRow ? `${openTraceRow.kind} ${openTraceRow.label}` : selectedNode ? NODE_TITLE[selectedNode] : ""}
+        >
+          {openTraceRow ? (
+            <TraceDetails row={openTraceRow} failing={failingTrace.get(openTraceRow.id)} />
+          ) : (
+            selectedNode && <NodeInspector node={selectedNode} tx={tx} feeZat={feeZat} />
+          )}
         </Drawer>
       )}
     </div>

@@ -42,6 +42,38 @@ Verified with `document.getAnimations()` right after a result appeared (1440 ifr
 at 0 / 60 / 120 ms for the three blocks, node `enter` from 120 to 940 ms, `draw` at 240 ms (Transaction → pools) and 600 ms
 (pools → Fee), `grow` on the five bars. Skeletons were captured by delaying `/api/tx` and `/api/prevouts` in the page.
 
+### Trace view (Task E), the default Overview
+
+Overview now opens on **Trace**, a Phalcon-style tree of the transaction's own structure; a small "Trace | Graph"
+switch next to the Overview/Rules tabs brings back the Anatomy graph. References: Phalcon invocation flow (opened in the
+user's Chrome) and Luora's own `docs/ux/trace-view.md` + DESIGN.md "Trace call kinds" (notes E1–E7 in
+`research/ux-refs.md`).
+
+- Data: `trace_tx` from the WASM core (see `docs/handoff/core.md`, "Trace"). Every row is a real byte range; the left
+  number is its **byte offset**, the next column its length. A FEE row is added by the UI (no offset: it is computed);
+  VIN rows gain `value=` when `/api/prevouts` has it.
+- Rows: indent guides, `−`/`+` fold squares, outlined mono badge `depth → KIND` (TX/HEADER/bundles neutral, VIN/VOUT blue,
+  SPEND/OUTPUT/ACTION green, PROOF/AUTH SIG/BINDING SIG neutral, FEE yellow, red when a failing check points at the row),
+  label, then `(name=value, …)` inline; hashes shortened; ciphertexts shown as "580 B, encrypted" in italic, never decoded.
+  Empty bundles dimmed. A failing check (e.g. expiry at the current tip) turns the HEADER badge red, adds a red dot and a
+  hover note with the check title.
+- Toolbar: Expand (Collapsed / Bundles / Everything), Byte offsets and Sizes toggles, search (field name, value or display
+  prefix, kind or label; ancestors kept, folds ignored), and the same in-page full screen as Anatomy (the expand logic now
+  lives in `components/expandable-card.tsx`, shared by both cards).
+- Click or Enter opens the row in the existing drawer with every field in full, copy buttons and the byte range.
+  Keyboard: ↑/↓ move, ← folds or jumps to the parent, → unfolds or enters, Enter opens.
+- Long rows scroll horizontally inside the card on desktop; at 390 px the size column hides, guides tighten and fields
+  wrap under the badge, `scrollWidth` stays 390.
+- Loading: a trace-shaped skeleton (toolbar + 10 rows with badges at three depths) replaces the anatomy skeleton; rows
+  fade in with an 18 ms stagger (capped at 360 ms); reduced motion respected.
+
+Verified in the browser (1440 and 390, port 3034): all 9 samples from `/api/samples` trace to exactly their size
+(e.g. Orchard → Ironwood 15,150/15,150 B, Coinbase 164/164, Testnet NU7 9,166/9,166); drawer, keyboard, search
+("nullifier" → tx › ironwood › action #0), Graph switch, full screen, failing expiry check at the tip.
+Tests: `src/lib/trace.test.ts` (real WASM on the v6 Ironwood tx: offsets, VIN values, fee row, expand levels, search,
+check → row). Screens: `trace-1440-default`, `trace-1440-drawer`, `trace-1440-failing-check`, `trace-1440-expanded`,
+`trace-1440-skeleton`, `trace-1440-sapling`, `trace-390`.
+
 ### Graph canvas
 
 The anatomy graph sits on its own darker canvas inside the card (`graph-canvas`: `#17171a`, an 18 px dot grid in

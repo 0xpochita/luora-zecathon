@@ -67,13 +67,13 @@ fn encrypted_field(name: &str, bytes: &[u8]) -> TraceField {
     TraceField {
         name: name.into(),
         value: hex::encode(bytes),
-        display: format!("{} B, encrypted", bytes.len()),
+        display: format!("{} B, encrypted", group(bytes.len())),
         encrypted: true,
     }
 }
 
 fn size_field(name: &str, bytes: &[u8]) -> TraceField {
-    field(name, hex::encode(bytes), format!("{} B", bytes.len()))
+    field(name, hex::encode(bytes), format!("{} B", group(bytes.len())))
 }
 
 fn short(value: &str) -> String {
@@ -82,6 +82,18 @@ fn short(value: &str) -> String {
     } else {
         format!("{}…{}", &value[..8], &value[value.len() - 6..])
     }
+}
+
+pub fn group(n: usize) -> String {
+    let digits = n.to_string();
+    let mut out = String::new();
+    for (i, c) in digits.chars().enumerate() {
+        if i > 0 && (digits.len() - i) % 3 == 0 {
+            out.push(',');
+        }
+        out.push(c);
+    }
+    out
 }
 
 pub fn format_zec(zat: i64) -> String {
@@ -389,7 +401,7 @@ fn trace_orchard_like(
             return Err(CoreError::new("trace-failed", format!("byte {proof_at}: proof length does not match the parsed bundle")));
         }
         let (_, proof) = cur.take(proof_len)?;
-        let n = b.push(format!("{pool}-proof"), Some(pool), "PROOF", format!("Halo 2 · {proof_len} B"), proof_at, vec![size_field("proofs", proof)]);
+        let n = b.push(format!("{pool}-proof"), Some(pool), "PROOF", format!("Halo 2 · {} B", group(proof_len)), proof_at, vec![size_field("proofs", proof)]);
         b.close(n, cur.pos);
         for i in 0..actions {
             let (offset, sig) = cur.take(SIG_BYTES)?;
@@ -420,9 +432,9 @@ pub fn trace(bytes: &[u8], net: Net) -> Result<Vec<TraceNode>, CoreError> {
     if let Some(u) = &upgrade {
         tx_label.push_str(&format!(" · {u}"));
     }
-    tx_label.push_str(&format!(" · {} bytes", bytes.len()));
+    tx_label.push_str(&format!(" · {} bytes", group(bytes.len())));
     let txid = tx.txid().to_string();
-    let root = b.push("tx", None, "TX", tx_label, 0, vec![field("txid", txid.clone(), short(&txid)), field("size", bytes.len().to_string(), format!("{} B", bytes.len()))]);
+    let root = b.push("tx", None, "TX", tx_label, 0, vec![field("txid", txid.clone(), short(&txid)), field("size", bytes.len().to_string(), format!("{} B", group(bytes.len())))]);
 
     let (offset, header) = cur.take(4)?;
     let (_, group) = cur.take(4)?;
