@@ -1,0 +1,16 @@
+{
+  "name": "luora-z-core",
+  "type": "module",
+  "version": "0.1.0",
+  "license": "MIT OR Apache-2.0",
+  "files": [
+    "luora_z_core_bg.wasm",
+    "luora_z_core.js",
+    "luora_z_core.d.ts"
+  ],
+  "main": "luora_z_core.js",
+  "types": "luora_z_core.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
