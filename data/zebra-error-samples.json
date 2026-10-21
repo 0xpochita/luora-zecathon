@@ -1,0 +1,310 @@
+{
+  "producedAt": "2026-10-21T13:14:34.090Z",
+  "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+  "network": "regtest",
+  "rpc": "JSON-RPC sendrawtransaction inside the container (docker exec, no published ports)",
+  "note": "Keys are fresh random secp256k1 keys created for each run and discarded; the chain is ephemeral regtest state.",
+  "samples": [
+    {
+      "id": "unshielded-coinbase-spend",
+      "title": "Spending a mature coinbase output to a transparent address",
+      "expectedVariant": "ValidateContextError::UnshieldedTransparentCoinbaseSpend",
+      "how": "Regtest with default should_allow_unshielded_coinbase_spends = false. Mined 130 blocks to a fresh P2PKH key, then signed a v5 transaction that spends the height-1 coinbase output to a transparent output.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = false\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a537000000000000000001cf50309f2fec7d7d71f6c67893f094e8e0c6e511103c66605d5542fb54b55199000000006a47304402206dfbb51e564c170ea53d8f725ba0374bc5034b00aa07f385d1243355cc68f96f02202da629c3ed233dc3ac8fcf4f876e3237a62e32fc807e0ad3df528d53d66c210f012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: could not contextually validate transaction on best chain: unshielded transparent coinbase spend: OutPoint { hash: transaction::Hash(\"9951b554fb42555d60663c1011e5c6e0e894f09378c6f6717d7dec2f9f3050cf\"), index: 0 } must be spent in a transaction which only has shielded outputs"
+      },
+      "accepted": false
+    },
+    {
+      "id": "baseline-accepted",
+      "title": "A correct v5 transparent spend (control case)",
+      "expectedVariant": "accepted",
+      "how": "Regtest with should_allow_unshielded_coinbase_spends = true. A v5 transaction with the NU6.3 branch ID spends a mature coinbase output with a correct ZIP 244 signature and a 10,000 zatoshi fee. It is accepted, which shows the signer is right and the failures below come from the one field each changes.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": "d830178c47cfa7fbe1ab2b0efaf14c0d07774a35d364a20e2b46753ac473427d",
+        "hex": "050000800a27a7265b16a537000000000000000001cf50309f2fec7d7d71f6c67893f094e8e0c6e511103c66605d5542fb54b55199000000006a47304402206dfbb51e564c170ea53d8f725ba0374bc5034b00aa07f385d1243355cc68f96f02202da629c3ed233dc3ac8fcf4f876e3237a62e32fc807e0ad3df528d53d66c210f012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": null,
+      "accepted": true
+    },
+    {
+      "id": "already-in-mempool",
+      "title": "Submitting the same transaction twice",
+      "expectedVariant": "MempoolError::InMempool",
+      "how": "The accepted control transaction submitted a second time before it is mined.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a537000000000000000001cf50309f2fec7d7d71f6c67893f094e8e0c6e511103c66605d5542fb54b55199000000006a47304402206dfbb51e564c170ea53d8f725ba0374bc5034b00aa07f385d1243355cc68f96f02202da629c3ed233dc3ac8fcf4f876e3237a62e32fc807e0ad3df528d53d66c210f012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -1,
+        "message": "transaction already exists in mempool"
+      },
+      "accepted": false
+    },
+    {
+      "id": "mempool-spend-conflict",
+      "title": "A second transaction spending the same output while the first waits in the mempool",
+      "expectedVariant": "SameEffectsTipRejectionError::SpendConflict",
+      "how": "Same input as the control transaction, different fee, so a different txid that spends an output already spent in the mempool.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a537000000000000000001cf50309f2fec7d7d71f6c67893f094e8e0c6e511103c66605d5542fb54b55199000000006b483045022100b7638ba58409f79116e5b8498f49c5afe97981dacfac10990e81ffe307a0f2e802200f1ccbaf380c1f8ec51556b248c36da6918ebcca1badc4ca20cbf998491bc090012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0120704025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "any transaction with the same effects will be rejected from the mempool until the next chain tip block: transaction rejected because another transaction in the mempool has already spent some of its inputs"
+      },
+      "accepted": false
+    },
+    {
+      "id": "wrong-branch-id",
+      "title": "Signed for NU6.2 after NU6.3 activated",
+      "expectedVariant": "TransactionError::WrongConsensusBranchId",
+      "how": "A v5 transaction with nConsensusBranchId 0x5437f330 (NU6.2), signed for that branch, sent to a chain where NU6.3 (0x37a5165b) is active.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a72630f33754000000000000000001c21b4ee1a878b49ca4a9fa57a4de24653ba73c162d379d12281664e25ae7a58e000000006a473044022012107ae206dd9bdbc54b21282b39a84a6367141c230a52e7b78ae422ed724d5b0220490cc2e412bf089dfe2014dbb47d025916bebd456e02685801eabcb7bc802d75012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: transaction uses an incorrect consensus branch id"
+      },
+      "accepted": false
+    },
+    {
+      "id": "expired",
+      "title": "Expiry height already in the past",
+      "expectedVariant": "TransactionError::ExpiredTransaction",
+      "how": "nExpiryHeight set to 120 while the chain tip is 130.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a5370000000078000000019363e61457be265cb3c6dca94ecf3351d960a655932000c2f9126bf3db17585e000000006a47304402205b6a22efda990cf1dc77ff5f59ad2aa2e86b2218061ced00aa3e499911d790bd0220306431a05bd45caff47165d07f5b7508a534fc3507c3559d6f0d7f4aa7ed1629012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: transaction must not be mined at a block Height(131) greater than its expiry Height(120), failing transaction transaction::Hash(\"0ebd4e9392f1511e221cbae8de3ed4421da121f034ef9cd1cbcd7919a3104fe5\")"
+      },
+      "accepted": false
+    },
+    {
+      "id": "zero-fee",
+      "title": "No fee at all",
+      "expectedVariant": "transaction::unmined::zip317::Error::UnpaidActions",
+      "how": "Outputs equal the input value, so the fee is 0 zatoshi and every logical action is unpaid.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a5370000000000000000011080071635d00392d536a44cef2bb3b9343137c7fcf2c60d483adb660774ed8b000000006a4730440220393dcc402f45cdcbe39566ad16309b4579f83aa3e43abbb667146f6d710fe01e022053906db12d69ecd01d6d973bdcec225d14c235dd08b786944be21273312907b0012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0140be4025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: failed to verify ZIP-317 transaction rules, transaction was not inserted to mempool: Unpaid actions is higher than the limit"
+      },
+      "accepted": false
+    },
+    {
+      "id": "low-fee",
+      "title": "Fee of 1,000 zatoshi for 2 logical actions",
+      "expectedVariant": "transaction::unmined::zip317::Error::UnpaidActions",
+      "how": "One P2PKH input and one P2PKH output pay 1,000 zatoshi; the conventional fee is marginal_fee times max(2, logical actions).",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a537000000000000000001d397f695c7afe42b202dd27c59793023ef5131a04ea6030a344efd9dcfe5cdff000000006a4730440220762cbe6247466ef37216d6a2fefaf5cd637ffdf286ba340f3c6d1233bbb8b1500220667547d66fba1d30a1209e5fff1b5449a1eb59547a1b2f2c53a4556446ee3749012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0158ba4025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: failed to verify ZIP-317 transaction rules, transaction was not inserted to mempool: Unpaid actions is higher than the limit"
+      },
+      "accepted": false
+    },
+    {
+      "id": "wrong-key-signature",
+      "title": "Signed with a key that does not own the output",
+      "expectedVariant": "TransactionError::InternalDowncastError",
+      "how": "The input is signed by a different, fresh secp256k1 key, so OP_EQUALVERIFY on the pubkey hash fails.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a5370000000000000000014aac87320d4911ad79ff9bf1cdae871219591ce172524be70ee5e72bc8961e77000000006a473044022027ea877352dec3497efdbfa80e0f55a56033889694cb57848513c2a9d6614fd8022062cf96f838ac82f6996b834dc22d908f874cb3256be16dc2789e5921e856c553012102396f1ff71b8a9d9798571d449ce331a0bf39e193a2a33303e4da029125fa61edffffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: could not convert an asynchronous verification error: downcast to known transaction error type failed, original error: Unknown(Script(Interpreter(Some(Good(Operation(OP_EQUALVERIFY))), Verify)))"
+      },
+      "accepted": false
+    },
+    {
+      "id": "wrong-prevout-amount",
+      "title": "Signature commits to the wrong input amount",
+      "expectedVariant": "TransactionError::InternalDowncastError",
+      "how": "The ZIP 244 signature hash is computed with an input value 1 zatoshi higher than the real coinbase output, as a signer with a wrong prevout amount would do.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a5370000000000000000014f049a49a23ab94cefa1714f9bc230d45de287ada112781ee72e0b1686d245ce000000006b483045022100ac45808fb6d6d3eaa8667c93e04cc43f331df60440da5b524276e1c391e2c0ea0220037ba9edd61fceb4fa049023c5a13fee2503bdcd7d452c7813f30495ec82213c012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: could not convert an asynchronous verification error: downcast to known transaction error type failed, original error: ScriptInvalid"
+      },
+      "accepted": false
+    },
+    {
+      "id": "lock-time-height",
+      "title": "nLockTime height in the future",
+      "expectedVariant": "TransactionError::LockedUntilAfterBlockHeight",
+      "how": "nLockTime 180 with a non-final input sequence, while the tip is 130.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a537b40000000000000001bb3d3857b512a5d0be991f0e1680b414db44893fc059934511cdac2ffde7375e000000006b483045022100c00cfd594c05ac56da5bee31d057af844001bb5f18087b383ae8c9c767fb9d29022011c3ca8c6b1d6ecc3dd16d1b0ba7e301cbb6a31d4d0d75cb2deec53964f78851012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0afeffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: transaction is locked until after block height 180"
+      },
+      "accepted": false
+    },
+    {
+      "id": "missing-input",
+      "title": "Spending an output that does not exist on this chain",
+      "expectedVariant": "TransactionError::TransparentInputNotFound",
+      "how": "The input points at output 0 of mainnet transaction 30cdd41fc24b39fa8b1e47078f17e0b56d4db2c09df44be6f7e484a9f1fc021c, which does not exist on this regtest chain.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a5370000000000000000011c02fcf1a984e4f7e64bf49dc0b24d6db5e0178f07471e8bfa394bc21fd4cd30000000006a47304402203442e2d3692e423f6078c5474f22cf8ce0ca2437d4a82b895bd55c370a9d855e02202714b6c0f39e6cdcc2955f43b48e0b87b1f08c6d8bc2ee4c927329b8f73d28f5012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: could not find transparent input UTXO in the best chain or mempool"
+      },
+      "accepted": false
+    },
+    {
+      "id": "truncated-hex",
+      "title": "Truncated transaction bytes",
+      "expectedVariant": "SerializationError::Io",
+      "how": "The control transaction's hex with its last 10 bytes removed.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a537000000000000000001cf50309f2fec7d7d71f6c67893f094e8e0c6e511103c66605d5542fb54b55199000000006a47304402206dfbb51e564c170ea53d8f725ba0374bc5034b00aa07f385d1243355cc68f96f02202da629c3ed233dc3ac8fcf4f876e3237a62e32fc807e0ad3df528d53d66c210f012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a"
+      },
+      "response": {
+        "code": -22,
+        "message": "io error: failed to fill whole buffer"
+      },
+      "accepted": false
+    },
+    {
+      "id": "immature-coinbase",
+      "title": "Spending a coinbase output before 100 confirmations",
+      "expectedVariant": "ValidateContextError::ImmatureTransparentCoinbaseSpend",
+      "how": "Spends the coinbase output of block 125 while the tip is 130.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 130,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a5370000000000000000012e45d2ed2365c0b29b2e46d32747a374b72177f5dda471a5abcaeb06fc0bc29e000000006a47304402207e7ba7ef6a50e8daa2f2e0675bc47c8079d17e512d210996a827e9032361fb2d0220761501a4d18f2296a6c61c8e4d52cf783a1501fa7e6b6fc21aca9bacd3a746f0012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: could not contextually validate transaction on best chain: immature transparent coinbase spend: attempt to spend OutPoint { hash: transaction::Hash(\"9ec20bfc06ebcaaba571a4ddf57721b774a34727d3462e9bb2c06523edd2452e\"), index: 0 } at Height(131), but spends are invalid before Height(225), which is 100 blocks after it was created at Height(125)"
+      },
+      "accepted": false
+    },
+    {
+      "id": "already-mined",
+      "title": "Resubmitting a transaction after it was mined",
+      "expectedVariant": "SameEffectsChainRejectionError::Mined",
+      "how": "The control transaction submitted again after one more block mined it.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 131,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a537000000000000000001cf50309f2fec7d7d71f6c67893f094e8e0c6e511103c66605d5542fb54b55199000000006a47304402206dfbb51e564c170ea53d8f725ba0374bc5034b00aa07f385d1243355cc68f96f02202da629c3ed233dc3ac8fcf4f876e3237a62e32fc807e0ad3df528d53d66c210f012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0130974025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -1,
+        "message": "any transaction with the same effects will be rejected from the mempool until a chain reset: transaction was committed to the best chain"
+      },
+      "accepted": false
+    },
+    {
+      "id": "double-spend-mined",
+      "title": "Spending an output that a mined transaction already spent",
+      "expectedVariant": "TransactionError::TransparentInputNotFound",
+      "how": "The conflicting transaction from the mempool-spend-conflict case, submitted after the control transaction was mined.",
+      "zebra": "zfnd/zebra:7.0.0-rc.0 (/Zebra:7.0.0-rc.0/)",
+      "config": "[network]\nnetwork = \"Regtest\"\n\n[network.testnet_parameters]\nshould_allow_unshielded_coinbase_spends = true\n\n[network.testnet_parameters.activation_heights]\nCanopy = 1\nNU5 = 1\n\"NU6.3\" = 1\n\n[mining]\nminer_address = \"tmMN6qmVqPSG98tr3J6DMMbtyR2afWZkJCn\"\n\n[state]\nephemeral = true\n\n[rpc]\nlisten_addr = \"127.0.0.1:18232\"\nenable_cookie_auth = false\n",
+      "chainHeight": 131,
+      "request": {
+        "method": "sendrawtransaction",
+        "txid": null,
+        "hex": "050000800a27a7265b16a537000000000000000001cf50309f2fec7d7d71f6c67893f094e8e0c6e511103c66605d5542fb54b55199000000006b483045022100b7638ba58409f79116e5b8498f49c5afe97981dacfac10990e81ffe307a0f2e802200f1ccbaf380c1f8ec51556b248c36da6918ebcca1badc4ca20cbf998491bc090012102ad5db291c7271e5aabb6c7a38318ebe94959c8bc69ddb36532a3a343332d8c0affffffff0120704025000000001976a9147fcd18425ecb0407223213ce9e601a1c1a3f8fc588ac000000"
+      },
+      "response": {
+        "code": -25,
+        "message": "failed to validate tx: WtxId(\"private\"), error: transaction did not pass consensus validation: could not find transparent input UTXO in the best chain or mempool"
+      },
+      "accepted": false
+    }
+  ]
+}

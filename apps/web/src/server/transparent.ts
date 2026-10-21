@@ -8,6 +8,7 @@ export interface TransparentInputRef {
 
 export interface TransparentOutputValue {
   valueZat: number;
+  scriptPubKey: string;
 }
 
 export interface TransparentBundle {
@@ -86,8 +87,8 @@ export function readTransparentBundle(raw: Uint8Array): TransparentBundle {
   for (let index = 0; index < outputCount; index += 1) {
     const value = cursor.i64();
     if (value < 0n || value > BigInt(MAX_ZATOSHI)) throw new Error(`output ${index} value out of range`);
-    cursor.take(cursor.compactSize());
-    outputs.push({ valueZat: Number(value) });
+    const scriptPubKey = cursor.take(cursor.compactSize()).toString("hex");
+    outputs.push({ valueZat: Number(value), scriptPubKey });
   }
 
   return { version, inputs, outputs };
