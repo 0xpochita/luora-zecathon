@@ -16,6 +16,13 @@ use zcash_transparent::bundle::{OutPoint, TxOut};
 use crate::model::*;
 use crate::network::{Net, branch_display_name, branch_hex};
 
+pub const ZIP2009_MARGINAL_FEE: u64 = 1_000;
+pub const ZIP2009_MAINNET_HEIGHT: u32 = 3_590_000;
+
+pub fn zip2009_active(net: Net, height: BlockHeight) -> bool {
+    matches!(net, Net::Main) && u32::from(height) >= ZIP2009_MAINNET_HEIGHT
+}
+
 pub const HALO2_PROOF_BASE_BYTES: usize = 2720;
 pub const HALO2_PROOF_PER_ACTION_BYTES: usize = 2272;
 pub const MAX_TX_BYTES: usize = 2_000_000;
@@ -213,6 +220,17 @@ impl FeeInputs {
     }
 
     pub fn conventional_fee(&self, net: Net, height: BlockHeight) -> u64 {
+        if zip2009_active(net, height) {
+            return self.zip2009_fee();
+        }
+        self.zip317_fee(net, height)
+    }
+
+    pub fn zip2009_fee(&self) -> u64 {
+        ZIP2009_MARGINAL_FEE * self.logical_actions().max(GRACE_ACTIONS) as u64
+    }
+
+    pub fn zip317_fee(&self, net: Net, height: BlockHeight) -> u64 {
         if self.joinsplits > 0 {
             return u64::from(MARGINAL_FEE) * self.logical_actions().max(GRACE_ACTIONS) as u64;
         }

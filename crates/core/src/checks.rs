@@ -4,8 +4,8 @@ use zcash_protocol::consensus::{BlockHeight, BranchId, NetworkUpgrade, Parameter
 use zcash_protocol::value::ZatBalance;
 
 use crate::decode::{
-    FeeInputs, canonical_halo2_proof_bytes, fee_paid, has_explicit_branch_id, is_coinbase,
-    parse_tx, version_number,
+    FeeInputs, ZIP2009_MARGINAL_FEE, canonical_halo2_proof_bytes, fee_paid, has_explicit_branch_id, is_coinbase,
+    parse_tx, version_number, zip2009_active,
 };
 use crate::model::{Check, CheckStatus, CoreError, ZipRef};
 use crate::network::{Net, branch_display_name, branch_hex};
@@ -654,7 +654,7 @@ fn coinbase_shielded_check(tx: &Transaction, net: Net, height: BlockHeight) -> C
 
 fn fee_check(tx: &Transaction, net: Net, height: BlockHeight, input_values: &[Option<u64>]) -> Check {
     let source = format!(
-        "{LIBRUSTZCASH_REV} zcash_primitives/src/transaction/fees/zip317.rs:172 FeeRule::fee_required and zcash_primitives/src/transaction/mod.rs:677 TransactionData::fee_paid"
+        "{LIBRUSTZCASH_REV} zcash_primitives/src/transaction/fees/zip317.rs:172 FeeRule::fee_required and zcash_primitives/src/transaction/mod.rs:677 TransactionData::fee_paid; ZIP 2009 marginal_fee 1000 from Mainnet height 3590000"
     );
     let title = "ZIP 317 conventional fee";
     let fee_inputs = FeeInputs::of(tx);
@@ -707,35 +707,52 @@ fn fee_check(tx: &Transaction, net: Net, height: BlockHeight, input_values: &[Op
             );
         }
     };
+    let relay_floor = fee_inputs.zip2009_fee();
+    let new_rule = zip2009_active(net, height);
+    let rule_zip = if new_rule { zip(2009, "Specification") } else { zip(317, "Fee calculation") };
+    let rule_name = if new_rule { "ZIP 2009" } else { "ZIP 317" };
     if fee >= conventional {
-        check(
+        return check(
             "zip317-fee",
             title,
             CheckStatus::Pass,
             format!(
-                "Fee paid is {}; the conventional fee for {logical} logical actions is {}.",
+                "Fee paid is {}; the {rule_name} conventional fee for {logical} logical actions is {}.",
                 fmt_zat(fee.into()),
                 fmt_zat(conventional.into())
             ),
-            zip(317, "Fee calculation"),
+            rule_zip,
             &source,
-        )
-    } else {
-        let marginal = 5_000u64;
-        let unpaid = (conventional - fee).div_ceil(marginal);
-        check(
+        );
+    }
+    if fee >= relay_floor {
+        return check(
             "zip317-fee",
             title,
             CheckStatus::Warn,
             format!(
-                "Fee paid is {}, below the conventional {} for {logical} logical actions ({unpaid} unpaid actions). Still consensus-valid, but nodes may not relay it and miners deprioritise it.",
+                "Fee paid is {}, below the ZIP 317 conventional {} that wallets use until Mainnet height 3,590,000, but at or above the ZIP 2009 (Draft) fee of {}, so Zebra nodes with the new relay policy accept it. Paying the new fee early can reveal which wallet built this transaction.",
                 fmt_zat(fee.into()),
-                fmt_zat(conventional.into())
+                fmt_zat(conventional.into()),
+                fmt_zat(relay_floor.into())
             ),
-            zip(317, "Transaction relaying"),
+            zip(2009, "Privacy Implications"),
             &source,
-        )
+        );
     }
+    let unpaid = (relay_floor - fee).div_ceil(ZIP2009_MARGINAL_FEE);
+    check(
+        "zip317-fee",
+        title,
+        CheckStatus::Warn,
+        format!(
+            "Fee paid is {}, below even the ZIP 2009 (Draft) fee of {} for {logical} logical actions ({unpaid} unpaid actions). Still consensus-valid, but Zebra relays no transaction with unpaid actions (block_unpaid_action_limit is 0), so it will likely never be mined.",
+            fmt_zat(fee.into()),
+            fmt_zat(relay_floor.into())
+        ),
+        zip(2009, "Deployment"),
+        &source,
+    )
 }
 
 pub fn run_checks(

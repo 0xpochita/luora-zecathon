@@ -9,7 +9,7 @@ Verified in the browser on port 3031 with the real v6 transaction
 `30cdd41fc24b39fa8b1e47078f17e0b56d4db2c09df44be6f7e484a9f1fc021c` (mainnet, mined at height 3,495,600, looked up
 through `zec.rocks:443`):
 
-- **Input**: one field for raw hex (decoded in the tab), a txid (64 hex, `GET /api/tx/<txid>`), or a PCZT (hex starting
+- **Input**: one field for raw hex (decoded in the tab), a txid (64 hex, `POST /api/tx`), or a PCZT (hex starting
   with `50435a54` or base64 starting with `UENaV`, the `PCZT` magic). Cmd/Ctrl+Enter inspects. Privacy note names the
   endpoint returned by `/api/chain`. URL state `?tx=<txid>&net=main|test` only; hex and PCZTs never reach the URL.
 - **Top bar**: Mainnet/Testnet segmented control, height field (empty = live tip from `/api/chain`, placeholder shows it),

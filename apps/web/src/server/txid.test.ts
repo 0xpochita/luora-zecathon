@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { displayTxidToInternalBytes, internalBytesToDisplayTxid, isTxid } from "./txid";
+import { displayTxidToInternalBytes, internalBytesToDisplayTxid, isTxid, readTxRequest } from "./txid";
 
 const IRONWOOD_TXID = "30cdd41fc24b39fa8b1e47078f17e0b56d4db2c09df44be6f7e484a9f1fc021c";
 
@@ -28,5 +28,19 @@ describe("txid byte order", () => {
 
   it("refuses to convert an invalid txid", () => {
     expect(() => displayTxidToInternalBytes("abc")).toThrow();
+  });
+});
+
+describe("readTxRequest", () => {
+  const post = (body: unknown) => new Request("http://local/api/tx", { method: "POST", body: JSON.stringify(body) });
+
+  it("reads txid and network from the JSON body", async () => {
+    const txid = "30CDD41FC24B39FA8B1E47078F17E0B56D4DB2C09DF44BE6F7E484A9F1FC021C";
+    await expect(readTxRequest(post({ txid, network: "test" }))).resolves.toEqual({ txid: txid.toLowerCase(), network: "test" });
+  });
+
+  it("rejects a bad txid and a missing body", async () => {
+    await expect(readTxRequest(post({ txid: "abc" }))).rejects.toThrow("64 hex");
+    await expect(readTxRequest(new Request("http://local/api/tx", { method: "POST" }))).rejects.toThrow("64 hex");
   });
 });

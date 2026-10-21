@@ -265,3 +265,16 @@ fn testnet_ironwood_tx_built_from_the_pczt() {
     assert_eq!(ironwood.value_balance_zat, 25_000);
     assert_eq!(fee_zat(&fx.hex, &[]).unwrap(), Some(25_000));
 }
+
+#[test]
+fn zip2009_fee_applies_from_mainnet_height_3590000() {
+    let fx = fixture("v4-transparent");
+    let before = check_tx(&fx.hex, "main", 3_589_999, &fx.transparent_input_values_zat).unwrap();
+    let fee_before = before.iter().find(|c| c.id == "zip317-fee").unwrap();
+    assert_eq!(fee_before.status, CheckStatus::Warn);
+    assert!(fee_before.detail.contains("ZIP 2009"), "{}", fee_before.detail);
+    let after = check_tx(&fx.hex, "main", 3_590_000, &fx.transparent_input_values_zat).unwrap();
+    assert_eq!(status_of(&after, "zip317-fee"), CheckStatus::Pass);
+    let tx = decode_tx(&fx.hex, "main").unwrap();
+    assert_eq!(tx.zip317.logical_actions, 2);
+}

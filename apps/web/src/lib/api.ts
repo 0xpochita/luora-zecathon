@@ -29,10 +29,15 @@ export class ApiError extends Error {
   }
 }
 
-async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function getJson<T>(path: string, signal?: AbortSignal, body?: unknown): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(path, { signal, cache: "no-store" });
+    response = await fetch(
+      path,
+      body === undefined
+        ? { signal, cache: "no-store" }
+        : { signal, cache: "no-store", method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
+    );
   } catch (error) {
     if ((error as Error).name === "AbortError") throw error;
     throw new ApiError("Network error: the server route could not be reached.", 0);
@@ -54,9 +59,9 @@ function listFrom<T>(body: unknown, key: string): T[] {
 
 export const api = {
   chain: (network: Network, signal?: AbortSignal) => getJson<ChainInfo>(`/api/chain?network=${network}`, signal),
-  tx: (txid: string, network: Network, signal?: AbortSignal) => getJson<TxLookup>(`/api/tx/${txid}?network=${network}`, signal),
+  tx: (txid: string, network: Network, signal?: AbortSignal) => getJson<TxLookup>("/api/tx", signal, { txid, network }),
   prevouts: (txid: string, network: Network, signal?: AbortSignal) =>
-    getJson<PrevoutValues>(`/api/prevouts/${txid}?network=${network}`, signal),
+    getJson<PrevoutValues>("/api/prevouts", signal, { txid, network }),
   samples: (signal?: AbortSignal) => getJson<unknown>("/api/samples", signal).then((body) => listFrom<Sample>(body, "samples")),
   zebraErrors: (signal?: AbortSignal) =>
     getJson<unknown>("/api/zebra-errors", signal).then((body) => listFrom<ZebraErrorEntry>(body, "errors")),
