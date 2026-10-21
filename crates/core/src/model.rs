@@ -122,6 +122,7 @@ pub struct PcztRole {
 #[serde(rename_all = "camelCase")]
 pub struct PcztAction {
     pub pool: &'static str,
+    pub kind: &'static str,
     pub index: usize,
     pub value_zat: Option<u64>,
     pub recipient: Option<String>,
