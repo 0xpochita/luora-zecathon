@@ -113,3 +113,40 @@ Every check carries `zip` (number, clause text, URL) and `source` (file:line in 
 - `verify` checks proofs only, not spend-auth or binding signatures, because those need the sighash and therefore every transparent prevout amount and script. It is native-only and not in the WASM build.
 - No PCZT that fails the `user_address` check exists as a fixture: making one would mean forging a PCZT, which the real-data rule forbids. The check is covered by its pass path on real PCZTs and by code review.
 - The wasm-bindgen generated JS in `apps/web/public/wasm/` contains a few generated comments. It is build output, not hand-written code.
+
+## Trace (`trace_tx`, added on `Bimajadivaaa/z-ux`)
+
+`trace_tx(hex, network) -> TraceNode[]` (WASM, `luora_z_core::trace_tx`, CLI `luora-z trace`) returns the transaction's own
+structure in serialisation order. Every node is a real byte range of the raw transaction:
+`{ id, parentId, depth, kind, label, offset, length, fields: { name, value, display, encrypted? }[] }`
+(`contract/types.ts` → `TraceNode`). `value` is the raw field (hex of the bytes as serialised, or a number),
+`display` a short form, `encrypted: true` marks note ciphertexts, which are never decoded.
+
+How the offsets are found (`crates/core/src/trace.rs`): the transaction is first parsed by `zcash_primitives`
+(`Transaction::read`); a cursor then walks the same bytes, reading every CompactSize from the bytes and checking each count
+against the parsed transaction, and taking fixed sizes for the rest. The walk must end exactly at the last byte, otherwise
+`trace-failed`. Layouts followed (cross-checked against the librustzcash writers at the pinned rev):
+
+| Part | Layout | Source |
+|---|---|---|
+| v4 header (8 B), transparent, lockTime, expiryHeight, valueBalanceSapling, vSpendsSapling (384 B each), vOutputsSapling (948 B each), vJoinSplit, bindingSigSapling | Protocol spec §7.1 "Transaction Encoding and Consensus" (v4) | `zcash_primitives/src/transaction/mod.rs` `read_v4`, `components/sapling.rs` `read_spend_v4` / `read_output_v4` |
+| v5 header (20 B), transparent, Sapling (spends 96 B, outputs 756 B, valueBalance, anchor, proofs 192 B, spendAuthSigs 64 B, output proofs, bindingSig), Orchard (actions 820 B, flags, valueBalance, anchor, CompactSize proof, spendAuthSigs, bindingSig) | ZIP 225 "Version 5 Transaction Format" | `mod.rs` `read_v5`, `sapling.rs` `read_v5_bundle`, `orchard.rs` `read_bundle` |
+| v6: as v5, then a second Orchard-shaped bundle for Ironwood | ZIP 229 "Version 6 Transaction Format" | `mod.rs` `read_v6`, `orchard.rs` `read_v6_bundle` |
+
+Sprout JoinSplits and transactions before v4 are not traced (`trace-unsupported`); no real sample needs them.
+
+Tests (`crates/core/tests/trace.rs`, all 7 real fixtures): top-level nodes tile `[0, sizeBytes)` with no gap and the last
+one ends at `sizeBytes`; every child lies inside its parent in byte order with `depth = parent + 1`; the bytes of each
+bundle node equal librustzcash's own serialisation of that bundle (`write_transparent`, `write_v5_header` /
+`write_v6_header`, `write_v5_sapling`, `orchard::write_v5_bundle` / `write_v6_bundle`; whole-tx `write_v4` for v4);
+every `vin-i` / `vout-i` slice equals `TxIn::write` / `TxOut::write`; nullifier and cmx fields equal the parsed actions;
+ciphertexts are flagged encrypted. Example (v6 Ironwood `30cdd41f…021c`, 6,340 B): header 0–20, transparent 20–352,
+Sapling 352–354 (empty), Orchard 354–355 (empty), Ironwood 355–6340 with action 356–1176 (820 B) and Halo 2 proof
+1217–6212 (CompactSize + 4,992 B).
+
+Byte order note: trace fields show bytes as they sit in the transaction. The drawer's `anchor` (from `decode_tx`) is in
+display order (reversed), so the same anchor reads differently in the two places. Prevout txids in VIN rows use display
+order, as explorers do.
+
+The WASM in `apps/web/public/wasm/` was rebuilt with `wasm-pack build crates/core --target web --out-dir
+../../apps/web/public/wasm --release` (713 KB raw).

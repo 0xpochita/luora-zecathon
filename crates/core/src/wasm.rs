@@ -75,3 +75,8 @@ pub fn inspect_pczt(base64_or_hex: &str, network: &str) -> Result<JsValue, JsVal
 pub fn upgrade_at(network: &str, height: u32) -> Result<JsValue, JsValue> {
     finish(crate::upgrade_at(network, height))
 }
+
+#[wasm_bindgen]
+pub fn trace_tx(hex: &str, network: &str) -> Result<JsValue, JsValue> {
+    finish(crate::trace_tx(hex, network))
+}

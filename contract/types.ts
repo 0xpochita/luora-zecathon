@@ -46,12 +46,49 @@ export interface PcztView {
   checks: Check[];
 }
 
+export type TraceKind =
+  | "TX"
+  | "HEADER"
+  | "TRANSPARENT"
+  | "VIN"
+  | "VOUT"
+  | "SAPLING"
+  | "SPEND"
+  | "OUTPUT"
+  | "BALANCE"
+  | "PROOF"
+  | "AUTH SIG"
+  | "BINDING SIG"
+  | "JOINSPLITS"
+  | "ORCHARD"
+  | "IRONWOOD"
+  | "ACTION";
+
+export interface TraceField {
+  name: string;
+  value: string;
+  display: string;
+  encrypted?: boolean;
+}
+
+export interface TraceNode {
+  id: string;
+  parentId: string | null;
+  depth: number;
+  kind: TraceKind;
+  label: string;
+  offset: number;
+  length: number;
+  fields: TraceField[];
+}
+
 export interface LuoraZCore {
   decode_tx(hex: string, network: Network): DecodedTx;
   check_tx(hex: string, network: Network, height: number, transparentInputValuesZat: (number | null)[]): Check[];
   fee_zat(hex: string, transparentInputValuesZat: (number | null)[]): number | null;
   inspect_pczt(base64OrHex: string, network: Network): PcztView;
   upgrade_at(network: Network, height: number): { name: string; branchId: string; activationHeight: number };
+  trace_tx(hex: string, network: Network): TraceNode[];
 }
 
 export interface Sample { label: string; network: Network; txid: string; height: number; why: string; pools: string[] }

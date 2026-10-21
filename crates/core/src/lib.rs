@@ -3,6 +3,7 @@ pub mod decode;
 pub mod model;
 pub mod network;
 pub mod pczt_view;
+pub mod trace;
 #[cfg(feature = "verify")]
 pub mod verify;
 #[cfg(target_arch = "wasm32")]
@@ -35,6 +36,10 @@ pub fn fee_zat(hex: &str, transparent_input_values_zat: &[Option<u64>]) -> Resul
 
 pub fn inspect_pczt(base64_or_hex: &str, network: &str) -> Result<PcztView, CoreError> {
     pczt_view::inspect(base64_or_hex, Net::parse(network)?)
+}
+
+pub fn trace_tx(hex: &str, network: &str) -> Result<Vec<TraceNode>, CoreError> {
+    trace::trace(&decode::hex_to_bytes(hex)?, Net::parse(network)?)
 }
 
 pub fn upgrade_at(network: &str, height: u32) -> Result<UpgradeInfo, CoreError> {

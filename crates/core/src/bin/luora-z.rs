@@ -1,7 +1,7 @@
 use std::io::Read;
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: luora-z <decode|check|fee|pczt|upgrade|verify> [--network main|test|regtest] [--height N] [--inputs v1,v2,...] [HEX|-]";
+const USAGE: &str = "usage: luora-z <decode|trace|check|fee|pczt|upgrade|verify> [--network main|test|regtest] [--height N] [--inputs v1,v2,...] [HEX|-]";
 
 fn main() -> ExitCode {
     match run(std::env::args().skip(1).collect()) {
@@ -53,6 +53,7 @@ fn run(args: Vec<String>) -> Result<String, String> {
     let payload = || payload.clone().ok_or_else(|| USAGE.to_string());
     let json = match command.as_str() {
         "decode" => serde_json::to_string_pretty(&luora_z_core::decode_tx(&payload()?, &network).map_err(|e| e.to_string())?),
+        "trace" => serde_json::to_string_pretty(&luora_z_core::trace_tx(&payload()?, &network).map_err(|e| e.to_string())?),
         "check" => serde_json::to_string_pretty(
             &luora_z_core::check_tx(&payload()?, &network, height.ok_or("check needs --height")?, &inputs)
                 .map_err(|e| e.to_string())?,

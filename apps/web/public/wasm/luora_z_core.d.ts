@@ -9,6 +9,8 @@ export function fee_zat(hex: string, transparent_input_values_zat: any): any;
 
 export function inspect_pczt(base64_or_hex: string, network: string): any;
 
+export function trace_tx(hex: string, network: string): any;
+
 export function upgrade_at(network: string, height: number): any;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -19,6 +21,7 @@ export interface InitOutput {
     readonly decode_tx: (a: number, b: number, c: number, d: number) => [number, number, number];
     readonly fee_zat: (a: number, b: number, c: any) => [number, number, number];
     readonly inspect_pczt: (a: number, b: number, c: number, d: number) => [number, number, number];
+    readonly trace_tx: (a: number, b: number, c: number, d: number) => [number, number, number];
     readonly upgrade_at: (a: number, b: number, c: number) => [number, number, number];
     readonly rustsecp256k1_v0_14_context_create: (a: number) => number;
     readonly rustsecp256k1_v0_14_context_destroy: (a: number) => void;

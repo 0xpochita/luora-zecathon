@@ -5,6 +5,7 @@ export const check_tx: (a: number, b: number, c: number, d: number, e: number, f
 export const decode_tx: (a: number, b: number, c: number, d: number) => [number, number, number];
 export const fee_zat: (a: number, b: number, c: any) => [number, number, number];
 export const inspect_pczt: (a: number, b: number, c: number, d: number) => [number, number, number];
+export const trace_tx: (a: number, b: number, c: number, d: number) => [number, number, number];
 export const upgrade_at: (a: number, b: number, c: number) => [number, number, number];
 export const rustsecp256k1_v0_14_context_create: (a: number) => number;
 export const rustsecp256k1_v0_14_context_destroy: (a: number) => void;

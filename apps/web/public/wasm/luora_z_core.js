@@ -69,6 +69,23 @@ export function inspect_pczt(base64_or_hex, network) {
 }
 
 /**
+ * @param {string} hex
+ * @param {string} network
+ * @returns {any}
+ */
+export function trace_tx(hex, network) {
+    const ptr0 = passStringToWasm0(hex, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(network, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.trace_tx(ptr0, len0, ptr1, len1);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * @param {string} network
  * @param {number} height
  * @returns {any}

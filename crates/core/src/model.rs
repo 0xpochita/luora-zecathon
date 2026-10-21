@@ -165,3 +165,25 @@ impl std::fmt::Display for CoreError {
 }
 
 impl std::error::Error for CoreError {}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct TraceField {
+    pub name: String,
+    pub value: String,
+    pub display: String,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub encrypted: bool,
+}
+
+#[derive(Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TraceNode {
+    pub id: String,
+    pub parent_id: Option<String>,
+    pub depth: u32,
+    pub kind: &'static str,
+    pub label: String,
+    pub offset: usize,
+    pub length: usize,
+    pub fields: Vec<TraceField>,
+}
