@@ -23,7 +23,7 @@ The Luora DESIGN.md tokens stay as they were (dot grid, graphite cards, white fo
 | D5 drawer | The inspector is a native `<dialog>` drawer on the right (bottom sheet under 640 px), opened by clicking a node or "Details"; Esc and a click on the backdrop close it. No permanent empty column. | R2 R12 R13 R14 |
 | D6 plain words | Pool labels "Transparent (public)", "Sapling (shielded)", "Ironwood (new pool)"; "value leaves / enters the pool", "no net change", "paid to the miner". Consensus field names (`valueBalanceIronwood`…) move to tooltips; ZIP numbers, branch IDs and bytes stay in the drawer and the Rules rows. | R7 R8 |
 | D8 header | Brand (click = back to the empty state), one live chip "Mainnet · 3,525,604", About link. Nothing else. | R5 |
-| D9 full screen Anatomy | Monochrome `ArrowsOut`/`ArrowsIn` icon button ("Full screen" / "Exit full screen") next to "v6 · 6,340 bytes". Native `element.requestFullscreen()`; when it is missing or rejected (iOS Safari, embedded frames) a `fixed inset-0` overlay is used. The graph grows to the screen height, clicking a node still opens the drawer (a modal dialog is in the top layer, above the full-screen element), Esc closes the drawer first, then leaves full screen. | R16 R17 |
+| D9 full screen Anatomy (in page) | Monochrome `ArrowsOut`/`ArrowsIn` icon button ("Full screen" / "Exit full screen") next to "v6 · 6,340 bytes". The card grows **inside the page**: it becomes a `position: fixed` overlay at 16 px inset (0 under 640 px) over a dark scrim (`rgba(0,0,0,.6)` + slight blur), animated from the card's own rect to full size with a FLIP transform (Web Animations API, 280 ms ease-out) and back the same way on close. A placeholder keeps the page from jumping. The browser Fullscreen API is not used at all (user request: Chrome must not go full screen). Close with the button, Esc or a click on the scrim; Esc closes an open drawer first. Body scroll is locked while open. Node clicks still open the drawer above the overlay (modal dialog, top layer). `prefers-reduced-motion` skips the animation. | R16 R17 |
 
 ### Adjustment argued by the references (differs from the brief)
 
@@ -61,15 +61,15 @@ At 1440 px (iframe) and 390 px (iframe), real data via `zec.rocks:443` and `test
 - "Rejected: expired" → only `TransactionError::ExpiredTransaction`, stage Transaction verifier, ZIP 203.
 - Drawer opens on node click, Esc closes it; bottom sheet at 390 px; privacy popover; no console errors;
   `scrollWidth` 390 at 390 px.
-- Full screen: the overlay path was exercised (graph fills 1440 and 390, drawer/bottom sheet opens over it, Esc closes the
-  drawer then exits). The **native** Fullscreen API path could not be exercised by browser automation: Chrome answers
-  `requestFullscreen()` from automation with "TypeError: Permissions check failed" (no real user gesture), so the code fell
-  back to the overlay as designed. One real click on the button in a normal window confirms the native path.
+- In-page full screen: at 1440 the card fills the page at 16 px inset (1408 × 868 in a 1440 × 900 frame), at 390 it is
+  edge to edge; `document.fullscreenElement` stays null; the root gets `overflow: hidden` while open and loses it after;
+  a node click opens the drawer above it; Esc closes the drawer, a second Esc runs the shrink animation and puts the card
+  back at its old position; a click on the scrim closes it too.
 
 Screens in `docs/screens/ux/`: `before-1440-empty`, `before-1440-result`, `before-390-empty`; `after-1440-empty`,
-`after-1440-result`, `after-1440-drawer`, `after-1440-rules-at-tip`, `after-1440-fullscreen-drawer`,
+`after-1440-result`, `after-1440-drawer`, `after-1440-rules-at-tip`, `after-1440-expanded`, `after-1440-expanded-drawer`,
 `after-1440-testnet-autodetect`, `after-1440-pczt`, `after-1440-zebra-error`, `after-1440-privacy-popover`,
-`after-390-empty`, `after-390-result`, `after-390-fullscreen`, `after-390-fullscreen-sheet`.
+`after-390-empty`, `after-390-result`, `after-390-expanded`.
 
 ## Commands
 
@@ -88,7 +88,6 @@ counts from the real WASM decoder on the real v6 Ironwood tx at height 3,495,600
 
 ## Not done / open
 
-- Native full-screen path not machine-verified (see above).
 - No clickable PCZT sample: the real PCZT fixtures live in `crates/core/tests/fixtures/pczt/`, outside the folders this task
   may change. Copying one into `apps/web/public/` (or serving it from `/api/samples`) would allow a "PCZT" chip.
 - No real Zebra error *message* sample (only the variant name); needs `ZebraErrorEntry.examples` from agent C.

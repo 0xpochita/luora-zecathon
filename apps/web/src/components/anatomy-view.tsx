@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowsIn, ArrowsOut } from "@phosphor-icons/react";
 import type { DecodedTx } from "@contract/types";
 import { buildNodes, poolFlows, type AnatomyNode, type NodeId } from "@/lib/anatomy";
@@ -174,44 +174,90 @@ function NodeGraph({
   );
 }
 
-function useFullscreen() {
+const EXPAND_MS = 280;
+
+function flip(from: DOMRect, to: DOMRect): string {
+  return `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
+}
+
+function reducedMotion(): boolean {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function useExpand() {
   const ref = useRef<HTMLElement>(null);
-  const [native, setNative] = useState(false);
-  const [overlay, setOverlay] = useState(false);
+  const placeholderRef = useRef<HTMLDivElement>(null);
+  const scrimRef = useRef<HTMLDivElement>(null);
+  const firstRect = useRef<DOMRect | null>(null);
+  const closingAnimation = useRef<Animation | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [placeholderHeight, setPlaceholderHeight] = useState(0);
 
-  useEffect(() => {
-    const sync = () => setNative(!!ref.current && document.fullscreenElement === ref.current);
-    document.addEventListener("fullscreenchange", sync);
-    return () => document.removeEventListener("fullscreenchange", sync);
-  }, []);
-
-  useEffect(() => {
-    if (!overlay) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !document.querySelector("dialog[open]")) setOverlay(false);
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [overlay]);
-
-  const toggle = () => {
-    if (native) {
-      document.exitFullscreen().catch(() => setNative(false));
-      return;
-    }
-    if (overlay) {
-      setOverlay(false);
-      return;
-    }
+  const open = () => {
     const element = ref.current;
-    if (element && document.fullscreenEnabled && element.requestFullscreen) {
-      element.requestFullscreen().catch(() => setOverlay(true));
-    } else {
-      setOverlay(true);
-    }
+    if (!element) return;
+    firstRect.current = element.getBoundingClientRect();
+    setPlaceholderHeight(firstRect.current.height);
+    setExpanded(true);
   };
 
-  return { ref, full: native || overlay, overlay, toggle };
+  const close = useCallback(() => {
+    const element = ref.current;
+    const target = placeholderRef.current?.getBoundingClientRect();
+    if (!element || !target || reducedMotion()) {
+      setExpanded(false);
+      return;
+    }
+    if (closingAnimation.current) return;
+    const timing = { duration: EXPAND_MS, easing: "ease-out", fill: "forwards" as const };
+    const animation = element.animate(
+      [
+        { transformOrigin: "top left", transform: "none" },
+        { transformOrigin: "top left", transform: flip(target, element.getBoundingClientRect()) },
+      ],
+      timing,
+    );
+    scrimRef.current?.animate([{ opacity: 1 }, { opacity: 0 }], timing);
+    closingAnimation.current = animation;
+    animation.onfinish = () => setExpanded(false);
+  }, []);
+
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!expanded) {
+      closingAnimation.current?.cancel();
+      closingAnimation.current = null;
+      return;
+    }
+    const first = firstRect.current;
+    if (!element || !first || reducedMotion()) return;
+    const timing = { duration: EXPAND_MS, easing: "ease-out" };
+    element.animate(
+      [
+        { transformOrigin: "top left", transform: flip(first, element.getBoundingClientRect()) },
+        { transformOrigin: "top left", transform: "none" },
+      ],
+      timing,
+    );
+    scrimRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], timing);
+  }, [expanded]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !document.querySelector("dialog[open]")) close();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      root.style.overflow = previous;
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [expanded, close]);
+
+  return { ref, placeholderRef, scrimRef, expanded, placeholderHeight, open, close };
 }
 
 export function AnatomyView({
@@ -231,18 +277,28 @@ export function AnatomyView({
   selected: NodeId | null;
   onSelect: (id: NodeId) => void;
 }) {
-  const { ref, full, overlay, toggle } = useFullscreen();
+  const { ref, placeholderRef, scrimRef, expanded, placeholderHeight, open, close } = useExpand();
+  const full = expanded;
   const nodes = buildNodes(tx, feeZat, failing, inputsPending);
   const flows = poolFlows(tx, inputValues, feeZat, inputsPending);
   const maxAbs = Math.max(1, ...flows.map((flow) => Math.abs(flow.valueZat ?? 0)));
-  const graphSize = full ? "max-h-[calc(100dvh-230px)]" : "";
+  const graphSize = full ? "max-h-[calc(100dvh-260px)]" : "";
   return (
+    <>
+    {expanded && (
+      <>
+        <div ref={placeholderRef} aria-hidden style={{ height: placeholderHeight }} />
+        <div ref={scrimRef} onClick={close} aria-hidden className="fixed inset-0 z-30 bg-black/60 backdrop-blur-[2px]" />
+      </>
+    )}
     <section
       ref={ref}
       aria-label="Anatomy"
-      className={`flex min-w-0 flex-col border border-border bg-card-grad shadow-soft ${
-        full ? "overflow-y-auto" : "rounded-card"
-      } ${overlay ? "fixed inset-0 z-40 rounded-none" : ""}`}
+      role={expanded ? "dialog" : undefined}
+      aria-modal={expanded ? true : undefined}
+      className={`flex min-w-0 flex-col rounded-card border border-border bg-card-grad shadow-soft ${
+        expanded ? "fixed inset-0 z-40 overflow-y-auto rounded-none shadow-float sm:inset-4 sm:rounded-card" : ""
+      }`}
     >
       <header className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 text-[14px]">
         <span className="size-1.5 flex-none rounded-full bg-fg" />
@@ -250,7 +306,7 @@ export function AnatomyView({
         <span className="ml-auto truncate text-[12.5px] text-dim">
           v{tx.version} · {formatInt(tx.sizeBytes)} bytes
         </span>
-        <IconButton label={full ? "Exit full screen" : "Full screen"} size="sm" onClick={toggle}>
+        <IconButton label={full ? "Exit full screen" : "Full screen"} size="sm" onClick={full ? close : open}>
           {full ? <ArrowsIn /> : <ArrowsOut />}
         </IconButton>
       </header>
@@ -291,5 +347,6 @@ export function AnatomyView({
         </Hint>
       </div>
     </section>
+    </>
   );
 }
