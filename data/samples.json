@@ -1,1 +1,95 @@
-[]
+[
+  {
+    "label": "v6 Ironwood transfer",
+    "network": "main",
+    "txid": "30cdd41fc24b39fa8b1e47078f17e0b56d4db2c09df44be6f7e484a9f1fc021c",
+    "height": 3495600,
+    "why": "Version 6 transaction (ZIP 229) with 1 Ironwood action and 2 transparent inputs; tools written before NU6.3 show transfers like this as 0.0 ZEC (lifinance/data-types #281).",
+    "pools": [
+      "transparent",
+      "ironwood"
+    ]
+  },
+  {
+    "label": "Orchard and Ironwood in one transaction",
+    "network": "main",
+    "txid": "1bee124c7e0038efff04947cb106b18e75e33ee08a595f1def84f71548319b62",
+    "height": 3525568,
+    "why": "Version 6 transaction with 2 Orchard actions and 1 Ironwood action, the shape a move from Orchard to Ironwood takes; from NU6.3 value may leave Orchard but not enter it, so valueBalanceOrchard must be zero or positive (ZIP 258).",
+    "pools": [
+      "orchard",
+      "ironwood"
+    ]
+  },
+  {
+    "label": "Orchard after NU6.3",
+    "network": "main",
+    "txid": "07ea19f20710b409c3139d45b0c26e2c9c77b47deab6f2206aad9722efb438b7",
+    "height": 3525366,
+    "why": "Version 6 transaction with 2 Orchard actions and 1 transparent output; after NU6.3 Orchard may only send value out through the turnstile, never receive new value.",
+    "pools": [
+      "transparent",
+      "orchard"
+    ]
+  },
+  {
+    "label": "Sapling shielded transfer",
+    "network": "main",
+    "txid": "4faf6339572e8097d00b2ea176c5d88908a4ef1dda09cf2f063692e008bc5615",
+    "height": 3525428,
+    "why": "Version 6 transaction that only uses the Sapling pool (1 spend, 2 outputs); amounts and addresses stay encrypted, only nullifiers, commitments and the value balance are public.",
+    "pools": [
+      "sapling"
+    ]
+  },
+  {
+    "label": "Transparent only",
+    "network": "main",
+    "txid": "53ebdcbb7adced52fd42874d14dfb26d62b61dff65d35082d583c06583e74d35",
+    "height": 3525574,
+    "why": "Version 4 transaction with 1 transparent input and 1 output and no shielded data; the fee needs the spent output values, which the inspector fetches as prevouts.",
+    "pools": [
+      "transparent"
+    ]
+  },
+  {
+    "label": "Coinbase",
+    "network": "main",
+    "txid": "a52e4025b46e63a092d74897e9b0a62bbade3317f748a9f668a31d44c8757fdb",
+    "height": 3525574,
+    "why": "Version 5 coinbase transaction with 2 transparent outputs; it has no real inputs, and from NU6.3 it must not contain Orchard actions.",
+    "pools": [
+      "transparent"
+    ]
+  },
+  {
+    "label": "v5 Sapling before Ironwood",
+    "network": "main",
+    "txid": "38909f8897d562d94355026631bce2e97233bb27f71ddd8db91e8ec6bf34402b",
+    "height": 3428136,
+    "why": "Version 5 Sapling transaction (ZIP 225) from the last blocks of NU6.2, branch ID 0x5437f330; 1 spend, 2 outputs. Checking it at a height after 3,428,143 shows why a branch ID must match the upgrade.",
+    "pools": [
+      "sapling"
+    ]
+  },
+  {
+    "label": "v5 Orchard before Ironwood",
+    "network": "main",
+    "txid": "e08715bdada7e393d14cf44c29f8b761f539a9683b4cb549047afa933af3a22e",
+    "height": 3428142,
+    "why": "Version 5 transaction with 2 Orchard actions from the last blocks of NU6.2 (branch ID 0x5437f330), mined just before NU6.3; compare its Orchard rules with the post-NU6.3 Orchard sample.",
+    "pools": [
+      "orchard"
+    ]
+  },
+  {
+    "label": "Testnet after NU7",
+    "network": "test",
+    "txid": "cef858e91c7ec1751cf45c8024c0ed3badb5eae18bce488354c7a1603ad29fac",
+    "height": 4525648,
+    "why": "Version 6 testnet transaction mined after NU7 activated at 4,465,026, so it carries branch ID 0x77190ad9 (ZIP 259); pools used: ironwood.",
+    "pools": [
+      "ironwood"
+    ]
+  }
+]

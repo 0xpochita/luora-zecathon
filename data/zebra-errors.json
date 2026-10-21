@@ -1452,7 +1452,7 @@
     "message": "could not convert an asynchronous verification error: {0}",
     "stage": "proof-signature",
     "zips": [],
-    "plain": "An asynchronous proof or signature verifier returned an error type Zebra did not recognise, so the original reason is inside the message. If the message mentions Elapsed, the verifier timed out (a node load problem, not an invalid transaction); otherwise read the original error text in the message.",
+    "plain": "An asynchronous verifier returned an error type that Zebra's conversion in zebra-consensus/src/error.rs did not recognise, so the real reason is inside the message after 'original error:'. In Zebra 7.0.0-rc.0 transparent script failures arrive this way: 'original error: ScriptInvalid' means the signature does not match the signature hash (wrong key, wrong prevout amount or a field changed after signing), and 'Unknown(Script(Interpreter(... OP_EQUALVERIFY ...)))' means the public key does not hash to the spent output's address. If the original error is Elapsed, the verifier timed out, which is a node load problem rather than an invalid transaction.",
     "zebraVersion": "v7.0.0-rc.0 (6d1e414d6f)"
   },
   {
