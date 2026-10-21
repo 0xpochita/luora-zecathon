@@ -84,16 +84,18 @@ fn first_string_literal(tokens: proc_macro2::TokenStream) -> Option<String> {
     None
 }
 
-fn arm_variant(pat: &Pat) -> Option<(String, String)> {
+fn arm_variant(pat: &Pat) -> Option<(Option<String>, String)> {
     let path = match pat {
         Pat::Path(pat) => &pat.path,
         Pat::TupleStruct(pat) => &pat.path,
         Pat::Struct(pat) => &pat.path,
+        Pat::Ident(pat) if pat.subpat.is_none() => return Some((None, pat.ident.to_string())),
         _ => return None,
     };
     let segments: Vec<String> = path.segments.iter().map(|segment| segment.ident.to_string()).collect();
     match segments.as_slice() {
-        [.., type_name, variant] => Some((type_name.clone(), variant.clone())),
+        [.., type_name, variant] => Some((Some(type_name.clone()), variant.clone())),
+        [variant] => Some((None, variant.clone())),
         _ => None,
     }
 }
@@ -106,7 +108,10 @@ struct DisplayArms<'a> {
 impl<'ast> Visit<'ast> for DisplayArms<'_> {
     fn visit_arm(&mut self, arm: &'ast Arm) {
         if let Some((type_name, variant)) = arm_variant(&arm.pat) {
-            let type_name = if type_name == "Self" { self.self_type.clone() } else { type_name };
+            let type_name = match type_name {
+                Some(name) if name != "Self" => name,
+                _ => self.self_type.clone(),
+            };
             let body = &arm.body;
             if let Some(message) = first_string_literal(quote::quote!(#body)) {
                 self.messages.entry((type_name, variant)).or_insert(message);
