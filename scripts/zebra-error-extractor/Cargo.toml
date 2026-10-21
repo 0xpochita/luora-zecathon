@@ -1,0 +1,13 @@
+[package]
+name = "zebra-error-extractor"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+syn = { version = "2", features = ["full", "parsing", "visit"] }
+proc-macro2 = { version = "1", features = ["span-locations"] }
+quote = "1"
+serde_json = "1"
+
+[workspace]

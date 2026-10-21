@@ -1,0 +1,1 @@
+zcash/lightwallet-protocol 2a80ce8470a07d22ef9dbd77bb69523186424e1a (2026-10-19), walletrpc/service.proto and walletrpc/compact_formats.proto, copied verbatim. MIT, see LICENSE.

@@ -1,5 +1,7 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
+const repoRoot = path.join(__dirname, "../..");
 const isDev = process.env.NODE_ENV === "development";
 
 const contentSecurityPolicy = [
@@ -23,11 +25,16 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  cacheComponents: true,
-  partialPrefetching: true,
   reactCompiler: true,
   poweredByHeader: false,
+  logging: { incomingRequests: false },
+  outputFileTracingRoot: repoRoot,
+  serverExternalPackages: ["@grpc/grpc-js", "@grpc/proto-loader"],
+  outputFileTracingIncludes: {
+    "/api/**": ["./src/server/proto/**"],
+  },
   turbopack: {
+    root: repoRoot,
     rules: {
       "*.css": {
         loaders: ["@tailwindcss/turbopack"],
