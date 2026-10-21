@@ -27,7 +27,7 @@ cargo build --release --features verify && target/release/luora-z verify <HEX>
 
 # rebuild the WASM (from the repo root)
 cargo install wasm-pack
-wasm-pack build crates/core --target web --out-dir ../../apps/web/public/wasm --release
+RUSTFLAGS="--remap-path-prefix=$HOME=~" wasm-pack build crates/core --target web --out-dir ../../apps/web/public/wasm --release
 rm apps/web/public/wasm/.gitignore            # wasm-pack writes "*" there; delete it so the output stays committed
 ```
 
