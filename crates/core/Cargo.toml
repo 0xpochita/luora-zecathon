@@ -1,0 +1,34 @@
+[package]
+name = "luora-z-core"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[[bin]]
+name = "luora-z"
+path = "src/bin/luora-z.rs"
+
+[dependencies]
+zcash_primitives = { git = "https://github.com/zcash/librustzcash", rev = "8672a4b2d60f432664780e6a4e85f49a36805a2a", default-features = false, features = ["std"] }
+zcash_protocol = { git = "https://github.com/zcash/librustzcash", rev = "8672a4b2d60f432664780e6a4e85f49a36805a2a", default-features = false, features = ["std", "local-consensus"] }
+zcash_address = { git = "https://github.com/zcash/librustzcash", rev = "8672a4b2d60f432664780e6a4e85f49a36805a2a", default-features = false, features = ["std"] }
+zcash_transparent = { git = "https://github.com/zcash/librustzcash", rev = "8672a4b2d60f432664780e6a4e85f49a36805a2a", default-features = false, features = ["std"] }
+pczt = { git = "https://github.com/zcash/librustzcash", rev = "8672a4b2d60f432664780e6a4e85f49a36805a2a", default-features = false, features = ["std", "orchard", "sapling", "transparent"] }
+orchard = { version = "0.16", default-features = false, features = ["std"] }
+sapling = { package = "sapling-crypto", version = "0.9", default-features = false, features = ["std"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+hex = "0.4"
+base64 = "0.22"
+wasm-bindgen = "0.2"
+serde-wasm-bindgen = "0.6"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
