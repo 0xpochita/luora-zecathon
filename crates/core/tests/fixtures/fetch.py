@@ -63,9 +63,41 @@ def save(network, name, label, txid):
     print(name, fixture["height"], len(fixture["hex"]) // 2, "bytes")
 
 
+def fetch_hex(network, txid):
+    raw = base64.b64encode(bytes.fromhex(txid)[::-1]).decode()
+    [result] = grpc(network, "GetTransaction", {"hash": raw})
+    return base64.b64decode(result["data"]).hex()
+
+
+def decode_with_cli(network, tx_hex):
+    cli = os.path.join(HERE, "..", "..", "target", "debug", "luora-z")
+    out = subprocess.run([cli, "decode", "--network", network, tx_hex], check=True, capture_output=True, text=True)
+    return json.loads(out.stdout)
+
+
+def prevouts(name):
+    path = os.path.join(HERE, f"{name}.json")
+    fixture = json.load(open(path))
+    decoded = decode_with_cli(fixture["network"], fixture["hex"])
+    values = []
+    for tx_in in decoded["transparent"]["inputs"]:
+        if tx_in["isCoinbase"]:
+            values.append(None)
+            continue
+        prev = decode_with_cli(fixture["network"], fetch_hex(fixture["network"], tx_in["prevTxid"]))
+        values.append(prev["transparent"]["outputs"][tx_in["prevIndex"]]["valueZat"])
+    fixture["transparentInputValuesZat"] = values
+    with open(path, "w") as f:
+        json.dump(fixture, f, indent=2)
+        f.write("\n")
+    print(name, values)
+
+
 if __name__ == "__main__":
-    command, network, *rest = sys.argv[1:]
+    command, *args = sys.argv[1:]
     if command == "scan":
-        scan(network, int(rest[0]), int(rest[1]))
+        scan(args[0], int(args[1]), int(args[2]))
     elif command == "save":
-        save(network, rest[0], rest[1], rest[2])
+        save(*args)
+    elif command == "prevouts":
+        prevouts(args[0])

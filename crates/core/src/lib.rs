@@ -19,7 +19,7 @@ pub fn check_tx(
     height: u32,
     transparent_input_values_zat: &[Option<u64>],
 ) -> Result<Vec<Check>, CoreError> {
-    checks::check(
+    checks::run_checks(
         &decode::hex_to_bytes(hex)?,
         Net::parse(network)?,
         height,
