@@ -62,15 +62,17 @@ function replaceUrl(txid: string | null, network: Network) {
 
 export function InspectorApp() {
   const searchParams = useSearchParams();
-  const initialTxid = useRef(searchParams.get("tx")?.toLowerCase() ?? null);
+  const [initialTxid] = useState(() => searchParams.get("tx")?.toLowerCase() ?? null);
   const [network, setNetwork] = useState<Network>(() => parseNetwork(searchParams.get("net")));
   const [coreState, setCoreState] = useState<CoreState>({ status: "loading" });
-  const [chain, setChain] = useState<ChainState>({ status: "loading" });
+  const [chainResult, setChainResult] = useState<{ network: Network; state: ChainState } | null>(null);
   const [heightText, setHeightText] = useState("");
-  const [input, setInput] = useState(() => (isTxid(initialTxid.current) ? initialTxid.current! : ""));
+  const [input, setInput] = useState(() => (isTxid(initialTxid) ? initialTxid : ""));
   const [inputError, setInputError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState<LoadedTx | null>(null);
-  const [lookup, setLookup] = useState<LookupState>({ status: "idle" });
+  const [lookup, setLookup] = useState<LookupState>(() =>
+    isTxid(initialTxid) ? { status: "loading", txid: initialTxid } : { status: "idle" },
+  );
   const [prevouts, setPrevouts] = useState<PrevoutState>({ status: "idle" });
   const [pcztInput, setPcztInput] = useState<string | null>(null);
   const [samples, setSamples] = useState<SamplesState>({ status: "loading" });
@@ -98,11 +100,10 @@ export function InspectorApp() {
 
   useEffect(() => {
     const controller = new AbortController();
-    setChain({ status: "loading" });
     api
       .chain(network, controller.signal)
-      .then((data: ChainInfo) => setChain({ status: "ready", data }))
-      .catch((error) => controller.signal.aborted || setChain({ status: "error", message: errorText(error) }));
+      .then((data: ChainInfo) => setChainResult({ network, state: { status: "ready", data } }))
+      .catch((error) => controller.signal.aborted || setChainResult({ network, state: { status: "error", message: errorText(error) } }));
     return () => controller.abort();
   }, [network]);
 
@@ -114,13 +115,11 @@ export function InspectorApp() {
       .catch((error) => setPrevouts({ status: "error", message: errorText(error) }));
   }, []);
 
-  const lookupTxid = useCallback(
+  const runLookup = useCallback(
     (txid: string, net: Network) => {
       lookupAbort.current?.abort();
       const controller = new AbortController();
       lookupAbort.current = controller;
-      setLookup({ status: "loading", txid });
-      setPrevouts({ status: "idle" });
       api
         .tx(txid, net, controller.signal)
         .then((body) => {
@@ -139,10 +138,18 @@ export function InspectorApp() {
     [fetchPrevouts],
   );
 
+  const lookupTxid = useCallback(
+    (txid: string, net: Network) => {
+      setLookup({ status: "loading", txid });
+      setPrevouts({ status: "idle" });
+      runLookup(txid, net);
+    },
+    [runLookup],
+  );
+
   useEffect(() => {
-    const txid = initialTxid.current;
-    if (isTxid(txid)) lookupTxid(txid, parseNetwork(new URLSearchParams(window.location.search).get("net")));
-  }, [lookupTxid]);
+    if (isTxid(initialTxid)) runLookup(initialTxid, parseNetwork(new URLSearchParams(window.location.search).get("net")));
+  }, [initialTxid, runLookup]);
 
   const inspect = useCallback(() => {
     const kind = classifyInput(input);
@@ -193,6 +200,7 @@ export function InspectorApp() {
     [lookupTxid],
   );
 
+  const chain: ChainState = chainResult?.network === network ? chainResult.state : { status: "loading" };
   const core = coreState.status === "ready" ? coreState.core : null;
   const liveHeight = chain.status === "ready" ? chain.data.height : null;
   const chosenHeight = parseHeight(heightText) ?? liveHeight;
