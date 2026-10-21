@@ -114,17 +114,17 @@
 }
 
 @utility graph-canvas {
-  background-color: #17171a;
+  background-color: #121214;
   background-image:
-    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255, 255, 255, 0.045), transparent 70%),
-    radial-gradient(circle, #2e2e33 1px, transparent 1.4px);
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255, 255, 255, 0.05), transparent 70%),
+    radial-gradient(circle, #34343a 1.2px, transparent 1.6px);
   background-size:
     100% 100%,
-    18px 18px;
+    22px 22px;
   background-position:
     0 0,
-    9px 9px;
-  box-shadow: inset 0 1px 12px rgba(0, 0, 0, 0.35);
+    11px 11px;
+  box-shadow: inset 0 1px 16px rgba(0, 0, 0, 0.45);
 }
 
 @utility trace-guides {
