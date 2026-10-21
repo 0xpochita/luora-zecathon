@@ -1,7 +1,7 @@
 use std::io::Read;
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: luora-z <decode|check|fee|pczt|upgrade> [--network main|test|regtest] [--height N] [--inputs v1,v2,...] [HEX|-]";
+const USAGE: &str = "usage: luora-z <decode|check|fee|pczt|upgrade|verify> [--network main|test|regtest] [--height N] [--inputs v1,v2,...] [HEX|-]";
 
 fn main() -> ExitCode {
     match run(std::env::args().skip(1).collect()) {
@@ -62,6 +62,8 @@ fn run(args: Vec<String>) -> Result<String, String> {
         "upgrade" => serde_json::to_string_pretty(
             &luora_z_core::upgrade_at(&network, height.ok_or("upgrade needs --height")?).map_err(|e| e.to_string())?,
         ),
+        #[cfg(feature = "verify")]
+        "verify" => serde_json::to_string_pretty(&luora_z_core::verify_tx(&payload()?).map_err(|e| e.to_string())?),
         _ => return Err(USAGE.to_string()),
     };
     json.map_err(|e| e.to_string())

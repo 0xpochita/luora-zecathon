@@ -26,6 +26,15 @@ hex = "0.4"
 base64 = "0.22"
 wasm-bindgen = "0.2"
 serde-wasm-bindgen = "0.6"
+zcash_proofs = { git = "https://github.com/zcash/librustzcash", rev = "8672a4b2d60f432664780e6a4e85f49a36805a2a", default-features = false, features = ["download-params"], optional = true }
+groth16 = { version = "0.2", optional = true }
+bellman = { version = "0.15", default-features = false, optional = true }
+bls12_381 = { version = "0.9", optional = true }
+jubjub = { version = "0.11", optional = true }
+group = { version = "0.14", optional = true }
+
+[features]
+verify = ["orchard/circuit", "dep:zcash_proofs", "dep:groth16", "dep:bellman", "dep:bls12_381", "dep:jubjub", "dep:group"]
 
 [profile.release]
 opt-level = "z"
