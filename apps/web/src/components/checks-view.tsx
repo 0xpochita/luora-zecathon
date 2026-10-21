@@ -9,7 +9,7 @@ const SUMMARY_LABEL: Record<CheckStatus, string> = { pass: "pass", fail: "fail",
 
 export function CheckRow({ check }: { check: Check }) {
   return (
-    <Inner className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 px-3 py-2.5 sm:grid-cols-[auto_1fr_auto]">
+    <Inner className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 px-3 py-2.5 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
       <div className="pt-px">
         <StatusMark status={check.status} />
       </div>
@@ -19,7 +19,7 @@ export function CheckRow({ check }: { check: Check }) {
         {check.source && <p className="mt-0.5 truncate font-mono text-xs text-dim" title={check.source}>{check.source}</p>}
       </div>
       {check.zip ? (
-        <ExternalLink href={check.zip.url} className="col-start-2 self-start justify-self-start text-[12.5px] whitespace-nowrap sm:col-start-3">
+        <ExternalLink href={check.zip.url} className="col-start-2 min-w-0 self-start justify-self-start text-[12.5px] break-words sm:col-start-3 sm:max-w-[260px] sm:text-right">
           ZIP {check.zip.number}
           {check.zip.clause ? ` · ${check.zip.clause}` : ""}
         </ExternalLink>

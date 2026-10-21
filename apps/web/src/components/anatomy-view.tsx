@@ -35,17 +35,17 @@ const WIDE_LAYOUT: Layout = {
 
 const NARROW_LAYOUT: Layout = {
   name: "narrow",
-  width: 340,
-  height: 572,
-  nodeWidth: 250,
+  width: 300,
+  height: 560,
+  nodeWidth: 220,
   positions: {
-    tx: { x: 6, y: 26 },
-    header: { x: 70, y: 106 },
-    transparent: { x: 70, y: 180 },
-    sapling: { x: 70, y: 254 },
-    orchard: { x: 70, y: 328 },
-    ironwood: { x: 70, y: 402 },
-    fee: { x: 6, y: 520 },
+    tx: { x: 2, y: 24 },
+    header: { x: 52, y: 104 },
+    transparent: { x: 52, y: 178 },
+    sapling: { x: 52, y: 252 },
+    orchard: { x: 52, y: 326 },
+    ironwood: { x: 52, y: 400 },
+    fee: { x: 2, y: 510 },
   },
 };
 
@@ -73,10 +73,10 @@ function wirePath(layout: Layout, from: NodeId, to: NodeId): string {
   }
   const x1 = a.x + w;
   const y1 = a.y + NODE_HEIGHT / 2;
+  const rail = layout.width - 6;
   const x2 = b.x + w;
   const y2 = b.y + NODE_HEIGHT / 2;
-  const turn = layout.width - 4;
-  return `M${x1},${y1} C${turn},${y1} ${turn},${y2} ${x2},${y2}`;
+  return `M${x1},${y1} C${rail},${y1} ${rail},${y1 + 20} ${rail},${y1 + 30} L${rail},${y2 - 30} C${rail},${y2 - 10} ${rail},${y2} ${x2},${y2}`;
 }
 
 function GraphNode({ node, layout, selected, onSelect }: { node: AnatomyNode; layout: Layout; selected: boolean; onSelect: () => void }) {
@@ -195,7 +195,7 @@ export function AnatomyView({
   return (
     <div className="flex flex-col gap-3">
       <NodeGraph layout={WIDE_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className="hidden w-full md:block" />
-      <NodeGraph layout={NARROW_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className="mx-auto block w-full max-w-[420px] md:hidden" />
+      <NodeGraph layout={NARROW_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className="mx-auto block w-full max-w-[360px] md:hidden" />
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
         {flows.map((flow) => {
           const value = flow.valueZat;
