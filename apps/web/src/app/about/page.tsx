@@ -63,7 +63,8 @@ export default function AboutPage() {
         <p className="px-1 text-[15px] leading-relaxed text-body">
           A local-first inspector for Zcash transactions, built for the Zecathon Core &amp; Tooling track. Paste a raw
           transaction, a txid or a PCZT and see its anatomy, the consensus and fee rules it meets at any height, why Zebra
-          rejected it, and how far a PCZT got through signing.
+          rejected it, and how far a PCZT got through signing. Paste a Zebra error message into the same box to get the error
+          variant, the validation stage and the fix.
         </p>
 
         <Panel label="Three problems it addresses" bodyClassName="gap-2 px-4 pb-4">
@@ -89,8 +90,9 @@ export default function AboutPage() {
           </p>
           <p>
             Looking up a transaction by txid is the one exception: our server route asks a public lightwalletd or Zaino
-            endpoint for that transaction and returns its hex, which is then decoded in the tab. The endpoint is named next
-            to the input before you press Inspect. A shared link carries only the txid and network.
+            endpoint for that transaction and returns its hex, which is then decoded in the tab. It asks the Mainnet endpoint
+            first and the Testnet endpoint only if Mainnet does not have the txid. Both endpoints are named under the input
+            as soon as a txid is recognised, before you press Inspect. A shared link carries only the txid and network.
           </p>
           <p>
             No analytics, no cookies, no third-party scripts, no server logs of txids or hex, no viewing keys, and never any
@@ -110,6 +112,20 @@ export default function AboutPage() {
             that needs the chain state, such as whether a nullifier was already spent or an anchor is known, is out of
             scope. Shielded amounts, senders, recipients and memos stay encrypted and are never shown.
           </p>
+        </Panel>
+
+        <Panel label="Making a PCZT to inspect" bodyClassName="gap-2 px-4 pb-4 leading-relaxed text-body">
+          <p>
+            A PCZT is pasted as hex or base64; it starts with the <span className="font-mono text-xs">PCZT</span> magic bytes.
+            With zcash-devtool on testnet, every stage below is a ZIP 374 role; paste the file after any of them to see what is
+            still missing.
+          </p>
+          <pre className="overflow-x-auto rounded-tile bg-inset p-3 font-mono text-xs text-text">
+            {`zcash-devtool pczt create ... > tx.pczt
+zcash-devtool pczt prove ... < tx.pczt > proven.pczt
+zcash-devtool pczt sign ... < proven.pczt > signed.pczt
+zcash-devtool pczt combine ...`}
+          </pre>
         </Panel>
 
         <Panel label="Built on" bodyClassName="gap-1.5 px-4 pb-4">

@@ -1,10 +1,12 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
+import { ArrowsIn, ArrowsOut } from "@phosphor-icons/react";
 import type { DecodedTx } from "@contract/types";
 import { buildNodes, poolFlows, type AnatomyNode, type NodeId } from "@/lib/anatomy";
-import { formatZec } from "@/lib/format";
+import { formatInt, formatZec } from "@/lib/format";
 import { NODE_ICON } from "./node-icons";
-import { Dot, Hint, Inner, Meter } from "./ui";
+import { Dot, Hint, IconButton, Inner, Meter } from "./ui";
 
 interface Layout {
   name: "wide" | "narrow";
@@ -130,7 +132,7 @@ function NodeGraph({
 }: {
   layout: Layout;
   nodes: AnatomyNode[];
-  selected: NodeId;
+  selected: NodeId | null;
   onSelect: (id: NodeId) => void;
   className: string;
 }) {
@@ -172,6 +174,46 @@ function NodeGraph({
   );
 }
 
+function useFullscreen() {
+  const ref = useRef<HTMLElement>(null);
+  const [native, setNative] = useState(false);
+  const [overlay, setOverlay] = useState(false);
+
+  useEffect(() => {
+    const sync = () => setNative(!!ref.current && document.fullscreenElement === ref.current);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+
+  useEffect(() => {
+    if (!overlay) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !document.querySelector("dialog[open]")) setOverlay(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [overlay]);
+
+  const toggle = () => {
+    if (native) {
+      document.exitFullscreen().catch(() => setNative(false));
+      return;
+    }
+    if (overlay) {
+      setOverlay(false);
+      return;
+    }
+    const element = ref.current;
+    if (element && document.fullscreenEnabled && element.requestFullscreen) {
+      element.requestFullscreen().catch(() => setOverlay(true));
+    } else {
+      setOverlay(true);
+    }
+  };
+
+  return { ref, full: native || overlay, overlay, toggle };
+}
+
 export function AnatomyView({
   tx,
   feeZat,
@@ -186,41 +228,68 @@ export function AnatomyView({
   inputValues: (number | null)[] | null;
   inputsPending: boolean;
   failing: Set<NodeId>;
-  selected: NodeId;
+  selected: NodeId | null;
   onSelect: (id: NodeId) => void;
 }) {
+  const { ref, full, overlay, toggle } = useFullscreen();
   const nodes = buildNodes(tx, feeZat, failing, inputsPending);
   const flows = poolFlows(tx, inputValues, feeZat, inputsPending);
   const maxAbs = Math.max(1, ...flows.map((flow) => Math.abs(flow.valueZat ?? 0)));
+  const graphSize = full ? "max-h-[calc(100dvh-230px)]" : "";
   return (
-    <div className="flex flex-col gap-3">
-      <NodeGraph layout={WIDE_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className="hidden w-full md:block" />
-      <NodeGraph layout={NARROW_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className="mx-auto block w-full max-w-[360px] md:hidden" />
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-        {flows.map((flow) => {
-          const value = flow.valueZat;
-          const direction = flow.id === "fee" || value === null || value === 0 ? flow.note : value > 0 ? "leaves the pool" : "enters the pool";
-          return (
-            <Inner key={flow.id} className="flex min-w-0 flex-col gap-1.5 px-3 py-2.5">
-              <div className="flex items-center gap-2 text-[12.5px] text-muted">
-                <Dot tone={value === null || value === 0 ? "neutral" : "warn"} />
-                {flow.label}
-              </div>
-              <div className="truncate font-mono text-[14px] text-fg" title={value === null ? undefined : formatZec(value)}>
-                {value === null ? "unknown" : formatZec(value, flow.id !== "fee")}
-              </div>
-              <Meter value={value === null ? 0 : Math.abs(value) / maxAbs} />
-              <div className="truncate text-[12.5px] text-dim" title={direction}>
-                {direction}
-              </div>
-            </Inner>
-          );
-        })}
+    <section
+      ref={ref}
+      aria-label="Anatomy"
+      className={`flex min-w-0 flex-col border border-border bg-card-grad shadow-soft ${
+        full ? "overflow-y-auto" : "rounded-card"
+      } ${overlay ? "fixed inset-0 z-40 rounded-none" : ""}`}
+    >
+      <header className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 text-[14px]">
+        <span className="size-1.5 flex-none rounded-full bg-fg" />
+        <span className="font-medium text-fg">Anatomy</span>
+        <span className="ml-auto truncate text-[12.5px] text-dim">
+          v{tx.version} · {formatInt(tx.sizeBytes)} bytes
+        </span>
+        <IconButton label={full ? "Exit full screen" : "Full screen"} size="sm" onClick={toggle}>
+          {full ? <ArrowsIn /> : <ArrowsOut />}
+        </IconButton>
+      </header>
+      <div className={`flex flex-1 flex-col gap-3 px-4 pb-4 ${full ? "justify-center" : ""}`}>
+        <Hint>Click a part to see its fields.</Hint>
+        <NodeGraph layout={WIDE_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className={`hidden w-full md:block ${graphSize}`} />
+        <NodeGraph
+          layout={NARROW_LAYOUT}
+          nodes={nodes}
+          selected={selected}
+          onSelect={onSelect}
+          className={`mx-auto block w-full md:hidden ${full ? `${graphSize} max-w-[520px]` : "max-w-[360px]"}`}
+        />
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+          {flows.map((flow) => {
+            const value = flow.valueZat;
+            const direction =
+              flow.id === "fee" || value === null || value === 0 ? flow.note : value > 0 ? "value leaves the pool" : "value enters the pool";
+            return (
+              <Inner key={flow.id} className="flex min-w-0 flex-col gap-1.5 px-3 py-2.5">
+                <div className="flex items-center gap-2 truncate text-[12.5px] text-muted" title={flow.field}>
+                  <Dot tone={value === null || value === 0 ? "neutral" : "warn"} />
+                  {flow.label}
+                </div>
+                <div className="truncate font-mono text-[14px] text-fg" title={value === null ? undefined : formatZec(value)}>
+                  {value === null ? "unknown" : formatZec(value, flow.id !== "fee")}
+                </div>
+                <Meter value={value === null ? 0 : Math.abs(value) / maxAbs} />
+                <div className="truncate text-[12.5px] text-dim" title={direction}>
+                  {direction}
+                </div>
+              </Inner>
+            );
+          })}
+        </div>
+        <Hint>
+          Only each pool&apos;s net balance is public; individual shielded amounts stay encrypted. Hover a pool for its consensus field.
+        </Hint>
       </div>
-      <Hint>
-        Balances use the consensus sign: positive means value leaves that pool into the transaction, negative means it enters
-        the pool. Per-note shielded amounts stay encrypted; only the net balance of each pool is public.
-      </Hint>
-    </div>
+    </section>
   );
 }

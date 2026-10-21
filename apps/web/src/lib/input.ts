@@ -3,6 +3,7 @@ export type InputKind =
   | { kind: "txid"; txid: string }
   | { kind: "hex"; hex: string }
   | { kind: "pczt"; data: string }
+  | { kind: "error"; text: string }
   | { kind: "invalid"; reason: string };
 
 const PCZT_MAGIC_HEX = "50435a54";
@@ -19,7 +20,8 @@ export function classifyInput(raw: string): InputKind {
     if (lower.length % 2 !== 0) return { kind: "invalid", reason: "Hex has an odd number of characters." };
     return { kind: "hex", hex: lower };
   }
-  return { kind: "invalid", reason: "Not hex, a 64-character txid, or a PCZT (hex or base64 starting with the PCZT magic)." };
+  if (/[g-z\s:]/i.test(raw.trim())) return { kind: "error", text: raw.trim() };
+  return { kind: "invalid", reason: "Not hex, a 64-character txid, a PCZT or a Zebra error message." };
 }
 
 export function isTxid(value: string | null | undefined): value is string {

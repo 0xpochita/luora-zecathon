@@ -41,4 +41,9 @@ describe("matchZebraError with a cut-off message", () => {
     expect(top.entry.variant).toBe("TransactionError::ExpiredTransaction");
     expect(top.reason).toBe("message template");
   });
+
+  it("matches a pasted variant path only to that variant, not to shorter names inside it", () => {
+    const matches = matchZebraError("TransactionError::ExpiredTransaction", catalog);
+    expect(matches.map((match) => match.entry.variant)).toEqual(["TransactionError::ExpiredTransaction"]);
+  });
 });

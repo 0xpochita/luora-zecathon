@@ -177,3 +177,54 @@
 .wire.bad {
   stroke: rgba(248, 113, 113, 0.7);
 }
+
+.drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(420px, 100vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  padding: 0;
+  border-radius: 18px 0 0 18px;
+  animation: drawer-in 0.22s ease-out both;
+}
+
+.drawer > div {
+  height: 100%;
+}
+
+.drawer::backdrop {
+  background: rgba(5, 5, 6, 0.55);
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 639px) {
+  .drawer {
+    inset: auto 0 0 0;
+    width: 100vw;
+    height: auto;
+    max-height: 85dvh;
+    border-radius: 18px 18px 0 0;
+    animation-name: sheet-in;
+  }
+
+  .drawer > div {
+    height: auto;
+    max-height: 85dvh;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}

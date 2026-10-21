@@ -60,7 +60,7 @@ export function matchZebraError(input: string, catalog: ZebraErrorEntry[], limit
 
   const scored = catalog.map((entry): ZebraMatch => {
     const shortVariant = entry.variant.split("::").pop() ?? entry.variant;
-    if (query.includes(shortVariant) && shortVariant.length > 3) {
+    if (shortVariant.length > 3 && new RegExp(`(^|[^A-Za-z0-9_])${escapeRegExp(shortVariant)}($|[^A-Za-z0-9_])`).test(query)) {
       return { entry, score: 100 + shortVariant.length / 100, reason: "variant name" };
     }
     const template = templateRegExps(entry.message).find(({ pattern }) => pattern.test(lowered));

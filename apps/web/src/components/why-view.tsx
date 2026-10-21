@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { FileMagnifyingGlass, Warning } from "@phosphor-icons/react";
-import type { Check, ZebraErrorEntry } from "@contract/types";
+import type { ZebraErrorEntry } from "@contract/types";
 import { matchZebraError, ZEBRA_STAGES, type ZebraMatch } from "@/lib/zebra-match";
 import { zipUrl } from "@/lib/format";
-import { CheckRow } from "./checks-view";
-import { Chip, EmptyState, ExternalLink, Hint, Inner, InnerHeader, LoadingLine, Textarea } from "./ui";
+import { Chip, EmptyState, ExternalLink, Hint, Inner, LoadingLine } from "./ui";
 
 export type CatalogState =
   | { status: "loading" }
@@ -72,57 +70,29 @@ function MatchCard({ match, primary }: { match: ZebraMatch; primary: boolean }) 
   );
 }
 
-export function WhyView({ catalog, failingChecks, hasTx }: { catalog: CatalogState; failingChecks: Check[]; hasTx: boolean }) {
-  const [errorText, setErrorText] = useState("");
-  const matches = catalog.status === "ready" ? matchZebraError(errorText, catalog.entries) : [];
+export function WhyView({ catalog, text }: { catalog: CatalogState; text: string }) {
+  const matches = catalog.status === "ready" ? matchZebraError(text, catalog.entries) : [];
+  if (catalog.status === "loading") return <LoadingLine>Loading the Zebra error catalog…</LoadingLine>;
+  if (catalog.status === "error")
+    return (
+      <EmptyState icon={<Warning />} title="Zebra error catalog not available">
+        {catalog.message}
+      </EmptyState>
+    );
   return (
     <div className="flex flex-col gap-3">
-      <label htmlFor="zebra-error" className="text-[13px] text-muted">
-        Paste the error Zebra returned (from <span className="font-mono text-xs">sendrawtransaction</span>, logs or a wallet)
-      </label>
-      <Textarea
-        id="zebra-error"
-        rows={3}
-        spellCheck={false}
-        value={errorText}
-        onChange={(event) => setErrorText(event.target.value)}
-        placeholder="e.g. the full message after “transaction did not pass consensus validation:”"
-        className="font-mono text-xs"
-      />
-      {catalog.status === "loading" && <LoadingLine>Loading the Zebra error catalog…</LoadingLine>}
-      {catalog.status === "error" && (
-        <EmptyState icon={<Warning />} title="Zebra error catalog not available">
-          {catalog.message}
+      {matches.length === 0 ? (
+        <EmptyState icon={<FileMagnifyingGlass />} title="No matching Zebra error">
+          Nothing in the catalog matches this text. Paste the full message Zebra returned, including the part after the last
+          colon.
         </EmptyState>
+      ) : (
+        matches.map((match, index) => <MatchCard key={match.entry.variant} match={match} primary={index === 0} />)
       )}
-      {catalog.status === "ready" && (
-        <>
-          <Hint>
-            Matching runs in this tab against {catalog.entries.length} error variants extracted from Zebra&apos;s source
-            {catalog.entries[0] ? ` (${catalog.entries[0].zebraVersion})` : ""}.
-          </Hint>
-          {errorText.trim() && matches.length === 0 && (
-            <EmptyState icon={<FileMagnifyingGlass />} title="No matching Zebra error">
-              Nothing in the catalog matches this text. Paste the full message, including the part after the last colon.
-            </EmptyState>
-          )}
-          {matches.map((match, index) => (
-            <MatchCard key={match.entry.variant} match={match} primary={index === 0} />
-          ))}
-        </>
-      )}
-      {hasTx && (
-        <Inner className="flex flex-col gap-2 p-3">
-          <InnerHeader icon={<Warning />} aside={`${failingChecks.length} failing`}>
-            From the loaded transaction
-          </InnerHeader>
-          {failingChecks.length === 0 ? (
-            <Hint>No check fails for the loaded transaction at the chosen network and height.</Hint>
-          ) : (
-            failingChecks.map((check) => <CheckRow key={check.id} check={check} />)
-          )}
-        </Inner>
-      )}
+      <Hint>
+        Matched in this tab against {catalog.entries.length} error variants extracted from Zebra&apos;s source
+        {catalog.entries[0] ? ` (${catalog.entries[0].zebraVersion})` : ""}.
+      </Hint>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
-import { Check as CheckIcon, Copy } from "@phosphor-icons/react";
+import { useEffect, useRef, useState, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { Check as CheckIcon, Copy, X } from "@phosphor-icons/react";
 import type { CheckStatus } from "@contract/types";
 
 export type Tone = "neutral" | "ok" | "bad" | "warn" | "info" | "solid";
@@ -163,54 +163,6 @@ export function Tabs<T extends string>({
   );
 }
 
-export function SegmentedControl<T extends string>({
-  value,
-  options,
-  onChange,
-  label,
-}: {
-  value: T;
-  options: TabOption<T>[];
-  onChange: (value: T) => void;
-  label: string;
-}) {
-  return (
-    <div role="radiogroup" aria-label={label} className="inline-flex gap-1 rounded-tile bg-inset p-1 shadow-[inset_0_0_0_1px_var(--border)]">
-      {options.map((option) => {
-        const active = option.value === value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            title={option.title}
-            onClick={() => onChange(option.value)}
-            className={`inline-flex h-7 min-w-8 items-center gap-1.5 rounded-[7px] px-2.5 text-[12.5px] transition-colors ${FOCUS_RING} ${
-              active ? "bg-primary text-primary-fg shadow-soft" : "text-muted hover:bg-hover hover:text-fg"
-            }`}
-          >
-            {option.icon}
-            {option.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-export function Toolbar({ children, className = "", label }: { children: ReactNode; className?: string; label?: string }) {
-  return (
-    <div
-      role="toolbar"
-      aria-label={label}
-      className={`flex items-center gap-1.5 rounded-card border border-border bg-card-grad p-1.5 shadow-soft ${className}`}
-    >
-      {children}
-    </div>
-  );
-}
-
 export function Panel({
   label,
   aside,
@@ -271,21 +223,6 @@ export function InnerHeader({ icon, children, aside }: { icon: ReactNode; childr
       <span className="flex-none text-[16px] text-muted">{icon}</span>
       <span className="truncate">{children}</span>
       {aside != null && <span className="ml-auto flex items-center gap-2 text-[12.5px] text-dim">{aside}</span>}
-    </div>
-  );
-}
-
-export function KV({ k, children, mono = true, wrap = false }: { k: ReactNode; children: ReactNode; mono?: boolean; wrap?: boolean }) {
-  return (
-    <div className={`flex gap-3 py-1 ${wrap ? "flex-col gap-0.5" : "items-baseline"}`}>
-      <span className="flex-none text-[13px] text-muted">{k}</span>
-      <span
-        className={`${wrap ? "" : "ml-auto truncate text-right"} min-w-0 text-text ${mono ? "font-mono text-xs" : "text-[13px]"} ${
-          wrap ? "break-all" : ""
-        }`}
-      >
-        {children}
-      </span>
     </div>
   );
 }
@@ -382,5 +319,37 @@ export function LogoMark({ size = 22 }: { size?: number }) {
       <circle cx="12" cy="12" r="9" />
       <path d="M8 8h8l-8 8h8" />
     </svg>
+  );
+}
+
+export function Drawer({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode }) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+  }, [open]);
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(event) => event.target === event.currentTarget && onClose()}
+      aria-labelledby="drawer-title"
+      className="drawer border border-border bg-card-grad text-fg shadow-float"
+    >
+      <div className="flex max-h-full min-h-0 flex-col">
+        <header className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 text-[14px]">
+          <span className="size-1.5 flex-none rounded-full bg-fg" />
+          <h2 id="drawer-title" className="truncate font-medium">
+            {title}
+          </h2>
+          <IconButton label="Close" size="sm" onClick={onClose} className="ml-auto" autoFocus>
+            <X />
+          </IconButton>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">{children}</div>
+      </div>
+    </dialog>
   );
 }

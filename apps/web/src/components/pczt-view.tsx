@@ -1,29 +1,9 @@
 "use client";
 
-import { Signature } from "@phosphor-icons/react";
 import type { PcztView as PcztData } from "@contract/types";
 import { formatZec } from "@/lib/format";
 import { CheckRow } from "./checks-view";
-import { Dot, EmptyState, Hint, Inner } from "./ui";
-
-export function PcztEmpty() {
-  return (
-    <EmptyState icon={<Signature />} title="No PCZT loaded">
-      <p>
-        Paste a PCZT (hex or base64, it starts with the <span className="font-mono text-xs">PCZT</span> magic bytes) into
-        the input on the left. It is parsed in this tab and never uploaded.
-      </p>
-      <p className="mt-2">To make one on testnet with zcash-devtool:</p>
-      <pre className="mt-1.5 overflow-x-auto rounded-tile bg-inset p-3 font-mono text-xs text-text">
-        {`zcash-devtool pczt create ... > tx.pczt
-zcash-devtool pczt prove ... < tx.pczt > proven.pczt
-zcash-devtool pczt sign ... < proven.pczt > signed.pczt
-zcash-devtool pczt combine ...`}
-      </pre>
-      <p className="mt-2 text-dim">Each stage is a ZIP 374 role; load the file after any of them to see what is still missing.</p>
-    </EmptyState>
-  );
-}
+import { Dot, Hint, Inner } from "./ui";
 
 export function PcztPanel({ pczt }: { pczt: PcztData }) {
   return (

@@ -99,6 +99,7 @@ export function buildNodes(tx: DecodedTx, feeZat: number | null, failing: Set<No
 export interface PoolFlow {
   id: (typeof POOL_IDS)[number] | "fee";
   label: string;
+  field: string;
   valueZat: number | null;
   note: string;
 }
@@ -111,19 +112,26 @@ export function poolFlows(tx: DecodedTx, inputValues: (number | null)[] | null, 
   return [
     {
       id: "transparent",
-      label: "Transparent",
+      label: "Transparent (public)",
+      field: "transparent inputs − outputs",
       valueZat: transparentBalance,
       note:
         transparentBalance === null
           ? inputsPending
             ? "fetching input values…"
             : `outputs ${formatZec(outputsZat)}, input values unknown`
-          : `inputs − outputs`,
+          : "no net change",
     },
-    { id: "sapling", label: "Sapling", valueZat: tx.sapling?.valueBalanceZat ?? 0, note: "valueBalanceSapling" },
-    { id: "orchard", label: "Orchard", valueZat: tx.orchard?.valueBalanceZat ?? 0, note: "valueBalanceOrchard" },
-    { id: "ironwood", label: "Ironwood", valueZat: tx.ironwood?.valueBalanceZat ?? 0, note: "valueBalanceIronwood" },
-    { id: "fee", label: "Fee", valueZat: feeZat, note: feeZat !== null ? "sum of balances" : inputsPending ? "fetching input values…" : "needs transparent input values" },
+    { id: "sapling", label: "Sapling (shielded)", field: "valueBalanceSapling", valueZat: tx.sapling?.valueBalanceZat ?? 0, note: "no net change" },
+    { id: "orchard", label: "Orchard (shielded)", field: "valueBalanceOrchard", valueZat: tx.orchard?.valueBalanceZat ?? 0, note: "no net change" },
+    { id: "ironwood", label: "Ironwood (new pool)", field: "valueBalanceIronwood", valueZat: tx.ironwood?.valueBalanceZat ?? 0, note: "no net change" },
+    {
+      id: "fee",
+      label: "Fee",
+      field: "sum of all pool balances",
+      valueZat: feeZat,
+      note: feeZat !== null ? "paid to the miner" : inputsPending ? "fetching input values…" : "needs transparent input values",
+    },
   ];
 }
 
