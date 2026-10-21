@@ -4,7 +4,8 @@ import Link from "next/link";
 import type { Network } from "@contract/types";
 import type { ChainInfo } from "@/lib/api";
 import { formatInt, NETWORK_LABEL } from "@/lib/format";
-import { Chip, LogoMark } from "./ui";
+import { BrandLogo } from "./brand";
+import { Chip } from "./ui";
 
 export type ChainState = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; data: ChainInfo };
 
@@ -14,13 +15,10 @@ export function TopBar({ network, chain, onHome }: { network: Network; chain: Ch
       <Link
         href="/"
         onClick={onHome}
-        aria-label="luora z home"
-        className="ml-1 flex items-center gap-2.5 rounded-tile text-[15px] font-medium outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-white/25"
+        aria-label="Luora home"
+        className="ml-1 flex items-center rounded-tile p-0.5 outline-none transition-opacity hover:opacity-80 focus-visible:ring-2 focus-visible:ring-white/25"
       >
-        <LogoMark />
-        <span>
-          luora <span className="text-muted">z</span>
-        </span>
+        <BrandLogo />
       </Link>
       <div className="ml-auto flex items-center gap-3">
         {chain.status === "ready" ? (

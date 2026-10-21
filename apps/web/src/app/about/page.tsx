@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/ssr";
-import { ExternalLink, LogoMark, Panel } from "@/components/ui";
+import { BrandLogo } from "@/components/brand";
+import { ExternalLink, Panel } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "About · luora z",
-  description: "What luora z is, the problems it addresses, its privacy model and what it checks.",
+  title: "About · Luora",
+  description: "What Luora is, the problems it addresses, its privacy model and what it checks.",
 };
 
 const PROBLEMS = [
@@ -21,12 +22,12 @@ const PROBLEMS = [
   },
   {
     title: "Rejections are opaque",
-    body: "Zebra's sendrawtransaction maps every verifier failure to one RPC error code. Around 60 TransactionError and 30 ValidateContextError variants never reach the user as a reason. luora z maps the message back to the variant, the validation stage and the rule.",
+    body: "Zebra's sendrawtransaction maps every verifier failure to one RPC error code. Around 60 TransactionError and 30 ValidateContextError variants never reach the user as a reason. Luora maps the message back to the variant, the validation stage and the rule.",
     links: [{ label: "zebra-consensus/src/error.rs", href: "https://github.com/ZcashFoundation/zebra/blob/main/zebra-consensus/src/error.rs" }],
   },
   {
     title: "PCZT signers can be shown the wrong payee",
-    body: "The reference PCZT Signer does not check user_address against the committed recipient, and a hardware wallet once returned unsigned PCZTs that the Combiner merged silently. luora z shows which ZIP 374 roles ran and flags shown-versus-committed mismatches.",
+    body: "The reference PCZT Signer does not check user_address against the committed recipient, and a hardware wallet once returned unsigned PCZTs that the Combiner merged silently. Luora shows which ZIP 374 roles ran and flags shown-versus-committed mismatches.",
     links: [
       { label: "librustzcash #3155", href: "https://github.com/zcash/librustzcash/issues/3155" },
       { label: "librustzcash #2768", href: "https://github.com/zcash/librustzcash/issues/2768" },
@@ -57,8 +58,9 @@ export default function AboutPage() {
       </header>
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-12">
         <div className="flex items-center gap-3 px-1 pt-4 pb-2">
-          <LogoMark size={34} />
-          <h1 className="text-ui-display font-medium">luora z</h1>
+          <h1>
+            <BrandLogo height={34} />
+          </h1>
         </div>
         <p className="px-1 text-[15px] leading-relaxed text-body">
           A local-first inspector for Zcash transactions, built for the Zecathon Core &amp; Tooling track. Paste a raw

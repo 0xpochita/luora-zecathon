@@ -313,15 +313,6 @@ export function LoadingLine({ children }: { children: ReactNode }) {
   );
 }
 
-export function LogoMark({ size = 22 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#f4f4f5" strokeWidth="1.6" aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M8 8h8l-8 8h8" />
-    </svg>
-  );
-}
-
 export function Drawer({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: ReactNode; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {

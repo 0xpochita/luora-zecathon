@@ -371,7 +371,7 @@ export function InspectorApp() {
       return (
         <EmptyState icon={<Warning />} title="Decoder not built yet">
           The librustzcash WASM decoder (<span className="font-mono text-xs">public/wasm/luora_z_core.js</span>) is not in this
-          build, so nothing can be decoded. luora z never shows a fake decode; build <span className="font-mono text-xs">crates/core</span>{" "}
+          build, so nothing can be decoded. Luora never shows a fake decode; build <span className="font-mono text-xs">crates/core</span>{" "}
           to enable it.
         </EmptyState>
       );

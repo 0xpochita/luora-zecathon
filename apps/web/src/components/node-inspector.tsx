@@ -259,7 +259,7 @@ export function NodeInspector({ node, tx, feeZat }: { node: NodeId; tx: DecodedT
         ))}
       </div>
       <Hint>
-        Only public fields are shown. Shielded amounts, senders, recipients and memos stay encrypted; luora z never asks for a
+        Only public fields are shown. Shielded amounts, senders, recipients and memos stay encrypted; Luora never asks for a
         viewing key to draw this.
       </Hint>
     </div>
