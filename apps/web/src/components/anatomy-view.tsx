@@ -342,14 +342,16 @@ export function AnatomyView({
       </header>
       <div className={`flex flex-1 flex-col gap-3 px-4 pb-4 ${full ? "justify-center" : ""}`}>
         <Hint>Click a part to see its fields.</Hint>
-        <NodeGraph layout={WIDE_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className={`hidden w-full md:block ${graphSize}`} />
-        <NodeGraph
-          layout={NARROW_LAYOUT}
-          nodes={nodes}
-          selected={selected}
-          onSelect={onSelect}
-          className={`mx-auto block w-full md:hidden ${full ? `${graphSize} max-w-[520px]` : "max-w-[360px]"}`}
-        />
+        <div className="graph-canvas flex flex-col rounded-inner border border-border px-2 py-4">
+          <NodeGraph layout={WIDE_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className={`hidden w-full md:block ${graphSize}`} />
+          <NodeGraph
+            layout={NARROW_LAYOUT}
+            nodes={nodes}
+            selected={selected}
+            onSelect={onSelect}
+            className={`mx-auto block w-full md:hidden ${full ? `${graphSize} max-w-[520px]` : "max-w-[360px]"}`}
+          />
+        </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
           {flows.map((flow) => {
             const value = flow.valueZat;
@@ -423,8 +425,10 @@ export function AnatomySkeleton() {
         <span className="skeleton ml-auto h-3 w-24 rounded-full" />
       </header>
       <div className="flex flex-col gap-3 px-4 pb-4">
-        <SkeletonGraph layout={WIDE_LAYOUT} className="hidden w-full md:block" />
-        <SkeletonGraph layout={NARROW_LAYOUT} className="mx-auto w-full max-w-[360px] md:hidden" />
+        <div className="graph-canvas rounded-inner border border-border px-2 py-4">
+          <SkeletonGraph layout={WIDE_LAYOUT} className="hidden w-full md:block" />
+          <SkeletonGraph layout={NARROW_LAYOUT} className="mx-auto w-full max-w-[360px] md:hidden" />
+        </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
           {[0, 1, 2, 3, 4].map((index) => (
             <div key={index} className="flex flex-col gap-2 rounded-inner border border-border bg-inner-grad px-3 py-2.5">

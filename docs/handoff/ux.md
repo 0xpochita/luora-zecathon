@@ -42,6 +42,12 @@ Verified with `document.getAnimations()` right after a result appeared (1440 ifr
 at 0 / 60 / 120 ms for the three blocks, node `enter` from 120 to 940 ms, `draw` at 240 ms (Transaction → pools) and 600 ms
 (pools → Fee), `grow` on the five bars. Skeletons were captured by delaying `/api/tx` and `/api/prevouts` in the page.
 
+### Graph canvas
+
+The anatomy graph sits on its own darker canvas inside the card (`graph-canvas`: `#17171a`, an 18 px dot grid in
+`#2e2e33`, a faint centred glow and an inset shadow), the node-editor look of R1 and R24, so the graph no longer floats
+on a flat card. Same canvas under the loading skeleton. Screenshot: `after-1440-anatomy-canvas.png`.
+
 ### Adjustment argued by the references (differs from the brief)
 
 The brief said "default Mainnet at the live tip". For a txid that is already mined, checking at the live tip makes every

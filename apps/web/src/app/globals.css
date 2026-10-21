@@ -113,6 +113,20 @@
   background-size: 22px 22px;
 }
 
+@utility graph-canvas {
+  background-color: #17171a;
+  background-image:
+    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255, 255, 255, 0.045), transparent 70%),
+    radial-gradient(circle, #2e2e33 1px, transparent 1.4px);
+  background-size:
+    100% 100%,
+    18px 18px;
+  background-position:
+    0 0,
+    9px 9px;
+  box-shadow: inset 0 1px 12px rgba(0, 0, 0, 0.35);
+}
+
 @utility glow-top {
   position: relative;
   isolation: isolate;
