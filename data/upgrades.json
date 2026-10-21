@@ -1,0 +1,169 @@
+{
+  "source": {
+    "zebra": {
+      "repo": "https://github.com/ZcashFoundation/zebra",
+      "tag": "v7.0.0-rc.0",
+      "commit": "6d1e414d6f55e4180d0e47baaa934bf97d5b4fec",
+      "files": [
+        "zebra-chain/src/parameters/constants.rs:48",
+        "zebra-chain/src/parameters/network_upgrade.rs:231"
+      ]
+    },
+    "crossChecked": {
+      "zcash_protocol": {
+        "repo": "https://github.com/zcash/librustzcash",
+        "commit": "8672a4b2d60f432664780e6a4e85f49a36805a2a",
+        "file": "components/zcash_protocol/src/consensus.rs"
+      },
+      "lightwalletd": {
+        "main": {
+          "endpoint": "zec.rocks:443",
+          "height": 3525543,
+          "consensusBranchId": "0x37a5165b",
+          "upgrade": "NU6.3",
+          "node": "/Zebra:6.3.0/",
+          "checkedAt": "2026-10-21T12:53:31.120Z"
+        },
+        "test": {
+          "endpoint": "testnet.zec.rocks:443",
+          "height": 4525599,
+          "consensusBranchId": "0x77190ad9",
+          "upgrade": "NU7",
+          "node": "/Zebra:7.0.0-rc.0/",
+          "checkedAt": "2026-10-21T12:53:32.001Z"
+        }
+      }
+    }
+  },
+  "networks": {
+    "main": [
+      {
+        "name": "Genesis",
+        "activationHeight": 0,
+        "branchId": null
+      },
+      {
+        "name": "BeforeOverwinter",
+        "activationHeight": 1,
+        "branchId": null
+      },
+      {
+        "name": "Overwinter",
+        "activationHeight": 347500,
+        "branchId": "0x5ba81b19"
+      },
+      {
+        "name": "Sapling",
+        "activationHeight": 419200,
+        "branchId": "0x76b809bb"
+      },
+      {
+        "name": "Blossom",
+        "activationHeight": 653600,
+        "branchId": "0x2bb40e60"
+      },
+      {
+        "name": "Heartwood",
+        "activationHeight": 903000,
+        "branchId": "0xf5b9230b"
+      },
+      {
+        "name": "Canopy",
+        "activationHeight": 1046400,
+        "branchId": "0xe9ff75a6"
+      },
+      {
+        "name": "NU5",
+        "activationHeight": 1687104,
+        "branchId": "0xc2d6d0b4"
+      },
+      {
+        "name": "NU6",
+        "activationHeight": 2726400,
+        "branchId": "0xc8e71055"
+      },
+      {
+        "name": "NU6.1",
+        "activationHeight": 3146400,
+        "branchId": "0x4dec4df0"
+      },
+      {
+        "name": "NU6.2",
+        "activationHeight": 3364600,
+        "branchId": "0x5437f330"
+      },
+      {
+        "name": "NU6.3",
+        "activationHeight": 3428143,
+        "branchId": "0x37a5165b"
+      }
+    ],
+    "test": [
+      {
+        "name": "Genesis",
+        "activationHeight": 0,
+        "branchId": null
+      },
+      {
+        "name": "BeforeOverwinter",
+        "activationHeight": 1,
+        "branchId": null
+      },
+      {
+        "name": "Overwinter",
+        "activationHeight": 207500,
+        "branchId": "0x5ba81b19"
+      },
+      {
+        "name": "Sapling",
+        "activationHeight": 280000,
+        "branchId": "0x76b809bb"
+      },
+      {
+        "name": "Blossom",
+        "activationHeight": 584000,
+        "branchId": "0x2bb40e60"
+      },
+      {
+        "name": "Heartwood",
+        "activationHeight": 903800,
+        "branchId": "0xf5b9230b"
+      },
+      {
+        "name": "Canopy",
+        "activationHeight": 1028500,
+        "branchId": "0xe9ff75a6"
+      },
+      {
+        "name": "NU5",
+        "activationHeight": 1842420,
+        "branchId": "0xc2d6d0b4"
+      },
+      {
+        "name": "NU6",
+        "activationHeight": 2976000,
+        "branchId": "0xc8e71055"
+      },
+      {
+        "name": "NU6.1",
+        "activationHeight": 3536500,
+        "branchId": "0x4dec4df0"
+      },
+      {
+        "name": "NU6.2",
+        "activationHeight": 4052000,
+        "branchId": "0x5437f330"
+      },
+      {
+        "name": "NU6.3",
+        "activationHeight": 4134000,
+        "branchId": "0x37a5165b"
+      },
+      {
+        "name": "NU7",
+        "activationHeight": 4465026,
+        "branchId": "0x77190ad9"
+      }
+    ]
+  }
+}
