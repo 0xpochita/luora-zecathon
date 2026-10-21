@@ -74,9 +74,11 @@ type StreamMethod = (request: unknown, options: grpc.CallOptions) => grpc.Client
 type StreamerClient = grpc.Client & Record<string, UnaryMethod & StreamMethod>;
 
 function protoDirectory(): string {
+  const moduleDirectory = typeof import.meta.dirname === "string" ? import.meta.dirname : process.cwd();
   const candidates = [
     path.join(process.cwd(), "src/server/proto"),
     path.join(process.cwd(), "apps/web/src/server/proto"),
+    path.join(moduleDirectory, "proto"),
   ];
   const found = candidates.find((candidate) => existsSync(path.join(candidate, "service.proto")));
   if (!found) throw new ApiError("indexer_error", "lightwallet protocol files are missing from the deployment");
