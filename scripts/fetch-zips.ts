@@ -46,6 +46,7 @@ async function main() {
   const listing = await getJson<{ name: string }[]>(`https://api.github.com/repos/${REPO}/contents/zips?ref=${head.sha}`);
   mkdirSync(OUT_DIR, { recursive: true });
   const fetchedAt = new Date().toISOString().slice(0, 10);
+  const index: { zip: number; url: string; source: string; commit: string; fetchedAt: string; markdown: string }[] = [];
   for (const zip of ZIPS) {
     const stem = `zip-${String(zip).padStart(4, "0")}`;
     const file = listing.find((entry) => entry.name === `${stem}.md` || entry.name === `${stem}.rst`);
@@ -64,8 +65,17 @@ async function main() {
       "",
     ].join("\n");
     writeFileSync(path.join(OUT_DIR, `${stem}.md`), header + body);
+    index.push({
+      zip,
+      url: `https://zips.z.cash/${stem}`,
+      source: `https://github.com/${REPO}/blob/${head.sha}/zips/${file.name}`,
+      commit: head.sha,
+      fetchedAt,
+      markdown: body,
+    });
     console.log(`${stem}.md  ${file.name}  ${raw.length} bytes`);
   }
+  writeFileSync(path.join(OUT_DIR, "index.json"), JSON.stringify(index));
   console.log(`zcash/zips@${head.sha}`);
 }
 
