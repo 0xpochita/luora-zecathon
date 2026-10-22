@@ -175,9 +175,12 @@ export function InspectBox({
         <>
           <div className="flex flex-col gap-2">
             <p className="px-1 text-[12.5px] text-dim">Or try a real transaction:</p>
-            {samples.status === "loading" && <LoadingLine>Loading samples…</LoadingLine>}
             {samples.status === "error" && <Hint>Samples not available: {samples.message}</Hint>}
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1.5" aria-busy={samples.status === "loading"}>
+              {samples.status === "loading" &&
+                [124, 136, 128, 132, 124].map((width, index) => (
+                  <span key={index} className="skeleton h-8 rounded-chip" style={{ width }} aria-hidden />
+                ))}
               {chips.map((sample) => (
                 <button
                   key={sample.txid}
@@ -201,6 +204,7 @@ export function InspectBox({
                 </button>
               )}
             </div>
+            {samples.status === "loading" && <span className="skeleton ml-1 h-3 w-28 rounded-full" aria-hidden />}
             {others.length > 0 && (
               <details className="group px-1">
                 <summary className="inline-flex list-none items-center gap-1 rounded-chip text-[12.5px] text-dim outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25 [&::-webkit-details-marker]:hidden">
