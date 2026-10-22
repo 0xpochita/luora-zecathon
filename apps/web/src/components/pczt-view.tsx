@@ -1,11 +1,20 @@
 "use client";
 
-import type { PcztView as PcztData } from "@contract/types";
+import type { Check, PcztView as PcztData } from "@contract/types";
 import { formatZec } from "@/lib/format";
+import { AskButton } from "./ask-ai";
 import { CheckRow } from "./checks-view";
 import { Dot, Hint, Inner } from "./ui";
 
-export function PcztPanel({ pczt }: { pczt: PcztData }) {
+export function PcztPanel({
+  pczt,
+  onAsk,
+  onAskCheck,
+}: {
+  pczt: PcztData;
+  onAsk?: (action: PcztData["actions"][number]) => void;
+  onAskCheck?: (check: Check) => void;
+}) {
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-2">
@@ -41,6 +50,7 @@ export function PcztPanel({ pczt }: { pczt: PcztData }) {
                   <th className="px-2.5 font-normal">Shown to signer</th>
                   <th className="px-2.5 font-normal">Proof</th>
                   <th className="px-2.5 font-normal">Signature</th>
+                  {onAsk && <th className="w-10 px-1.5 font-normal"><span className="sr-only">Ask AI</span></th>}
                 </tr>
               </thead>
               <tbody>
@@ -69,6 +79,11 @@ export function PcztPanel({ pczt }: { pczt: PcztData }) {
                           {action.signature ? "present" : "missing"}
                         </span>
                       </td>
+                      {onAsk && (
+                        <td className="px-1.5!">
+                          <AskButton onAsk={() => onAsk(action)} label={`Ask AI about ${action.pool} action ${action.index}`} />
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -85,7 +100,7 @@ export function PcztPanel({ pczt }: { pczt: PcztData }) {
         ) : (
           <div className="flex flex-col gap-1.5">
             {pczt.checks.map((check) => (
-              <CheckRow key={check.id} check={check} />
+              <CheckRow key={check.id} check={check} onAsk={onAskCheck} />
             ))}
           </div>
         )}

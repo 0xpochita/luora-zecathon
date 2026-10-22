@@ -3,12 +3,14 @@
 import { CaretRight } from "@phosphor-icons/react";
 import type { Check, CheckStatus } from "@contract/types";
 import { formatInt } from "@/lib/format";
+import { AskButton } from "./ask-ai";
 import { Chip, Dot, ExternalLink, Hint, Inner, Input, Select, StatusMark } from "./ui";
 
 const ORDER: CheckStatus[] = ["fail", "warn", "pass", "na"];
 
-export function CheckRow({ check }: { check: Check }) {
+export function CheckRow({ check, onAsk, focused = false }: { check: Check; onAsk?: (check: Check) => void; focused?: boolean }) {
   return (
+    <div id={`check-${check.id}`} className={`scroll-mt-24 rounded-inner transition-shadow ${focused ? "ring-2 ring-white/30" : ""}`}>
     <Inner className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 px-3 py-2.5 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
       <div className="pt-px">
         <StatusMark status={check.status} />
@@ -18,15 +20,19 @@ export function CheckRow({ check }: { check: Check }) {
         <p className="text-[13px] leading-relaxed break-words text-body">{check.detail}</p>
         {check.source && <p className="mt-0.5 truncate font-mono text-xs text-dim" title={check.source}>{check.source}</p>}
       </div>
-      {check.zip ? (
-        <ExternalLink href={check.zip.url} className="col-start-2 min-w-0 self-start justify-self-start text-[12.5px] break-words sm:col-start-3 sm:max-w-[260px] sm:text-right">
-          ZIP {check.zip.number}
-          {check.zip.clause ? ` · ${check.zip.clause}` : ""}
-        </ExternalLink>
-      ) : (
-        <span className="col-start-2 text-[12.5px] text-dim sm:col-start-3">no ZIP</span>
-      )}
+      <div className="col-start-2 flex min-w-0 items-start gap-2 self-start sm:col-start-3 sm:max-w-[290px] sm:justify-end">
+        {check.zip ? (
+          <ExternalLink href={check.zip.url} className="min-w-0 text-[12.5px] break-words sm:text-right">
+            ZIP {check.zip.number}
+            {check.zip.clause ? ` · ${check.zip.clause}` : ""}
+          </ExternalLink>
+        ) : (
+          <span className="text-[12.5px] text-dim">no ZIP</span>
+        )}
+        {onAsk && <AskButton onAsk={() => onAsk(check)} label={`Ask AI about ${check.title}`} className="-mt-0.5" />}
+      </div>
     </Inner>
+    </div>
   );
 }
 
@@ -86,7 +92,7 @@ export function CheckAtControl({
   );
 }
 
-export function ChecksView({ checks }: { checks: Check[] }) {
+export function ChecksView({ checks, onAsk, focusId = null }: { checks: Check[]; onAsk?: (check: Check) => void; focusId?: string | null }) {
   const sorted = [...checks].sort((left, right) => ORDER.indexOf(left.status) - ORDER.indexOf(right.status));
   const attention = sorted.filter((check) => check.status === "fail" || check.status === "warn");
   const rest = sorted.filter((check) => check.status === "pass" || check.status === "na");
@@ -98,12 +104,12 @@ export function ChecksView({ checks }: { checks: Check[] }) {
       {attention.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {attention.map((check) => (
-            <CheckRow key={check.id} check={check} />
+            <CheckRow key={check.id} check={check} onAsk={onAsk} focused={check.id === focusId} />
           ))}
         </div>
       )}
       {rest.length > 0 && (
-        <details className="group flex flex-col gap-1.5">
+        <details className="group flex flex-col gap-1.5" open={rest.some((check) => check.id === focusId)}>
           <summary className="flex h-9 list-none items-center gap-2 rounded-tile bg-raised px-3 text-[13px] text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25 [&::-webkit-details-marker]:hidden">
             <Dot tone="ok" />
             {passed} rule{passed === 1 ? "" : "s"} passed
@@ -112,7 +118,7 @@ export function ChecksView({ checks }: { checks: Check[] }) {
           </summary>
           <div className="mt-1.5 flex flex-col gap-1.5">
             {rest.map((check) => (
-              <CheckRow key={check.id} check={check} />
+              <CheckRow key={check.id} check={check} onAsk={onAsk} focused={check.id === focusId} />
             ))}
           </div>
         </details>

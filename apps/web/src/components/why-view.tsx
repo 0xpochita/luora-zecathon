@@ -4,6 +4,7 @@ import { FileMagnifyingGlass, Warning } from "@phosphor-icons/react";
 import type { ZebraErrorEntry } from "@contract/types";
 import { matchZebraError, ZEBRA_STAGES, type ZebraMatch } from "@/lib/zebra-match";
 import { zipUrl } from "@/lib/format";
+import { AskButton } from "./ask-ai";
 import { Chip, EmptyState, ExternalLink, Hint, Inner, LoadingLine } from "./ui";
 
 export type CatalogState =
@@ -44,13 +45,14 @@ function StageStrip({ stage }: { stage: ZebraErrorEntry["stage"] }) {
   );
 }
 
-function MatchCard({ match, primary }: { match: ZebraMatch; primary: boolean }) {
+function MatchCard({ match, primary, onAsk }: { match: ZebraMatch; primary: boolean; onAsk?: (match: ZebraMatch) => void }) {
   const { entry } = match;
   return (
     <Inner className="flex flex-col gap-2.5 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="min-w-0 font-mono text-[13px] break-all text-fg">{entry.variant}</span>
         <Chip className="ml-auto">matched by {match.reason}</Chip>
+        {onAsk && <AskButton size="sm" onAsk={() => onAsk(match)} label={`Ask AI about ${entry.variant}`} />}
       </div>
       <p className="font-mono text-xs break-words text-port">&quot;{entry.message}&quot;</p>
       {primary && <StageStrip stage={entry.stage} />}
@@ -70,7 +72,7 @@ function MatchCard({ match, primary }: { match: ZebraMatch; primary: boolean }) 
   );
 }
 
-export function WhyView({ catalog, text }: { catalog: CatalogState; text: string }) {
+export function WhyView({ catalog, text, onAsk }: { catalog: CatalogState; text: string; onAsk?: (match: ZebraMatch) => void }) {
   const matches = catalog.status === "ready" ? matchZebraError(text, catalog.entries) : [];
   if (catalog.status === "loading") return <LoadingLine>Loading the Zebra error catalog…</LoadingLine>;
   if (catalog.status === "error")
@@ -87,7 +89,7 @@ export function WhyView({ catalog, text }: { catalog: CatalogState; text: string
           colon.
         </EmptyState>
       ) : (
-        matches.map((match, index) => <MatchCard key={match.entry.variant} match={match} primary={index === 0} />)
+        matches.map((match, index) => <MatchCard key={match.entry.variant} match={match} primary={index === 0} onAsk={onAsk} />)
       )}
       <Hint>
         Matched in this tab against {catalog.entries.length} error variants extracted from Zebra&apos;s source

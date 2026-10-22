@@ -6,6 +6,7 @@ import { MagnifyingGlass } from "@phosphor-icons/react";
 import { childCounts, EXPAND_LEVELS, expandedFor, visibleRows, type ExpandLevel, type TraceRow, type TraceRowKind } from "@/lib/trace";
 import { formatInt } from "@/lib/format";
 import { delayStyle } from "./anatomy-view";
+import { AskButton } from "./ask-ai";
 import { ExpandableCard } from "./expandable-card";
 import { CopyButton, Dot, Hint, Inner, Input, Select } from "./ui";
 
@@ -82,6 +83,7 @@ function TraceRowView({
   onToggle,
   onActivate,
   onOpen,
+  onAsk,
 }: {
   row: TraceRow;
   index: number;
@@ -94,6 +96,7 @@ function TraceRowView({
   onToggle: () => void;
   onActivate: () => void;
   onOpen: () => void;
+  onAsk?: () => void;
 }) {
   return (
     <div
@@ -108,7 +111,7 @@ function TraceRowView({
       }}
       title={failing ? `Failing check: ${failing.join(", ")}` : undefined}
       style={delayStyle(Math.min(index * 18, 360))}
-      className={`node-in flex min-h-8 cursor-pointer items-start gap-2 rounded-chip px-2 py-1 sm:min-w-max sm:items-center ${
+      className={`node-in group flex min-h-8 cursor-pointer items-start gap-2 rounded-chip px-2 py-1 sm:min-w-max sm:items-center ${
         active ? "bg-hover shadow-[inset_2px_0_0_var(--fg)]" : "hover:bg-white/[.035]"
       } ${row.empty ? "opacity-50" : ""}`}
     >
@@ -157,6 +160,13 @@ function TraceRowView({
           </span>
         )}
       </span>
+      {onAsk && (
+        <AskButton
+          onAsk={onAsk}
+          label={`Ask AI about ${row.kind} ${row.label}`}
+          className={`-my-0.5 sm:sticky sm:right-0 ${active ? "" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`}
+        />
+      )}
     </div>
   );
 }
@@ -176,6 +186,7 @@ export function TraceView({
   activeId,
   onActiveChange,
   onOpen,
+  onAsk,
   aside,
 }: {
   rows: TraceRow[];
@@ -183,6 +194,7 @@ export function TraceView({
   activeId: string | null;
   onActiveChange: (id: string) => void;
   onOpen: (id: string) => void;
+  onAsk?: (row: TraceRow) => void;
   aside: string;
 }) {
   const [level, setLevel] = useState<ExpandLevel>("everything");
@@ -289,13 +301,14 @@ export function TraceView({
                     treeRef.current?.focus({ preventScroll: true });
                   }}
                   onOpen={() => onOpen(row.id)}
+                  onAsk={onAsk ? () => onAsk(row) : undefined}
                 />
               ))
             )}
           </div>
           <Hint>
             Each row is a real part of the raw transaction, in the order it is serialised; the left number is its byte offset.
-            Encrypted note ciphertexts are shown by size only. ↑ ↓ move, ← → fold, Enter opens the details.
+            Encrypted note ciphertexts are shown by size only. ↑ ↓ move, ← → fold, Enter opens the details, A asks AI about the row.
           </Hint>
         </div>
       )}

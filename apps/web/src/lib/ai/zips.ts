@@ -120,6 +120,6 @@ export function pickExcerpts(docs: ZipDocument[], query: ZipQuery, budget = EXCE
 }
 
 export async function loadZipDocuments(): Promise<ZipDocument[]> {
-  const module = await import("../../../../../data/zips/index.json");
-  return module.default as ZipDocument[];
+  const index = await import("../../../../../data/zips/index.json");
+  return index.default as ZipDocument[];
 }

@@ -21,6 +21,10 @@ import { TopBar, type ChainState } from "./top-bar";
 import { Drawer, EmptyState, Hint, LoadingLine, Panel, Select, Tabs, type TabOption } from "./ui";
 import { VerdictCard, VerdictSkeleton, type RulesLine } from "./verdict-card";
 import { WhyView, type CatalogState } from "./why-view";
+import { AiStatusButton, AskPanel, useAskAi } from "./ask-ai";
+import { ConnectAiDialog } from "./connect-ai";
+import { checkSubject, nodeSubject, pcztActionSubject, traceRowSubject, zebraSubject, type AskEnv, type AskSubject } from "@/lib/ai/subject";
+import { matchZebraError } from "@/lib/zebra-match";
 
 type Mode = "tx" | "pczt" | "error";
 type ViewId = "overview" | "rules";
@@ -118,6 +122,7 @@ export function InspectorApp() {
   const [openTraceId, setOpenTraceId] = useState<string | null>(null);
   const [checkAtChoice, setCheckAtChoice] = useState<CheckAt | null>(null);
   const [heightText, setHeightText] = useState("");
+  const [focusCheck, setFocusCheck] = useState<string | null>(null);
   const [resultId, setResultId] = useState(0);
   const lookupAbort = useRef<AbortController | null>(null);
   const endpointsRef = useRef<Endpoints>({ main: null, test: null });
@@ -436,8 +441,78 @@ export function InspectorApp() {
     </>
   );
 
-  const traceRowList = trace && "nodes" in trace ? traceRows(trace.nodes, inputValues, feeZat, inputsPending) : null;
+  const traceRowList = useMemo(
+    () => (trace && "nodes" in trace ? traceRows(trace.nodes, inputValues, feeZat, inputsPending) : null),
+    [trace, inputValues, feeZat, inputsPending],
+  );
   const openTraceRow = openTraceId ? traceRowList?.find((row) => row.id === openTraceId) ?? null : null;
+  const pcztView = pczt && "view" in pczt ? pczt.view : null;
+  const zebraMatches = useMemo(
+    () => (mode === "error" && catalog.status === "ready" ? matchZebraError(errorInput, catalog.entries) : []),
+    [mode, catalog, errorInput],
+  );
+
+  const tipUpgrade = chain.status === "ready" ? chain.data.upgrade : null;
+  const askEnv = useMemo((): AskEnv | null => {
+    if (mode === "tx" && tx && loaded)
+      return {
+        network,
+        height: chosenHeight,
+        heightLabel,
+        upgrade: upgradeAtHeight?.name ?? tx.upgrade,
+        version: tx.version,
+        txid: tx.txid,
+        hex: loaded.hex,
+      };
+    if (mode === "pczt" || mode === "error") return { network, height: liveHeight, heightLabel: liveHeight !== null ? `at the current tip (${formatInt(liveHeight)})` : "", upgrade: tipUpgrade, version: null, txid: null, hex: null };
+    return null;
+  }, [mode, tx, loaded, network, chosenHeight, heightLabel, upgradeAtHeight, liveHeight, tipUpgrade]);
+
+  const knownRefs = useMemo(
+    () => ({
+      offsets: new Set((traceRowList ?? []).flatMap((row) => (row.offset !== null ? [row.offset] : []))),
+      checks: new Set([...(checkList ?? []), ...(pcztView?.checks ?? [])].map((check) => check.id)),
+    }),
+    [traceRowList, checkList, pcztView],
+  );
+
+  const currentSubject = useCallback((): AskSubject | null => {
+    if (mode === "tx" && tx) {
+      if (view === "rules") {
+        const first = checkList?.find((check) => check.status === "fail") ?? checkList?.find((check) => check.status === "warn");
+        return first ? checkSubject(first, tx.version) : null;
+      }
+      if (overviewMode === "graph") return nodeSubject(selectedNode ?? "tx", tx, feeZat, checkList);
+      const row = traceRowList?.find((item) => item.id === (activeTraceId ?? "tx"));
+      return row && traceRowList ? traceRowSubject(row, traceRowList, checkList, tx.version) : null;
+    }
+    if (mode === "error" && zebraMatches[0]) return zebraSubject(zebraMatches[0].entry, zebraMatches[0].reason);
+    if (mode === "pczt" && pcztView?.actions[0]) return pcztActionSubject(pcztView.actions[0], pcztView);
+    return null;
+  }, [mode, tx, view, checkList, overviewMode, selectedNode, feeZat, traceRowList, activeTraceId, zebraMatches, pcztView]);
+
+  const ai = useAskAi({ env: askEnv, known: knownRefs, current: currentSubject });
+
+  const selectOffset = useCallback(
+    (offset: number) => {
+      const row = [...(traceRowList ?? [])].reverse().find((item) => item.offset === offset);
+      if (!row) return;
+      setView("overview");
+      setOverviewMode("trace");
+      setActiveTraceId(row.id);
+      requestAnimationFrame(() => document.getElementById(`trace-row-${row.id}`)?.scrollIntoView({ block: "center", behavior: "smooth" }));
+    },
+    [traceRowList],
+  );
+
+  const selectCheck = useCallback(
+    (id: string) => {
+      if (mode === "tx") setView("rules");
+      setFocusCheck(id);
+      requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById(`check-${id}`)?.scrollIntoView({ block: "center", behavior: "smooth" })));
+    },
+    [mode],
+  );
 
   let result: ReactNode = null;
   if (looking || (mode === "tx" && coreState.status === "loading")) {
@@ -507,6 +582,10 @@ export function InspectorApp() {
                   activeId={activeTraceId}
                   onActiveChange={setActiveTraceId}
                   onOpen={setOpenTraceId}
+                  onAsk={(row) => {
+                    setActiveTraceId(row.id);
+                    ai.ask(traceRowSubject(row, traceRowList!, checkList, tx.version));
+                  }}
                   aside={`v${tx.version} · ${formatInt(tx.sizeBytes)} bytes`}
                 />
               ) : (
@@ -524,6 +603,7 @@ export function InspectorApp() {
                 failing={failing}
                 selected={selectedNode}
                 onSelect={setSelectedNode}
+                onAsk={(node) => ai.ask(nodeSubject(node, tx, feeZat, checkList))}
               />
             ) : (
               <Panel label="Rules" aside={upgradeAtHeight ? `${NETWORK_LABEL[network]} · ${upgradeAtHeight.name}` : NETWORK_LABEL[network]} bodyClassName="gap-3 px-4 pb-4">
@@ -544,7 +624,7 @@ export function InspectorApp() {
                 ) : chosenHeight === null ? (
                   <Hint>{rulesLine.status === "pending" ? rulesLine.text : "Pick a height to run the rules."}</Hint>
                 ) : checkList && !inputsPending ? (
-                  <ChecksView checks={checkList} />
+                  <ChecksView checks={checkList} focusId={focusCheck} onAsk={(check) => ai.ask(checkSubject(check, tx.version))} />
                 ) : (
                   <RulesSkeleton />
                 )}
@@ -577,7 +657,11 @@ export function InspectorApp() {
                     ? "; a signer check warns."
                     : "; signer checks pass."}
               </p>
-              <PcztPanel pczt={pczt.view} />
+              <PcztPanel
+                pczt={pczt.view}
+                onAsk={(action) => ai.ask(pcztActionSubject(action, pczt.view))}
+                onAskCheck={(check) => ai.ask(checkSubject(check, null))}
+              />
             </>
           ) : (
             <LoadingLine>Reading the PCZT…</LoadingLine>
@@ -587,14 +671,14 @@ export function InspectorApp() {
   } else if (mode === "error") {
     result = (
       <Panel label="Why Zebra rejected it" bodyClassName="gap-3 px-4 pb-4">
-        <WhyView catalog={catalog} text={errorInput} />
+        <WhyView catalog={catalog} text={errorInput} onAsk={(match) => ai.ask(zebraSubject(match.entry, match.reason))} />
       </Panel>
     );
   }
 
   return (
-    <div className="flex min-h-dvh flex-col font-sans text-[13px] text-fg dot-grid">
-      <TopBar network={network} chain={chain} onHome={goHome} />
+    <div className={`flex min-h-dvh flex-col font-sans text-[13px] text-fg dot-grid ${ai.open ? "xl:pr-[424px]" : ""}`}>
+      <TopBar network={network} chain={chain} onHome={goHome} aside={<AiStatusButton ai={ai} />} />
       {mode === null && !looking ? (
         <main className="flex flex-1 flex-col items-center justify-center px-4 pt-6 pb-16">
           <div className="flex w-full max-w-2xl flex-col gap-5">
@@ -641,6 +725,8 @@ export function InspectorApp() {
           </div>
         </main>
       )}
+      <AskPanel ai={ai} onOffset={selectOffset} onCheck={selectCheck} />
+      {ai.connectOpen && <ConnectAiDialog ai={ai} />}
       {tx && (
         <Drawer
           open={selectedNode !== null || openTraceRow !== null}

@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { Sparkle } from "@phosphor-icons/react";
 import type { DecodedTx } from "@contract/types";
 import { buildNodes, poolFlows, type AnatomyNode, type NodeId } from "@/lib/anatomy";
 import { formatInt, formatZec } from "@/lib/format";
@@ -100,7 +101,46 @@ export function delayStyle(ms: number): CSSProperties {
   return { "--d": `${ms}ms` } as CSSProperties;
 }
 
-function GraphNode({ node, layout, selected, onSelect }: { node: AnatomyNode; layout: Layout; selected: boolean; onSelect: () => void }) {
+function GraphAskButton({ x, y, label, onAsk }: { x: number; y: number; label: string; onAsk: () => void }) {
+  return (
+    <g
+      transform={`translate(${x},${y})`}
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      className="outline-none [&:focus-visible>rect]:stroke-[rgba(255,255,255,.4)] [&:hover>rect]:fill-[var(--hover)]"
+      onClick={(event) => {
+        event.stopPropagation();
+        onAsk();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          event.stopPropagation();
+          onAsk();
+        }
+      }}
+    >
+      <title>{label}</title>
+      <rect width={22} height={22} rx={7} fill="var(--raised)" stroke="rgba(255,255,255,.07)" />
+      <Sparkle x={5} y={5} width={12} height={12} weight="fill" color="var(--muted)" />
+    </g>
+  );
+}
+
+function GraphNode({
+  node,
+  layout,
+  selected,
+  onSelect,
+  onAsk,
+}: {
+  node: AnatomyNode;
+  layout: Layout;
+  selected: boolean;
+  onSelect: () => void;
+  onAsk?: () => void;
+}) {
   const position = layout.positions[node.id];
   const Icon = NODE_ICON[node.id];
   const w = layout.nodeWidth;
@@ -139,6 +179,7 @@ function GraphNode({ node, layout, selected, onSelect }: { node: AnatomyNode; la
       <text x={38} y={27} fill="var(--port)" fontFamily="var(--font-geist-mono)" fontSize={11.5}>
         {node.subtitle}
       </text>
+      {onAsk && <GraphAskButton x={w - 30} y={11} label={`Ask AI about ${node.title}`} onAsk={onAsk} />}
       </g>
     </g>
   );
@@ -149,12 +190,14 @@ function NodeGraph({
   nodes,
   selected,
   onSelect,
+  onAsk,
   className,
 }: {
   layout: Layout;
   nodes: AnatomyNode[];
   selected: NodeId | null;
   onSelect: (id: NodeId) => void;
+  onAsk?: (id: NodeId) => void;
   className: string;
 }) {
   const byId = Object.fromEntries(nodes.map((node) => [node.id, node])) as Record<NodeId, AnatomyNode>;
@@ -198,7 +241,14 @@ function NodeGraph({
         />
       ))}
       {nodes.map((node) => (
-        <GraphNode key={node.id} node={node} layout={layout} selected={selected === node.id} onSelect={() => onSelect(node.id)} />
+        <GraphNode
+          key={node.id}
+          node={node}
+          layout={layout}
+          selected={selected === node.id}
+          onSelect={() => onSelect(node.id)}
+          onAsk={onAsk ? () => onAsk(node.id) : undefined}
+        />
       ))}
     </svg>
   );
@@ -212,6 +262,7 @@ export function AnatomyView({
   failing,
   selected,
   onSelect,
+  onAsk,
 }: {
   tx: DecodedTx;
   feeZat: number | null;
@@ -220,6 +271,7 @@ export function AnatomyView({
   failing: Set<NodeId>;
   selected: NodeId | null;
   onSelect: (id: NodeId) => void;
+  onAsk?: (id: NodeId) => void;
 }) {
   const nodes = buildNodes(tx, feeZat, failing, inputsPending);
   const flows = poolFlows(tx, inputValues, feeZat, inputsPending);
@@ -230,14 +282,15 @@ export function AnatomyView({
         const graphSize = full ? "mx-auto max-h-[calc(100dvh-260px)] max-w-[980px]" : "";
         return (
       <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
-        <Hint>Click a part to see its fields.</Hint>
+        <Hint>Click a part to see its fields; the sparkle asks AI about it.</Hint>
         <div className={`graph-canvas flex flex-col rounded-inner border border-border px-2 py-4 ${full ? "min-h-0 flex-1 justify-center" : ""}`}>
-          <NodeGraph layout={WIDE_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className={`hidden w-full md:block ${graphSize}`} />
+          <NodeGraph layout={WIDE_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} onAsk={onAsk} className={`hidden w-full md:block ${graphSize}`} />
           <NodeGraph
             layout={NARROW_LAYOUT}
             nodes={nodes}
             selected={selected}
             onSelect={onSelect}
+            onAsk={onAsk}
             className={`mx-auto block w-full md:hidden ${full ? `${graphSize} max-w-[520px]` : "max-w-[360px]"}`}
           />
         </div>
