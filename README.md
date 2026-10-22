@@ -146,6 +146,7 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **Ask AI**: a sparkle on every Trace row, Graph node, rule, Zebra match and PCZT action; answers cite the ZIP text, chips like `@1706` and `#branch-id` jump to the row or rule, and with no AI connected a built-in answer is assembled from the real fields
 - **Copy As GitHub Issue**: one click turns a verdict, a Zebra match or a PCZT into Markdown with the failing rules, ZIP links, source lines and decoder versions, previewed before copying
 - **Shareable Links, Privacy First**: a txid link as before; pasted hex or a PCZT goes into the link only if you tick the box, and only after the `#`, which browsers never send to a server
+- **Stall Doctor**: paste zebrad logs, Prometheus `/metrics` or `getblockchaininfo` and get a height timeline with restart and timeout markers, plus eight known stall signatures (Zebra #11133, #11509, #11610, #10630 and more) with evidence lines, workarounds and issue links, all in the tab
 - **Why Is It Stuck**: a transaction still in the mempool is checked at the next block, with blocks left before expiry, the fee against ZIP 317 and ZIP 2009, and any rule that keeps it out
 - **Honest Fee**: when an input value is unknown, every fee says "input values unavailable" with the reason (Zebra #11238), never a wrong number
 - **Keyboard First**: ↑ ↓ move through rows, ← → fold, Enter opens details, A asks AI about the selection, Esc closes

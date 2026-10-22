@@ -27,12 +27,14 @@ import { TopBar, type ChainState } from "./top-bar";
 import { Drawer, EmptyState, Hint, LoadingLine, Panel, Select, Tabs, type TabOption } from "./ui";
 import { VerdictCard, VerdictSkeleton, type RulesLine } from "./verdict-card";
 import { WhyView, type CatalogState } from "./why-view";
+import { StallView } from "./stall-view";
 import { AiStatusButton, AskPanel, useAskAi } from "./ask-ai";
 import { ConnectAiDialog } from "./connect-ai";
 import { checkSubject, nodeSubject, pcztActionSubject, traceRowSubject, zebraSubject, type AskEnv, type AskSubject } from "@/lib/ai/subject";
 import { matchZebraError } from "@/lib/zebra-match";
+import { diagnoseStall } from "@/lib/stall";
 
-type Mode = "tx" | "pczt" | "error";
+type Mode = "tx" | "pczt" | "error" | "stall";
 type ViewId = "overview" | "rules";
 type OverviewMode = "trace" | "graph";
 
@@ -120,6 +122,7 @@ export function InspectorApp() {
   const [prevouts, setPrevouts] = useState<PrevoutState>({ status: "idle" });
   const [pcztInput, setPcztInput] = useState<string | null>(null);
   const [errorInput, setErrorInput] = useState("");
+  const [stallInput, setStallInput] = useState("");
   const [samples, setSamples] = useState<SamplesState>({ status: "loading" });
   const [catalog, setCatalog] = useState<CatalogState>({ status: "loading" });
   const [view, setView] = useState<ViewId>("overview");
@@ -283,6 +286,11 @@ export function InspectorApp() {
         showResult("error");
         replaceUrl(null, network);
         return;
+      case "stall":
+        setStallInput(kind.text);
+        showResult("stall");
+        replaceUrl(null, network);
+        return;
     }
   }, [input, network, startLookup, showResult]);
 
@@ -302,6 +310,17 @@ export function InspectorApp() {
       setInputError(null);
       setErrorInput(text);
       showResult("error");
+      replaceUrl(null, network);
+    },
+    [network, showResult],
+  );
+
+  const pickStall = useCallback(
+    (text: string) => {
+      setInput(text);
+      setInputError(null);
+      setStallInput(text);
+      showResult("stall");
       replaceUrl(null, network);
     },
     [network, showResult],
@@ -499,6 +518,8 @@ export function InspectorApp() {
     () => (mode === "error" && catalog.status === "ready" ? matchZebraError(errorInput, catalog.entries) : []),
     [mode, catalog, errorInput],
   );
+
+  const stallReport = useMemo(() => (mode === "stall" ? diagnoseStall(stallInput) : null), [mode, stallInput]);
 
   const tipUpgrade = chain.status === "ready" ? chain.data.upgrade : null;
   const zebraCatalog = catalog.status === "ready" ? (catalog.entries[0]?.zebraVersion ?? null) : null;
@@ -776,6 +797,12 @@ export function InspectorApp() {
         <WhyView catalog={catalog} text={errorInput} onAsk={(match) => ai.ask(zebraSubject(match.entry, match.reason))} />
       </Panel>
     );
+  } else if (mode === "stall" && stallReport) {
+    result = (
+      <Panel label="Stall Doctor" bodyClassName="gap-3 px-4 pb-4">
+        <StallView report={stallReport} />
+      </Panel>
+    );
   }
 
   return (
@@ -802,6 +829,7 @@ export function InspectorApp() {
                 samples={samples}
                 onPickSample={pickSample}
                 onPickError={pickError}
+                onPickStall={pickStall}
                 compact={false}
               />
             </div>
@@ -822,6 +850,7 @@ export function InspectorApp() {
             samples={samples}
             onPickSample={pickSample}
             onPickError={pickError}
+            onPickStall={pickStall}
             compact
           />
           <div key={resultId} className="contents">

@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { CaretRight, Info, Sparkle } from "@phosphor-icons/react";
 import type { Sample } from "@contract/types";
 import { classifyInput } from "@/lib/input";
-import { ERROR_CHIP, SAMPLE_CHIPS } from "@/lib/samples";
+import { ERROR_CHIP, SAMPLE_CHIPS, STALL_CHIPS } from "@/lib/samples";
 import { formatInt, NETWORK_LABEL, shortHash } from "@/lib/format";
 import { Button, Dot, Hint, LoadingLine, Textarea } from "./ui";
 
@@ -33,6 +33,8 @@ function kindHint(input: string, endpoints: Endpoints): string | null {
       return "PCZT · decoded in this tab";
     case "error":
       return "Zebra error message · matched in this tab";
+    case "stall":
+      return "zebrad logs or metrics · Stall Doctor runs in this tab";
     case "invalid":
       return kind.reason;
   }
@@ -61,6 +63,7 @@ function PrivacyNote({ endpoints }: { endpoints: Endpoints }) {
         <ul className="flex list-disc flex-col gap-1.5 pl-4">
           <li>Raw transactions and PCZTs are decoded in this tab with WebAssembly (librustzcash) and never leave it.</li>
           <li>Zebra error messages are matched in this tab against a catalog extracted from Zebra&apos;s source.</li>
+          <li>Pasted zebrad logs and /metrics output are diagnosed in this tab and never sent anywhere.</li>
           <li>
             Looking up by txid asks <span className="font-mono text-xs text-text">{endpoints.main ?? "the Mainnet indexer"}</span>,
             and <span className="font-mono text-xs text-text">{endpoints.test ?? "the Testnet indexer"}</span> if Mainnet does
@@ -83,6 +86,7 @@ export function InspectBox({
   samples,
   onPickSample,
   onPickError,
+  onPickStall,
   compact,
 }: {
   input: string;
@@ -94,6 +98,7 @@ export function InspectBox({
   samples: SamplesState;
   onPickSample: (sample: Sample) => void;
   onPickError: (text: string) => void;
+  onPickStall: (text: string) => void;
   compact: boolean;
 }) {
   const hint = kindHint(input, endpoints);
@@ -109,7 +114,7 @@ export function InspectBox({
         }}
       >
         <label htmlFor="tx-input" className={compact ? "sr-only" : "px-1 text-[14px] font-medium text-fg"}>
-          Paste a Zcash transaction, txid, PCZT or Zebra error
+          Paste a Zcash transaction, txid, PCZT, Zebra error or zebrad logs
         </label>
         <div className={`flex gap-2 ${compact ? "items-center" : "flex-col"}`}>
           <Textarea
@@ -205,6 +210,19 @@ export function InspectBox({
                   {ERROR_CHIP.label}
                 </button>
               )}
+              {samples.status !== "loading" &&
+                STALL_CHIPS.map((chip) => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    title={chip.why}
+                    onClick={() => onPickStall(chip.text)}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25"
+                  >
+                    <Dot tone="warn" />
+                    {chip.label}
+                  </button>
+                ))}
             </div>
             {samples.status === "loading" && <span className="skeleton ml-1 h-3 w-28 rounded-full" aria-hidden />}
             {others.length > 0 && (

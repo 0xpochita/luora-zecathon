@@ -1,9 +1,12 @@
+import { looksLikeNodeOutput } from "./stall";
+
 export type InputKind =
   | { kind: "empty" }
   | { kind: "txid"; txid: string }
   | { kind: "hex"; hex: string }
   | { kind: "pczt"; data: string }
   | { kind: "error"; text: string }
+  | { kind: "stall"; text: string }
   | { kind: "invalid"; reason: string };
 
 const PCZT_MAGIC_HEX = "50435a54";
@@ -12,6 +15,7 @@ const PCZT_MAGIC_BASE64_PREFIX = "UENaV";
 export function classifyInput(raw: string): InputKind {
   const compact = raw.replace(/\s+/g, "");
   if (!compact) return { kind: "empty" };
+  if (looksLikeNodeOutput(raw)) return { kind: "stall", text: raw };
   const lower = compact.toLowerCase();
   if (lower.startsWith(PCZT_MAGIC_HEX) && /^[0-9a-f]+$/.test(lower)) return { kind: "pczt", data: lower };
   if (compact.startsWith(PCZT_MAGIC_BASE64_PREFIX)) return { kind: "pczt", data: compact };
