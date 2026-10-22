@@ -1,4 +1,5 @@
 import type { Network, Sample, ZebraErrorEntry } from "@contract/types";
+import type { BlockView } from "@/server/block";
 
 export interface ChainInfo {
   network: Network;
@@ -14,6 +15,10 @@ export interface TxLookup {
   hex: string;
   height: number | null;
   mempool?: boolean;
+  endpoint: string;
+}
+
+export interface BlockLookup extends BlockView {
   endpoint: string;
 }
 
@@ -61,6 +66,7 @@ function listFrom<T>(body: unknown, key: string): T[] {
 export const api = {
   chain: (network: Network, signal?: AbortSignal) => getJson<ChainInfo>(`/api/chain?network=${network}`, signal),
   tx: (txid: string, network: Network, signal?: AbortSignal) => getJson<TxLookup>("/api/tx", signal, { txid, network }),
+  block: (block: string, network: Network, signal?: AbortSignal) => getJson<BlockLookup>("/api/block", signal, { block, network }),
   prevouts: (txid: string, network: Network, signal?: AbortSignal) =>
     getJson<PrevoutValues>("/api/prevouts", signal, { txid, network }),
   samples: (signal?: AbortSignal) => getJson<unknown>("/api/samples", signal).then((body) => listFrom<Sample>(body, "samples")),

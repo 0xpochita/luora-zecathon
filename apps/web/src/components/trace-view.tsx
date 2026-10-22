@@ -62,7 +62,7 @@ function ZecText({ text }: { text: string }) {
   );
 }
 
-function FieldInline({ name, display, encrypted }: { name: string; display: string; encrypted?: boolean }) {
+export function FieldInline({ name, display, encrypted }: { name: string; display: string; encrypted?: boolean }) {
   return (
     <span className="break-all sm:break-normal sm:whitespace-nowrap">
       <span className="text-muted">{name}=</span>

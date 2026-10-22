@@ -39,7 +39,7 @@ The project's notes live in this repository:
 
 | Section | Pages |
 |---|---|
-| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) · [Copy as issue, mempool, honest fee](docs/handoff/issue.md) |
+| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) · [Copy as issue, mempool, honest fee](docs/handoff/issue.md) · [Block Trace](docs/handoff/block.md) |
 | Data contract | [`contract/types.ts`](contract/types.ts), the shapes shared by the WASM module, the UI and the server routes |
 | Real data | [`data/samples.json`](data/samples.json) · [`data/zebra-errors.json`](data/zebra-errors.json) · [`data/zebra-error-samples.json`](data/zebra-error-samples.json) · [`data/upgrades.json`](data/upgrades.json) · [`data/zips/`](data/zips) · [test fixtures](crates/core/tests/fixtures/README.md) |
 | Specs used | [ZIP 203](https://zips.z.cash/zip-0203) · [ZIP 225](https://zips.z.cash/zip-0225) · [ZIP 229](https://zips.z.cash/zip-0229) · [ZIP 244](https://zips.z.cash/zip-0244) · [ZIP 257](https://zips.z.cash/zip-0257) · [ZIP 258](https://zips.z.cash/zip-0258) · [ZIP 317](https://zips.z.cash/zip-0317) · [ZIP 2009](https://zips.z.cash/zip-2009) · [ZIP 374](https://zips.z.cash/zip-0374) |
@@ -138,6 +138,7 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **Why Rejected**: 285 Zebra error variants with stage, rule and fix, matched against what you paste
 - **PCZT Inspector**: nine signing roles, per-action values and recipients, address and signature checks
 - **Auto-Detect Input**: one box for txid, raw hex, PCZT or error text; txids are tried on Mainnet, then Testnet
+- **Block Trace**: paste a block hash (copied from an explorer by mistake, or on purpose) or a height and see the header and every transaction with its pools; one click opens a transaction, and `?block=<hash|height>&net=main|test` links straight to it
 - **Live Chain Chip**: the network's current height and active upgrade, read from lightwalletd
 - **Real Samples**: eleven real mainnet and testnet transactions, one click each
 - **In-Page Full Screen**: the Trace and the graph grow to fill the window; the detail drawer still opens

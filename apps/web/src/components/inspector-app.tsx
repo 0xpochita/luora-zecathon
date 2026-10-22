@@ -4,11 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, 
 import { useSearchParams } from "next/navigation";
 import { Warning } from "@phosphor-icons/react";
 import type { Check, DecodedTx, Network, Nu7Run, PcztView as PcztData, Sample, TraceNode } from "@contract/types";
-import { api, ApiError, errorText, type ChainInfo } from "@/lib/api";
+import { api, ApiError, errorText, type BlockLookup, type ChainInfo } from "@/lib/api";
 import { coreErrorMessage, loadCore, type CoreState } from "@/lib/core";
 import { failingNodes, type NodeId } from "@/lib/anatomy";
 import { failingRows, traceRows } from "@/lib/trace";
-import { classifyInput, isTxid } from "@/lib/input";
+import { classifyInput, isBlockRef, isTxid } from "@/lib/input";
 import { formatInt, formatZec, NETWORK_LABEL } from "@/lib/format";
 import { describeMovement, summarizeRules } from "@/lib/summary";
 import { FEE_UNAVAILABLE, withHonestFee } from "@/lib/fee";
@@ -16,6 +16,7 @@ import { expiryText, feeText, mempoolStatus, stuckReason } from "@/lib/mempool";
 import { readShareFragment } from "@/lib/share-link";
 import { CopyIssue } from "./copy-issue";
 import { AnatomyView } from "./anatomy-view";
+import { BlockTraceView } from "./block-view";
 import { TraceDetails, TraceSkeleton, TraceView } from "./trace-view";
 import { CheckAtControl, ChecksView, RulesSkeleton, type CheckAt } from "./checks-view";
 import { MigrationCard } from "./migration-card";
@@ -32,7 +33,7 @@ import { ConnectAiDialog } from "./connect-ai";
 import { checkSubject, nodeSubject, pcztActionSubject, traceRowSubject, zebraSubject, type AskEnv, type AskSubject } from "@/lib/ai/subject";
 import { matchZebraError } from "@/lib/zebra-match";
 
-type Mode = "tx" | "pczt" | "error";
+type Mode = "tx" | "pczt" | "error" | "block";
 type ViewId = "overview" | "rules";
 type OverviewMode = "trace" | "graph";
 
@@ -91,10 +92,14 @@ function parseHeight(text: string): number | null {
   return Number(digits);
 }
 
-function replaceUrl(txid: string | null, network: Network) {
+function notFoundOn(nets: Network[], what: string): string {
+  return `${what} on ${nets.map((item) => NETWORK_LABEL[item]).join(" or ")}.`;
+}
+
+function replaceUrl(id: string | null, network: Network, key: "tx" | "block" = "tx") {
   const params = new URLSearchParams();
-  if (txid) {
-    params.set("tx", txid);
+  if (id) {
+    params.set(key, id);
     params.set("net", network);
   }
   const query = params.toString();
@@ -104,20 +109,24 @@ function replaceUrl(txid: string | null, network: Network) {
 export function InspectorApp() {
   const searchParams = useSearchParams();
   const [initial] = useState(() => {
+    const network = parseNetwork(searchParams.get("net"));
     const txid = searchParams.get("tx")?.toLowerCase() ?? null;
-    return isTxid(txid) ? { txid, network: parseNetwork(searchParams.get("net")) } : null;
+    if (isTxid(txid)) return { kind: "tx" as const, id: txid, network };
+    const block = searchParams.get("block")?.toLowerCase() ?? null;
+    return isBlockRef(block) ? { kind: "block" as const, id: block, network } : null;
   });
   const [network, setNetwork] = useState<Network>(initial?.network ?? "main");
   const [coreState, setCoreState] = useState<CoreState>({ status: "loading" });
   const [chains, setChains] = useState<Partial<Record<Network, ChainState>>>({});
-  const [input, setInput] = useState(initial?.txid ?? "");
+  const [input, setInput] = useState(initial?.id ?? "");
   const [inputError, setInputError] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode | null>(null);
   const [loaded, setLoaded] = useState<LoadedTx | null>(null);
   const [lookup, setLookup] = useState<LookupState>(() =>
-    initial ? { status: "loading", txid: initial.txid, endpoint: `the ${NETWORK_LABEL[initial.network ?? "main"]} indexer` } : { status: "idle" },
+    initial ? { status: "loading", txid: initial.id, endpoint: `the ${NETWORK_LABEL[initial.network ?? "main"]} indexer` } : { status: "idle" },
   );
   const [prevouts, setPrevouts] = useState<PrevoutState>({ status: "idle" });
+  const [block, setBlock] = useState<{ id: string; view: BlockLookup } | null>(null);
   const [pcztInput, setPcztInput] = useState<string | null>(null);
   const [errorInput, setErrorInput] = useState("");
   const [samples, setSamples] = useState<SamplesState>({ status: "loading" });
@@ -184,8 +193,41 @@ export function InspectorApp() {
     setHeightText("");
   }, []);
 
+  const runBlockLookup = useCallback(
+    (id: string, nets: Network[], afterTx: boolean) => {
+      lookupAbort.current?.abort();
+      const controller = new AbortController();
+      lookupAbort.current = controller;
+      const attempt = (index: number) => {
+        const net = nets[index];
+        if (index > 0 || afterTx) setLookup({ status: "loading", txid: id, endpoint: endpointLabel(endpointsRef.current, net) });
+        api
+          .block(id, net, controller.signal)
+          .then((body) => {
+            setLookup({ status: "idle" });
+            setNetwork(net);
+            setBlock({ id, view: body });
+            showResult("block");
+            replaceUrl(id, net, "block");
+          })
+          .catch((error) => {
+            if (controller.signal.aborted) return;
+            const notFound = error instanceof ApiError && error.status === 404;
+            if (notFound && index + 1 < nets.length) return attempt(index + 1);
+            setLookup({
+              status: "error",
+              txid: id,
+              message: notFound ? notFoundOn(nets, afterTx ? "no transaction or block with this hash" : "no block at this height or hash") : errorText(error),
+            });
+          });
+      };
+      attempt(0);
+    },
+    [showResult],
+  );
+
   const runLookup = useCallback(
-    (txid: string, nets: Network[], noteFor: (index: number) => string | null) => {
+    (txid: string, nets: Network[], noteFor: (index: number) => string | null, blockFallback = false) => {
       lookupAbort.current?.abort();
       const controller = new AbortController();
       lookupAbort.current = controller;
@@ -214,25 +256,45 @@ export function InspectorApp() {
             if (controller.signal.aborted) return;
             const notFound = error instanceof ApiError && error.status === 404;
             if (notFound && index + 1 < nets.length) return attempt(index + 1);
+            if (notFound && blockFallback) return runBlockLookup(txid, nets, true);
             setLookup({
               status: "error",
               txid,
-              message: notFound && nets.length > 1 ? `not found on ${nets.map((item) => NETWORK_LABEL[item]).join(" or ")}.` : errorText(error),
+              message: notFound && nets.length > 1 ? notFoundOn(nets, "not found") : errorText(error),
             });
           });
       };
       attempt(0);
     },
-    [fetchPrevouts, showResult],
+    [fetchPrevouts, showResult, runBlockLookup],
   );
 
   const startLookup = useCallback(
-    (txid: string, nets: Network[], noteFor: (index: number) => string | null) => {
+    (txid: string, nets: Network[], noteFor: (index: number) => string | null, blockFallback = false) => {
       setLookup({ status: "loading", txid, endpoint: endpointLabel(endpointsRef.current, nets[0]) });
       setPrevouts({ status: "idle" });
-      runLookup(txid, nets, noteFor);
+      runLookup(txid, nets, noteFor, blockFallback);
     },
     [runLookup],
+  );
+
+  const startBlockLookup = useCallback(
+    (id: string, nets: Network[]) => {
+      setInput(id);
+      setInputError(null);
+      setLookup({ status: "loading", txid: id, endpoint: endpointLabel(endpointsRef.current, nets[0]) });
+      runBlockLookup(id, nets, false);
+    },
+    [runBlockLookup],
+  );
+
+  const openBlockTx = useCallback(
+    (txid: string, net: Network) => {
+      setInput(txid);
+      setInputError(null);
+      startLookup(txid, [net], () => "from the block");
+    },
+    [startLookup],
   );
 
   useEffect(() => {
@@ -249,8 +311,10 @@ export function InspectorApp() {
 
   useEffect(() => {
     if (!initial) return;
-    runLookup(initial.txid, initial.network ? [initial.network] : AUTO_NETWORKS, initial.network ? () => "from the link" : autoNote);
-  }, [initial, runLookup]);
+    const nets = initial.network ? [initial.network] : AUTO_NETWORKS;
+    if (initial.kind === "block") runBlockLookup(initial.id, nets, false);
+    else runLookup(initial.id, nets, initial.network ? () => "from the link" : autoNote);
+  }, [initial, runLookup, runBlockLookup]);
 
   const inspect = useCallback(() => {
     const kind = classifyInput(input);
@@ -263,7 +327,10 @@ export function InspectorApp() {
         setInputError(kind.reason);
         return;
       case "txid":
-        startLookup(kind.txid, AUTO_NETWORKS, autoNote);
+        startLookup(kind.txid, AUTO_NETWORKS, autoNote, true);
+        return;
+      case "block":
+        startBlockLookup(kind.block, AUTO_NETWORKS);
         return;
       case "hex":
         lookupAbort.current?.abort();
@@ -284,7 +351,7 @@ export function InspectorApp() {
         replaceUrl(null, network);
         return;
     }
-  }, [input, network, startLookup, showResult]);
+  }, [input, network, startLookup, startBlockLookup, showResult]);
 
   const pickSample = useCallback(
     (sample: Sample) => {
@@ -311,6 +378,7 @@ export function InspectorApp() {
     lookupAbort.current?.abort();
     setMode(null);
     setLoaded(null);
+    setBlock(null);
     setLookup({ status: "idle" });
     setInput("");
     setInputError(null);
@@ -711,6 +779,17 @@ export function InspectorApp() {
         </>
       );
     } else result = txSkeleton;
+  } else if (mode === "block" && block) {
+    result = (
+      <div className="enter" style={stagger(0)}>
+        <BlockTraceView
+          block={block.view}
+          onOpenTx={(txid) => openBlockTx(txid, block.view.network)}
+          onOpenBlock={(hash) => startBlockLookup(hash, [block.view.network])}
+          onNetworkChange={(net) => startBlockLookup(block.id, [net])}
+        />
+      </div>
+    );
   } else if (mode === "pczt") {
     const done = pczt && "view" in pczt ? pczt.view.roles.filter((role) => role.done).length : 0;
     result = (
