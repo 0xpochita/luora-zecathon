@@ -38,7 +38,7 @@ The project's notes live in this repository:
 
 | Section | Pages |
 |---|---|
-| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) |
+| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) · [Copy as issue, mempool, honest fee](docs/handoff/issue.md) |
 | Data contract | [`contract/types.ts`](contract/types.ts), the shapes shared by the WASM module, the UI and the server routes |
 | Real data | [`data/samples.json`](data/samples.json) · [`data/zebra-errors.json`](data/zebra-errors.json) · [`data/zebra-error-samples.json`](data/zebra-error-samples.json) · [`data/upgrades.json`](data/upgrades.json) · [`data/zips/`](data/zips) · [test fixtures](crates/core/tests/fixtures/README.md) |
 | Specs used | [ZIP 203](https://zips.z.cash/zip-0203) · [ZIP 225](https://zips.z.cash/zip-0225) · [ZIP 229](https://zips.z.cash/zip-0229) · [ZIP 244](https://zips.z.cash/zip-0244) · [ZIP 257](https://zips.z.cash/zip-0257) · [ZIP 258](https://zips.z.cash/zip-0258) · [ZIP 317](https://zips.z.cash/zip-0317) · [ZIP 2009](https://zips.z.cash/zip-2009) · [ZIP 374](https://zips.z.cash/zip-0374) |
@@ -138,6 +138,10 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **Skeleton Loading And Motion**: shaped placeholders while data loads, staged entrance after; both respect reduced motion
 - **Phone Ready**: every view at 390 px, the drawer becomes a bottom sheet
 - **Ask AI**: a sparkle on every Trace row, Graph node, rule, Zebra match and PCZT action; answers cite the ZIP text, chips like `@1706` and `#branch-id` jump to the row or rule, and with no AI connected a built-in answer is assembled from the real fields
+- **Copy As GitHub Issue**: one click turns a verdict, a Zebra match or a PCZT into Markdown with the failing rules, ZIP links, source lines and decoder versions, previewed before copying
+- **Shareable Links, Privacy First**: a txid link as before; pasted hex or a PCZT goes into the link only if you tick the box, and only after the `#`, which browsers never send to a server
+- **Why Is It Stuck**: a transaction still in the mempool is checked at the next block, with blocks left before expiry, the fee against ZIP 317 and ZIP 2009, and any rule that keeps it out
+- **Honest Fee**: when an input value is unknown, every fee says "input values unavailable" with the reason (Zebra #11238), never a wrong number
 - **Keyboard First**: ↑ ↓ move through rows, ← → fold, Enter opens details, A asks AI about the selection, Esc closes
 
 <img width="1440" alt="Rules: consensus and fee checks at a chosen height" src="docs/screens/ux/after-1440-rules-at-tip.png" />
@@ -154,7 +158,7 @@ paste → classify (txid | hex | pczt | error | invalid)
 | Indexer | lightwalletd `CompactTxStreamer` over gRPC (`@grpc/grpc-js`), the protocol Zaino also serves |
 | Zebra catalog | A Rust extractor using `syn` over Zebra's source |
 | Regtest | `zebrad` in Docker, transactions signed with `@noble/curves` |
-| Tests | 24 Rust tests on real transactions (`cargo test`), 51 offline web tests and 12 live indexer tests (Vitest) |
+| Tests | 24 Rust tests on real transactions (`cargo test`), 83 offline web tests and 12 live indexer tests (Vitest) |
 | Lint | ESLint, TypeScript strict |
 | Built with | Claude Code and Orca worktrees |
 
@@ -330,6 +334,8 @@ pnpm dev            # http://localhost:3031
 
 The WASM decoder is committed in `apps/web/public/wasm/`, so no Rust toolchain is needed to run the app. Open it, click a sample chip, or paste a transaction.
 
+> **Share links.** `?tx=<txid>&net=main|test` opens a txid lookup. A link made with "Include the raw transaction in the link" looks like `/#hex=<hex>&net=main` (or `#pczt=…`): the part after `#` is read in the tab and never reaches any server, Luora's included. Anyone who opens it can still decode it, and unbroadcast hex shows its transparent addresses and amounts, so share it only where that is fine. Links above 50,000 characters are refused.
+
 ### Rebuild the decoder
 
 ```bash
@@ -486,6 +492,9 @@ parseAnswer(text, known)           # @offset, #check and ZIP n chips in an answe
 - [x] Halo 2 and Groth16 proof verification in the native CLI
 - [x] One-box UX with verdict, skeleton loading, in-page full screen, phone layout
 - [x] Ask AI on rows, nodes, rules, Zebra matches and PCZT actions: built-in answers, your Claude Code, local models or your own key, with the payload shown before it leaves
+- [x] Copy as GitHub issue on the verdict, Why rejected and PCZT, with opt-in `#hex=` / `#pczt=` share links
+- [x] Mempool "why stuck": rules at tip + 1, blocks left before expiry, fee against ZIP 317 and ZIP 2009
+- [x] Honest fee: "input values unavailable" everywhere a fee is shown when an input value is unknown
 - [ ] Proof verification in the web app
 - [ ] Hosted demo and 2-minute video
 
