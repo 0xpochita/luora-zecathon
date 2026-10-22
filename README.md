@@ -5,7 +5,7 @@
 <h1 align="center">Luora</h1>
 
 <p align="center">
-  See what a Zcash transaction actually does. Paste a transaction, a txid, a PCZT or a Zebra error, and get its structure, the consensus rules it passes or breaks, and the reason a node said no. Decoded in your browser. Nothing leaves it.
+  See what a Zcash transaction actually does. Paste a transaction, a txid, a block hash, a PCZT, a Zebra error or zebrad logs, and get its structure, the consensus rules it passes or breaks, the reason a node said no, or why a node stopped syncing. Decoded in your browser. Nothing leaves it.
 </p>
 
 <p align="center">
@@ -22,11 +22,11 @@
 
 ---
 
-Luora is a transaction inspector for the people who keep Zcash running: **wallet and SDK developers, exchange engineers, Zebra operators and auditors**. NU6.3 Ironwood added the v6 transaction and a fourth value pool, and most tools have not caught up. Luora reads any v4, v5 or v6 transaction with **librustzcash compiled to WebAssembly**, lays it out byte by byte like a debugger trace, checks it against the consensus rules of any height, explains **Zebra's** rejections in plain words, and shows how far a **PCZT** has come through its signing roles.
+Luora is a transaction inspector for the people who keep Zcash running: **wallet and SDK developers, exchange engineers, Zebra operators and auditors**. NU6.3 Ironwood added the v6 transaction and a fourth value pool, and most tools have not caught up. Luora reads any v4, v5 or v6 transaction with **librustzcash compiled to WebAssembly**, lays it out byte by byte like a debugger trace, checks it against the consensus rules of any height, explains **Zebra's** rejections in plain words, and shows how far a **PCZT** has come through its signing roles. For node operators it reads a whole **block**, diagnoses a stalled **zebrad** from its logs, and watches whether the public Zebra, Zakura and Zaino backends still agree on one chain.
 
 > **Luora never sees your secrets.** It reads the public shape of a transaction and nothing more.
 >
-> - Pasted hex and PCZTs are **decoded in your browser tab** and never sent anywhere
+> - Pasted hex, PCZTs and zebrad logs are **decoded in your browser tab** and never sent anywhere
 > - A txid lookup asks a public **lightwalletd** indexer for that one transaction, through a server route that logs nothing; the txid travels in a POST body, never in a URL
 > - **No viewing keys, no wallet, no analytics, no cookies.** Shielded amounts, senders, recipients and memos stay encrypted
 > - It is **defensive only**: inspect, explain, verify. No linking, no clustering, no deanonymisation
@@ -39,11 +39,11 @@ The project's notes live in this repository:
 
 | Section | Pages |
 |---|---|
-| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) · [Copy as issue, mempool, honest fee](docs/handoff/issue.md) · [Block Trace](docs/handoff/block.md) · [Light and dark theme](docs/handoff/theme.md) |
+| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) · [Copy as issue, mempool, honest fee](docs/handoff/issue.md) · [ZIP 318 migration check](docs/handoff/zip318.md) · [Block Trace](docs/handoff/block.md) · [Stall Doctor](docs/handoff/stall.md) · [Chain divergence watcher](docs/handoff/diverge.md) · [Light and dark theme](docs/handoff/theme.md) |
 | Data contract | [`contract/types.ts`](contract/types.ts), the shapes shared by the WASM module, the UI and the server routes |
 | Real data | [`data/samples.json`](data/samples.json) · [`data/zebra-errors.json`](data/zebra-errors.json) · [`data/zebra-error-samples.json`](data/zebra-error-samples.json) · [`data/upgrades.json`](data/upgrades.json) · [`data/zips/`](data/zips) · [test fixtures](crates/core/tests/fixtures/README.md) |
 | Specs used | [ZIP 203](https://zips.z.cash/zip-0203) · [ZIP 225](https://zips.z.cash/zip-0225) · [ZIP 229](https://zips.z.cash/zip-0229) · [ZIP 244](https://zips.z.cash/zip-0244) · [ZIP 257](https://zips.z.cash/zip-0257) · [ZIP 258](https://zips.z.cash/zip-0258) · [ZIP 317](https://zips.z.cash/zip-0317) · [ZIP 2009](https://zips.z.cash/zip-2009) · [ZIP 374](https://zips.z.cash/zip-0374) |
-| Screens | [`docs/screens/`](docs/screens), every view at 1440 px and 390 px |
+| Screens | [`docs/screens/`](docs/screens), every view at 1440 px and 390 px; [`docs/screens/theme/`](docs/screens/theme) has each main view in light and dark |
 
 ---
 
@@ -75,7 +75,7 @@ Zcash changed under everyone's feet in 2026, and the tooling is behind.
 
 ### The Solution
 
-Luora answers with six pieces, each doing a job the others cannot.
+Luora answers with eight pieces, each doing a job the others cannot.
 
 **1. A trace of the bytes**: `trace_tx` walks the raw transaction in serialisation order and returns every element with its exact byte offset and length: header, each transparent input and output, each Sapling spend and output, each Orchard and Ironwood action, proofs, signatures, and the fee. Encrypted parts are shown by size only. Offsets are proven by tests on real transactions.
 
@@ -89,31 +89,38 @@ Luora answers with six pieces, each doing a job the others cannot.
 
 **6. PCZT before you sign**: `inspect_pczt` reads a Partially Created Zcash Transaction with the `pczt` crate, shows which of the nine ZIP 374 roles have run, every action's value and recipient, and warns when a shown address differs from the committed one or when a signature is missing before extraction.
 
+**7. A whole block at once**: paste a block hash (often copied from an explorer by mistake) or a height, and Block Trace reads the compact block from lightwalletd: header, previous block, and every transaction with its pools and the coinbase marked. One click opens any of them in the Trace.
+
+**8. Tools for the people running nodes**: **Stall Doctor** reads pasted zebrad logs, Prometheus `/metrics` or `getblockchaininfo` and matches eight known stall signatures from Zebra's issue tracker, each with the evidence lines, the workaround and the issue link. **Do the backends agree?** (`/chains`) compares the tips of the public Zebra, Zakura and Zaino endpoints and names the first height where two of them follow different chains, the gap Zebra #11675 says nothing watches today. On 2026-10-22 it showed a public Testnet backend (ZecDev lightwalletd-rs, Zebra 6.4.2) on a different chain from block 4,416,798, stuck at 4,417,161.
+
 ---
 
 ## Input Types
 
 One box takes everything. Luora decides what it got and opens the matching result.
 
-| | **txid** | **Raw transaction** | **PCZT** | **Zebra error** |
-|---|---|---|---|---|
-| **You paste** | 64 hex characters | longer hex | PCZT bytes, hex or base64 | any text |
-| **What happens** | looked up on Mainnet, then Testnet | decoded in the tab | parsed in the tab | matched against the catalog in the tab |
-| **Network call** | one POST to Luora's route, which asks lightwalletd | none | none | none (the public catalog loads once) |
-| **Rules checked at** | the height it was mined | the live tip | n/a | n/a |
-| **You get** | verdict, Trace, Graph, Rules | verdict, Trace, Graph, Rules | role progress, actions, signer checks | variant, stage, rule, fix |
+| | **txid** | **Block hash or height** | **Raw transaction** | **PCZT** | **Zebra error** | **zebrad logs or metrics** |
+|---|---|---|---|---|---|---|
+| **You paste** | 64 hex characters | 64 hex characters, or a number | longer hex | PCZT bytes, hex or base64 | any text | several log lines, `/metrics` text or `getblockchaininfo` JSON |
+| **What happens** | looked up on Mainnet, then Testnet | tried as a txid first, then as a block | decoded in the tab | parsed in the tab | matched against the catalog in the tab | Stall Doctor runs in the tab |
+| **Network call** | one POST to Luora's route, which asks lightwalletd | one POST to `/api/block`, which asks lightwalletd | none | none | none (the public catalog loads once) | none |
+| **Rules checked at** | the height it was mined | n/a | the live tip | n/a | n/a | n/a |
+| **You get** | verdict, Trace, Graph, Rules | header and every transaction, each one click away | verdict, Trace, Graph, Rules | role progress, actions, signer checks | variant, stage, rule, fix | height timeline, matched stall signatures, what to collect next |
 
 ### Why each input earns its place
 
-A txid is the everyday case: something on chain looks wrong. Raw hex is for a transaction that never made it on chain, straight from a wallet or a failed broadcast. A PCZT is for the moment before signing, when a mistake can still be caught. A Zebra error is often all an operator has.
+A txid is the everyday case: something on chain looks wrong. Raw hex is for a transaction that never made it on chain, straight from a wallet or a failed broadcast. A PCZT is for the moment before signing, when a mistake can still be caught. A Zebra error is often all an operator has. A block hash is what people copy from explorers, so it should open the block instead of failing. Logs are what an operator has when the node itself is the problem.
 
 ### Decision flow of one lookup
 
 ```
-paste → classify (txid | hex | pczt | error | invalid)
+paste → classify (stall | block height | txid | hex | pczt | error | invalid)
+  ├─ stall → diagnoseStall in the tab → timeline + signature checks
   ├─ txid  → POST /api/tx {txid, network: main}  ── not found → retry on test
   │           └─ GetTransaction on zec.rocks:443 (lightwalletd) → raw bytes + mined height
+  │         ── still not found → POST /api/block (same 64 hex as a block hash) → Block Trace
   │         POST /api/prevouts → parent outputs → transparent input values (for the fee)
+  ├─ block height → POST /api/block → GetBlock → Block Trace
   ├─ hex   → bytes stay in the tab
   ├─ WASM  decode_tx · trace_tx · check_tx(height, input values) · fee_zat
   ├─ pczt  → inspect_pczt
@@ -129,7 +136,7 @@ paste → classify (txid | hex | pczt | error | invalid)
 
 - **Byte-Exact Trace**: every element of the transaction in serialisation order with its offset and size, Phalcon-style rows with kind badges, indent guides and folding
 - **Verdict Card**: what moved, from which pool to which, the fee and how many rules pass, in one sentence
-- **Anatomy Graph**: the same transaction as a node graph, plus each pool's net value balance
+- **Anatomy Graph**: the same transaction as one node per pool (a 134-output payout is one Transparent node reading "0 in · 134 out"), plus each pool's net value balance; the Trace lists every input, output and action
 - **Rules At Any Height**: twelve checks with ZIP links and source lines; check at the mined height, the live tip or any height
 - **NU7 Readiness**: one click **Check at NU7** (Testnet at 4,465,026; Mainnet as a labelled hypothetical), plus the ZIP 218 limits of 330 Orchard, 330 Ironwood and 300 Sapling actions that Zebra's mempool enforces from NU7
 - **ZIP 318 Migration Check**: Blends in / Fingerprintable / Unknown for Orchard to Ironwood migrations, straight from `zcash_protocol::zip318`, with the field that decides it
@@ -142,7 +149,7 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **Live Chain Chip**: the network's current height and active upgrade, read from lightwalletd
 - **Do The Backends Agree**: `/chains` asks 11 public mainnet and 2 testnet lightwalletd and Zaino endpoints (Zebra, Zakura, Zaino, lightwalletd-rs) for their tip, shows each one's software and lag, and when two follow different chains, names the first differing height with both block hashes (Zebra #11675)
 - **Real Samples**: eleven real mainnet and testnet transactions, one click each
-- **In-Page Full Screen**: the Trace and the graph grow to fill the window; the detail drawer still opens
+- **In-Page Full Screen**: the Trace and the graph grow to fill the window, a Trace | Graph switch in the card header changes view without leaving full screen, and the detail drawer still opens
 - **Skeleton Loading And Motion**: shaped placeholders while data loads, staged entrance after; both respect reduced motion
 - **Phone Ready**: every view at 390 px, the drawer becomes a bottom sheet
 - **Light And Dark**: follows the system theme by default; the sun/moon/monitor button in the top bar pins Light or Dark, remembered in this browser and applied before the first paint
@@ -152,6 +159,7 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **Stall Doctor**: paste zebrad logs, Prometheus `/metrics` or `getblockchaininfo` and get a height timeline with restart and timeout markers, plus eight known stall signatures (Zebra #11133, #11509, #11610, #10630 and more) with evidence lines, workarounds and issue links, all in the tab
 - **Why Is It Stuck**: a transaction still in the mempool is checked at the next block, with blocks left before expiry, the fee against ZIP 317 and ZIP 2009, and any rule that keeps it out
 - **Honest Fee**: when an input value is unknown, every fee says "input values unavailable" with the reason (Zebra #11238), never a wrong number
+- **Styled Controls**: dropdowns use the browser's customizable `<select>` (Chromium 135+, native elsewhere), and the input box grows to show pasted multi-line logs
 - **Keyboard First**: ↑ ↓ move through rows, ← → fold, Enter opens details, A asks AI about the selection, Esc closes
 
 <img width="1440" alt="Rules: consensus and fee checks at a chosen height" src="docs/screens/ux/after-1440-rules-at-tip.png" />
@@ -223,6 +231,11 @@ Zebra is the only consensus node on Zcash now, so its errors are the ones people
 
 Stages in the catalog: state 68, block 63, transaction 59, mempool 44, router 19, rpc 15, proof and signature 11, script 6.
 
+| Operator tool | Where | What it checks |
+|---|---|---|
+| **Stall Doctor** | [`apps/web/src/lib/stall.ts`](apps/web/src/lib/stall.ts) | Eight stall signatures from Zebra issues #11133, #11509, #11610, #10494 / #10630 and others, plus checkpoint gap and peer count from `/metrics`; runs in the tab |
+| **Chain divergence** | [`apps/web/src/lib/diverge.ts`](apps/web/src/lib/diverge.ts), [`/chains`](apps/web/src/app/chains/page.tsx) | Tip, lag and the first differing block hash between public Zebra, Zakura and Zaino backends, with a bounded binary search inside the 1,000-block reorg window (Zebra #11675) |
+
 ---
 
 ## Indexer Integration
@@ -239,10 +252,12 @@ Luora reads chain data from lightwalletd's `CompactTxStreamer`, the same protoco
 | `GET /api/chain?network=` | `GetLightdInfo` | height, branch ID, active upgrade, endpoint |
 | `POST /api/tx` `{ txid, network }` | `GetTransaction` | raw hex and mined height; decoding happens in the browser |
 | `POST /api/prevouts` `{ txid, network }` | `GetTransaction` per parent | transparent input values, for the fee |
+| `POST /api/block` `{ block, network }` | `GetBlock` by hash or height | header and per-transaction pool counts for Block Trace |
+| `GET /api/chain/compare?net=` | `GetLightdInfo`, `GetLatestBlock`, `GetBlock` on every allowlisted backend | each backend's software, tip, lag and the first differing height |
 | `GET /api/samples` | none | the real samples |
 | `GET /api/zebra-errors` | none | the Zebra catalog |
 
-Set `INDEXER_MAIN`, `INDEXER_TEST` or `INDEXER_REGTEST` (with `ALLOW_REGTEST=1`) to point at your own lightwalletd or Zaino. Endpoints come only from the environment, never from a request.
+Set `INDEXER_MAIN`, `INDEXER_TEST` or `INDEXER_REGTEST` (with `ALLOW_REGTEST=1`) to point at your own lightwalletd or Zaino. Endpoints come only from the environment, never from a request. `/chains` compares a fixed server-side list of 11 Mainnet and 2 Testnet public backends (zec.rocks and its regions, stardust, CipherScan, Zingo Labs Zaino, ZecDev, mysideoftheweb); each was verified live, and no host is ever taken from a request. See [`docs/handoff/diverge.md`](docs/handoff/diverge.md).
 
 ---
 
@@ -423,6 +438,24 @@ Paste the PCZT → Roles done → Actions → Signer checks → Sign or stop
 2. **Actions**: pool, value, recipient and the address a signer would be shown
 3. **Checks**: shown address against committed recipient, dummy keys cleared, every signature present, fee and expiry
 
+### Block Flow
+
+```
+Paste a block hash or height → Header → Transactions → Open one in the Trace
+```
+
+### Stall Flow
+
+```
+Paste zebrad logs or /metrics → Height timeline → Matched signatures → Workaround and issue → What to collect next
+```
+
+### Chains Flow
+
+```
+Open /chains → Every backend's tip → Agree, lagging or diverged at height H → Both hashes at the fork
+```
+
 ### Height Flow
 
 ```
@@ -489,7 +522,10 @@ upgrade_at(network, height)                   # { name, branchId, activationHeig
 #### App
 
 ```
-classifyInput(text)                # txid | hex | pczt | error | invalid | empty
+classifyInput(text)                # stall | block | txid | hex | pczt | error | invalid | empty
+lookupBlock(network, ref)          # BlockView: header + per-transaction pool counts from GetBlock
+diagnoseStall(text)                # StallReport: timeline, matched stall signatures, hints
+compareBackends(sources, options)  # Comparison: per-backend tip, lag and first differing height
 readTxRequest(request)             # validated { txid, network } from a POST body
 getTransaction(network, txid)      # GetTransaction with byte-order flip, deadline and retry
 prevoutValues(network, raw)        # parent outputs → transparent input values
@@ -520,6 +556,10 @@ parseAnswer(text, known)           # @offset, #check and ZIP n chips in an answe
 - [x] Copy as GitHub issue on the verdict, Why rejected and PCZT, with opt-in `#hex=` / `#pczt=` share links
 - [x] Mempool "why stuck": rules at tip + 1, blocks left before expiry, fee against ZIP 317 and ZIP 2009
 - [x] Honest fee: "input values unavailable" everywhere a fee is shown when an input value is unknown
+- [x] Block Trace from a block hash or height, shareable with `?block=`
+- [x] Stall Doctor for zebrad logs and metrics, eight known stall signatures
+- [x] `/chains`: public Zebra, Zakura and Zaino backends compared, first differing height named
+- [x] Light and dark theme, System by default
 - [ ] Proof verification in the web app
 - [x] Hosted demo at [zec.luorasec.xyz](https://zec.luorasec.xyz)
 - [ ] 2-minute video
