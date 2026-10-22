@@ -20,7 +20,7 @@ export function CheckRow({
   focused?: boolean;
 }) {
   return (
-    <div id={`check-${check.id}`} className={`scroll-mt-24 rounded-inner transition-shadow ${focused ? "ring-2 ring-white/30" : ""}`}>
+    <div id={`check-${check.id}`} className={`scroll-mt-24 rounded-inner transition-shadow ${focused ? "ring-2 ring-overlay/30" : ""}`}>
     <Inner className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 px-3 py-2.5 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
       <div className="pt-px">
         <StatusMark status={check.status} />
@@ -100,7 +100,7 @@ export function CheckAtControl({
         <button
           type="button"
           onClick={() => onChange("nu7")}
-          className="inline-flex h-8 items-center rounded-tile bg-raised px-3 text-[13px] text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25"
+          className="inline-flex h-8 items-center rounded-tile bg-raised px-3 text-[13px] text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-overlay/25"
         >
           Check at NU7
         </button>
@@ -160,7 +160,7 @@ export function ChecksView({
       )}
       {rest.length > 0 && (
         <details className="group flex flex-col gap-1.5" open={rest.some((check) => check.id === focusId)}>
-          <summary className="flex h-9 list-none items-center gap-2 rounded-tile bg-raised px-3 text-[13px] text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25 [&::-webkit-details-marker]:hidden">
+          <summary className="flex h-9 list-none items-center gap-2 rounded-tile bg-raised px-3 text-[13px] text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-overlay/25 [&::-webkit-details-marker]:hidden">
             <Dot tone="ok" />
             {passed} rule{passed === 1 ? "" : "s"} passed
             {skipped > 0 ? `, ${skipped} not applicable` : ""}

@@ -112,7 +112,7 @@ export function BlockTraceView({
                   onClick={() => onOpenTx(tx.txid)}
                   aria-label={`Inspect transaction ${tx.index}${tx.coinbase ? " (coinbase)" : ""} ${tx.txid}`}
                   style={delayStyle(Math.min(index * 18, 360))}
-                  className="node-in flex w-full cursor-pointer flex-col rounded-chip px-2 py-1 text-left outline-none hover:bg-white/[.035] focus-visible:bg-hover focus-visible:shadow-[inset_2px_0_0_var(--fg)] sm:min-w-max"
+                  className="node-in flex w-full cursor-pointer flex-col rounded-chip px-2 py-1 text-left outline-none hover:bg-overlay/[.035] focus-visible:bg-hover focus-visible:shadow-[inset_2px_0_0_var(--fg)] sm:min-w-max"
                 >
                   <Line depth={1} kind="TX">
                     <span className="text-fg sm:hidden">{shortHash(tx.txid, 10, 8)}</span>

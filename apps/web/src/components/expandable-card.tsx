@@ -119,7 +119,7 @@ export function ExpandableCard({
       {expanded && (
         <>
           <div ref={placeholderRef} aria-hidden style={{ height: placeholderHeight }} />
-          <div ref={scrimRef} onClick={close} aria-hidden className="fixed inset-0 z-30 bg-black/60 backdrop-blur-[2px]" />
+          <div ref={scrimRef} onClick={close} aria-hidden className="fixed inset-0 z-30 bg-scrim backdrop-blur-[2px]" />
         </>
       )}
       <section

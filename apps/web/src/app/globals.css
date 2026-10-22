@@ -1,36 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --canvas: #0e0e10;
-  --dot: #232327;
-  --card-top: #2b2b2f;
-  --card-bot: #1e1e21;
-  --inner-top: #262629;
-  --inner-bot: #1b1b1e;
-  --surface: #1e1e21;
-  --raised: #252528;
-  --hover: #2e2e33;
-  --inset: #1c1c1f;
-  --field: #1a1a1d;
-  --border: rgba(255, 255, 255, 0.07);
-  --border-strong: rgba(255, 255, 255, 0.13);
-  --fg: #e6e6e8;
-  --text: #dcdcde;
-  --body: #b9b9be;
-  --port: #a3a3a9;
-  --muted: #9b9ba1;
-  --dim: #6f6f76;
-  --primary: #f4f4f5;
-  --primary-fg: #0e0e10;
-  --wire: #7d7d84;
-  --wire-on: #f4f4f5;
-  --green: #4ade80;
-  --yellow: #facc15;
-  --red: #f87171;
-  --blue: #60a5fa;
-  --mint: #86efac;
-  --pink: #f472b6;
+  --canvas: light-dark(#f4f4f5, #0e0e10);
+  --dot: light-dark(#d9d9dd, #232327);
+  --card-top: light-dark(#ffffff, #2b2b2f);
+  --card-bot: light-dark(#fafafa, #1e1e21);
+  --inner-top: light-dark(#fcfcfc, #262629);
+  --inner-bot: light-dark(#f6f6f7, #1b1b1e);
+  --surface: light-dark(#ffffff, #1e1e21);
+  --raised: light-dark(#eeeef0, #252528);
+  --hover: light-dark(#e6e6e9, #2e2e33);
+  --inset: light-dark(#f4f4f5, #1c1c1f);
+  --field: light-dark(#ffffff, #1a1a1d);
+  --border: light-dark(rgba(24, 24, 27, 0.09), rgba(255, 255, 255, 0.07));
+  --border-strong: light-dark(rgba(24, 24, 27, 0.16), rgba(255, 255, 255, 0.13));
+  --fg: light-dark(#18181b, #e6e6e8);
+  --text: light-dark(#27272a, #dcdcde);
+  --body: light-dark(#3f3f46, #b9b9be);
+  --port: light-dark(#52525b, #a3a3a9);
+  --muted: light-dark(#57575e, #9b9ba1);
+  --dim: light-dark(#626269, #6f6f76);
+  --primary: light-dark(#18181b, #f4f4f5);
+  --primary-fg: light-dark(#ffffff, #0e0e10);
+  --wire: light-dark(#a1a1aa, #7d7d84);
+  --wire-on: light-dark(#18181b, #f4f4f5);
+  --green: light-dark(#11703a, #4ade80);
+  --yellow: light-dark(#865a00, #facc15);
+  --red: light-dark(#bb1e1e, #f87171);
+  --blue: light-dark(#1d4ed8, #60a5fa);
+  --mint: light-dark(#15803d, #86efac);
+  --pink: light-dark(#be185d, #f472b6);
+  --overlay: light-dark(#18181b, #ffffff);
+  --scrim: light-dark(rgba(24, 24, 27, 0.3), rgba(5, 5, 6, 0.55));
+  --shadow: light-dark(rgba(24, 24, 27, 0.1), rgba(0, 0, 0, 0.45));
+  --shadow-strong: light-dark(rgba(24, 24, 27, 0.16), rgba(0, 0, 0, 0.55));
+  --guide: light-dark(rgba(24, 24, 27, 0.12), rgba(255, 255, 255, 0.09));
+  --graph: light-dark(#f8f8f9, #121214);
+  --graph-dot: light-dark(#d4d4d8, #34343a);
+  --graph-glow: light-dark(rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.05));
+  --track: light-dark(#e4e4e7, #151517);
+  --meter: light-dark(#52525b, #d4d4d8);
+  --field-fg: light-dark(#18181b, #f0f0f2);
+  --primary-hover: light-dark(#3f3f46, #ffffff);
+  --mint-hover: light-dark(#166534, #a7f3c4);
+  --caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239b9ba1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  color-scheme: light dark;
+}
+
+:root[data-theme="dark"] {
   color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2357575e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2357575e' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  }
 }
 
 @theme inline {
@@ -57,14 +86,21 @@
   --color-red: var(--red);
   --color-blue: var(--blue);
   --color-mint: var(--mint);
+  --color-mint-hover: var(--mint-hover);
+  --color-primary-hover: var(--primary-hover);
+  --color-overlay: var(--overlay);
+  --color-scrim: var(--scrim);
+  --color-track: var(--track);
+  --color-meter: var(--meter);
+  --color-field-fg: var(--field-fg);
 
   --radius-chip: 8px;
   --radius-tile: 10px;
   --radius-inner: 12px;
   --radius-card: 18px;
 
-  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --shadow-float: 0 14px 40px rgba(0, 0, 0, 0.55);
+  --shadow-soft: 0 10px 30px var(--shadow);
+  --shadow-float: 0 14px 40px var(--shadow-strong);
 
   --text-ui-xs: 12.5px;
   --text-ui-sm: 13px;
@@ -102,7 +138,7 @@
 
 @utility select-caret {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%239b9ba1' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-image: var(--caret);
   background-repeat: no-repeat;
   background-position: right 12px center;
 }
@@ -114,24 +150,24 @@
 }
 
 @utility graph-canvas {
-  background-color: #121214;
+  background-color: var(--graph);
   background-image:
-    radial-gradient(ellipse 70% 60% at 50% 45%, rgba(255, 255, 255, 0.05), transparent 70%),
-    radial-gradient(circle, #34343a 1.2px, transparent 1.6px);
+    radial-gradient(ellipse 70% 60% at 50% 45%, var(--graph-glow), transparent 70%),
+    radial-gradient(circle, var(--graph-dot) 1.2px, transparent 1.6px);
   background-size:
     100% 100%,
     22px 22px;
   background-position:
     0 0,
     11px 11px;
-  box-shadow: inset 0 1px 16px rgba(0, 0, 0, 0.45);
+  box-shadow: inset 0 1px 16px var(--shadow);
 }
 
 @utility trace-guides {
-  background-image: repeating-linear-gradient(to right, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 10px);
+  background-image: repeating-linear-gradient(to right, var(--guide) 0 1px, transparent 1px 10px);
   background-position: 4px 0;
   @media (width >= 40rem) {
-    background-image: repeating-linear-gradient(to right, rgba(255, 255, 255, 0.09) 0 1px, transparent 1px 16px);
+    background-image: repeating-linear-gradient(to right, var(--guide) 0 1px, transparent 1px 16px);
     background-position: 7px 0;
   }
 }
@@ -148,7 +184,7 @@
     top: -10px;
     height: 46px;
     border-radius: 999px;
-    background: linear-gradient(90deg, rgba(244, 114, 182, 0.35), rgba(96, 165, 250, 0.35));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--pink) 35%, transparent), color-mix(in srgb, var(--blue) 35%, transparent));
     filter: blur(22px);
     pointer-events: none;
   }
@@ -208,7 +244,7 @@
       border: 1px solid var(--border-strong);
       border-radius: 10px;
       background: linear-gradient(180deg, var(--card-top) 0%, var(--card-bot) 100%);
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 12px 32px var(--shadow-strong);
     }
 
     select option {
@@ -263,7 +299,7 @@
 }
 
 .wire.bad {
-  stroke: rgba(248, 113, 113, 0.7);
+  stroke: color-mix(in srgb, var(--red) 70%, transparent);
 }
 
 .drawer {
@@ -284,7 +320,7 @@
 }
 
 .drawer::backdrop {
-  background: rgba(5, 5, 6, 0.55);
+  background: var(--scrim);
 }
 
 @keyframes drawer-in {
@@ -371,7 +407,7 @@
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #252528 0%, #2e2e33 50%, #252528 100%);
+  background: linear-gradient(90deg, var(--raised) 0%, var(--hover) 50%, var(--raised) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
 }
@@ -389,6 +425,6 @@
 
   .skeleton {
     animation: none;
-    background: #252528;
+    background: var(--raised);
   }
 }

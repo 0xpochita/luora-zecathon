@@ -108,7 +108,7 @@ function GraphAskButton({ x, y, label, onAsk }: { x: number; y: number; label: s
       role="button"
       tabIndex={0}
       aria-label={label}
-      className="outline-none [&:focus-visible>rect]:stroke-[rgba(255,255,255,.4)] [&:hover>rect]:fill-[var(--hover)]"
+      className="outline-none [&:focus-visible>rect]:stroke-overlay/40 [&:hover>rect]:fill-[var(--hover)]"
       onClick={(event) => {
         event.stopPropagation();
         onAsk();
@@ -122,7 +122,7 @@ function GraphAskButton({ x, y, label, onAsk }: { x: number; y: number; label: s
       }}
     >
       <title>{label}</title>
-      <rect width={22} height={22} rx={7} fill="var(--raised)" stroke="rgba(255,255,255,.07)" />
+      <rect width={22} height={22} rx={7} fill="var(--raised)" stroke="var(--border)" />
       <Sparkle x={5} y={5} width={12} height={12} weight="fill" color="var(--muted)" />
     </g>
   );
@@ -172,8 +172,8 @@ function GraphNode({
         height={NODE_HEIGHT}
         rx={12}
         fill={`url(#card-grad-${layout.name})`}
-        stroke={selected ? "rgba(255,255,255,.13)" : "rgba(255,255,255,.07)"}
-        className="group-focus-visible:stroke-[rgba(255,255,255,.4)]"
+        stroke={selected ? "var(--border-strong)" : "var(--border)"}
+        className="group-focus-visible:stroke-overlay/40"
         filter={selected ? `url(#float-${layout.name})` : undefined}
       />
       <Icon x={12} y={13} width={18} height={18} color="var(--muted)" />
@@ -224,11 +224,11 @@ function NodeGraph({
     <svg viewBox={`0 0 ${layout.width} ${layout.height}`} className={className} role="group" aria-label="Transaction anatomy graph">
       <defs>
         <linearGradient id={`card-grad-${layout.name}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#2b2b2f" />
-          <stop offset="1" stopColor="#1e1e21" />
+          <stop offset="0" stopColor="var(--card-top)" />
+          <stop offset="1" stopColor="var(--card-bot)" />
         </linearGradient>
         <filter id={`float-${layout.name}`} x="-20%" y="-40%" width="140%" height="200%">
-          <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="#000" floodOpacity="0.55" />
+          <feDropShadow dx="0" dy="10" stdDeviation="12" floodColor="var(--shadow-strong)" />
         </filter>
       </defs>
       {wires.map((wire) => (

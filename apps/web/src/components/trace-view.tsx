@@ -33,7 +33,7 @@ const KIND_TONE: Record<TraceRowKind, BadgeTone> = {
 };
 
 const BADGE_CLASS: Record<BadgeTone, string> = {
-  neutral: "border-white/15 text-muted",
+  neutral: "border-overlay/15 text-muted",
   blue: "border-blue/45 text-blue",
   green: "border-green/45 text-green",
   yellow: "border-yellow/45 text-yellow",
@@ -112,7 +112,7 @@ function TraceRowView({
       title={failing ? `Failing check: ${failing.join(", ")}` : undefined}
       style={delayStyle(Math.min(index * 18, 360))}
       className={`node-in group flex min-h-8 cursor-pointer items-start gap-2 rounded-chip px-2 py-1 sm:min-w-max sm:items-center ${
-        active ? "bg-hover shadow-[inset_2px_0_0_var(--fg)]" : "hover:bg-white/[.035]"
+        active ? "bg-hover shadow-[inset_2px_0_0_var(--fg)]" : "hover:bg-overlay/[.035]"
       } ${row.empty ? "opacity-50" : ""}`}
     >
       {showOffsets && (
@@ -139,7 +139,7 @@ function TraceRowView({
             onToggle();
           }}
           aria-label={open ? "Collapse" : "Expand"}
-          className="mt-[3px] grid size-4 flex-none place-items-center rounded-[4px] border border-white/20 font-mono text-[11px] leading-none text-muted hover:border-white/40 hover:text-fg sm:mt-0"
+          className="mt-[3px] grid size-4 flex-none place-items-center rounded-[4px] border border-overlay/20 font-mono text-[11px] leading-none text-muted hover:border-overlay/40 hover:text-fg sm:mt-0"
         >
           {open ? "−" : "+"}
         </button>
@@ -174,7 +174,7 @@ function TraceRowView({
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) {
   return (
     <label className="inline-flex h-8 items-center gap-2 rounded-tile bg-raised px-2.5 text-[12.5px] text-text">
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="size-3.5 accent-[#f4f4f5]" />
+      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="size-3.5 accent-primary" />
       {label}
     </label>
   );
@@ -279,7 +279,7 @@ export function TraceView({
             aria-activedescendant={current ? `trace-row-${current}` : undefined}
             tabIndex={0}
             onKeyDown={onKeyDown}
-            className={`graph-canvas flex flex-col gap-px overflow-x-auto rounded-inner border border-border p-1.5 outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
+            className={`graph-canvas flex flex-col gap-px overflow-x-auto rounded-inner border border-border p-1.5 outline-none focus-visible:ring-2 focus-visible:ring-overlay/25 ${
               full ? "min-h-0 flex-1 overflow-y-auto" : ""
             }`}
           >
