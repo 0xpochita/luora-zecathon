@@ -227,11 +227,11 @@ export function AnatomyView({
   return (
     <ExpandableCard label="Anatomy" aside={`v${tx.version} · ${formatInt(tx.sizeBytes)} bytes`}>
       {(full) => {
-        const graphSize = full ? "max-h-[calc(100dvh-260px)]" : "";
+        const graphSize = full ? "mx-auto max-h-[calc(100dvh-260px)] max-w-[980px]" : "";
         return (
-      <div className={`flex flex-1 flex-col gap-3 px-4 pb-4 ${full ? "justify-center" : ""}`}>
+      <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
         <Hint>Click a part to see its fields.</Hint>
-        <div className="graph-canvas flex flex-col rounded-inner border border-border px-2 py-4">
+        <div className={`graph-canvas flex flex-col rounded-inner border border-border px-2 py-4 ${full ? "min-h-0 flex-1 justify-center" : ""}`}>
           <NodeGraph layout={WIDE_LAYOUT} nodes={nodes} selected={selected} onSelect={onSelect} className={`hidden w-full md:block ${graphSize}`} />
           <NodeGraph
             layout={NARROW_LAYOUT}
