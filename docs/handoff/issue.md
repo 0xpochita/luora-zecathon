@@ -1,6 +1,12 @@
 # Handoff: Task H (Copy as issue, mempool "why stuck", honest fee)
 
-Branch `Bimajadivaaa/z-issue`. Not pushed, not merged. Checked in Chrome on port 3037 on 2026-10-22.
+Branch `Bimajadivaaa/z-issue`. Not pushed, not merged into main. Checked in Chrome on port 3037 on 2026-10-22.
+
+`main` (with z-318: ZIP 318 card, Check at NU7, round-trip; and the landing entrance) is merged into this branch. The only
+conflict was in `inspector-app.tsx`; both sides are kept: the tip + 1 height for mempool transactions feeds main's
+`chosenHeight`, and `withHonestFee` also wraps the NU7 rule list. Re-checked after the merge: tsc, lint, 88 offline
+tests, build, and in Chrome a live mempool v5 transaction (`1d3c735f…5469624`, tip 3,526,682, expires in 38 blocks)
+with Check at NU7 and Copy as issue.
 
 ## What works
 
@@ -65,7 +71,7 @@ While values are being fetched the label says "fetching input values…". A coin
 pnpm install
 pnpm --filter web exec next dev -p 3037
 pnpm --filter web lint
-pnpm --filter web test          # 83 offline tests, 12 live skipped
+pnpm --filter web test          # 88 offline tests after merging main, 14 live skipped
 pnpm --filter web build
 ```
 
