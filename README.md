@@ -38,9 +38,9 @@ The project's notes live in this repository:
 
 | Section | Pages |
 |---|---|
-| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) |
+| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) |
 | Data contract | [`contract/types.ts`](contract/types.ts), the shapes shared by the WASM module, the UI and the server routes |
-| Real data | [`data/samples.json`](data/samples.json) · [`data/zebra-errors.json`](data/zebra-errors.json) · [`data/zebra-error-samples.json`](data/zebra-error-samples.json) · [`data/upgrades.json`](data/upgrades.json) · [test fixtures](crates/core/tests/fixtures/README.md) |
+| Real data | [`data/samples.json`](data/samples.json) · [`data/zebra-errors.json`](data/zebra-errors.json) · [`data/zebra-error-samples.json`](data/zebra-error-samples.json) · [`data/upgrades.json`](data/upgrades.json) · [`data/zips/`](data/zips) · [test fixtures](crates/core/tests/fixtures/README.md) |
 | Specs used | [ZIP 203](https://zips.z.cash/zip-0203) · [ZIP 225](https://zips.z.cash/zip-0225) · [ZIP 229](https://zips.z.cash/zip-0229) · [ZIP 244](https://zips.z.cash/zip-0244) · [ZIP 257](https://zips.z.cash/zip-0257) · [ZIP 258](https://zips.z.cash/zip-0258) · [ZIP 317](https://zips.z.cash/zip-0317) · [ZIP 2009](https://zips.z.cash/zip-2009) · [ZIP 374](https://zips.z.cash/zip-0374) |
 | Screens | [`docs/screens/`](docs/screens), every view at 1440 px and 390 px |
 
@@ -137,7 +137,8 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **In-Page Full Screen**: the Trace and the graph grow to fill the window; the detail drawer still opens
 - **Skeleton Loading And Motion**: shaped placeholders while data loads, staged entrance after; both respect reduced motion
 - **Phone Ready**: every view at 390 px, the drawer becomes a bottom sheet
-- **Keyboard First**: ↑ ↓ move through rows, ← → fold, Enter opens details, Esc closes
+- **Ask AI**: a sparkle on every Trace row, Graph node, rule, Zebra match and PCZT action; answers cite the ZIP text, chips like `@1706` and `#branch-id` jump to the row or rule, and with no AI connected a built-in answer is assembled from the real fields
+- **Keyboard First**: ↑ ↓ move through rows, ← → fold, Enter opens details, A asks AI about the selection, Esc closes
 
 <img width="1440" alt="Rules: consensus and fee checks at a chosen height" src="docs/screens/ux/after-1440-rules-at-tip.png" />
 
@@ -224,6 +225,31 @@ Luora reads chain data from lightwalletd's `CompactTxStreamer`, the same protoco
 | `GET /api/zebra-errors` | none | the Zebra catalog |
 
 Set `INDEXER_MAIN`, `INDEXER_TEST` or `INDEXER_REGTEST` (with `ALLOW_REGTEST=1`) to point at your own lightwalletd or Zaino. Endpoints come only from the environment, never from a request.
+
+---
+
+## AI Integration
+
+Luora hosts no AI. Ask AI works with nothing connected, and you choose who else may answer in **Connect AI** (top bar, "AI · None").
+
+| Option | Who answers | What leaves the machine |
+|---|---|---|
+| **None** (default) | Luora's built-in answer: the row's real fields, the related rule results with their source lines, and the matching excerpt from the vendored ZIP text | Nothing |
+| **Your Claude Code** | The `claude` CLI on your laptop, signed in with your own plan, through `POST /api/ai/claude` | The prompt, to the local `claude` process. The route answers only on `localhost` / `127.0.0.1` with a matching Origin, and returns 404 when hosted |
+| **Local model** | Ollama, LM Studio or any OpenAI-compatible server (default `http://localhost:11434`) | The prompt, from the browser straight to that endpoint; the page allows only localhost endpoints |
+| **Own API key** | Anthropic (`claude-sonnet-5`, or `claude-opus-5-5`), OpenAI, OpenRouter | The prompt and the key, from the browser straight to the provider; the key stays in tab memory (optionally sessionStorage), never on Luora's server |
+
+What is sent by default: the selected element's public fields, its parents' labels, the related rule results, the ZIP excerpt, the network, the height and your question. **Not** sent unless you tick it: the txid and prevout txids, transparent addresses and scripts, exact hashes (nullifiers, commitments, keys), and the raw hex. Addresses and 64-hex ids inside rule details and earlier answers are scrubbed too. The first question to each provider shows the exact text before it leaves the tab, and "What will be sent" shows it any time.
+
+| Piece | Where |
+|---|---|
+| ZIP text | [`data/zips/`](data/zips): ZIPs 203, 225, 229, 244, 257, 258, 317, 374, 2009 from `zcash/zips@2bdf394`, fetched by [`scripts/fetch-zips.ts`](scripts/fetch-zips.ts) |
+| Payload and privacy | [`apps/web/src/lib/ai/payload.ts`](apps/web/src/lib/ai/payload.ts), [`subject.ts`](apps/web/src/lib/ai/subject.ts) |
+| Built-in answers | [`apps/web/src/lib/ai/builtin.ts`](apps/web/src/lib/ai/builtin.ts) |
+| Streaming providers | [`apps/web/src/lib/ai/providers.ts`](apps/web/src/lib/ai/providers.ts) |
+| Local Claude Code bridge | [`apps/web/src/app/api/ai/claude/route.ts`](apps/web/src/app/api/ai/claude/route.ts): `claude -p` in an empty temp folder, no tools, no MCP, no settings |
+
+<img width="1440" alt="Ask AI on an Ironwood action, built-in answer" src="docs/screens/ai/desktop-trace-action-builtin.jpg" />
 
 ---
 
@@ -331,6 +357,7 @@ pnpm upgrades          # data/upgrades.json
 pnpm zebra-errors      # data/zebra-errors.json
 pnpm samples           # data/samples.json
 pnpm regtest-errors    # data/zebra-error-samples.json (Docker)
+npx tsx fetch-zips.ts  # data/zips/*.md and index.json from zcash/zips
 ```
 
 > **Two traps worth knowing.** lightwalletd wants the txid in internal byte order, the reverse of what explorers show; Luora flips it for you. And ZIP 317 as written still uses a 5,000-zatoshi marginal fee while Zebra 6.4 and later relay at 1,000 (ZIP 2009), so a fee can be below "conventional" and still be accepted; Luora shows which case you are in.
@@ -439,6 +466,9 @@ readTxRequest(request)             # validated { txid, network } from a POST bod
 getTransaction(network, txid)      # GetTransaction with byte-order flip, deadline and retry
 prevoutValues(network, raw)        # parent outputs → transparent input values
 matchError(text, catalog, limit)   # ranked Zebra variants for a pasted string
+buildPayload(subject, env, zips, optIns, question)   # exact text an AI sees, privacy opt-ins applied
+pickExcerpts(zipDocs, { zips, clauses, keywords })   # ZIP sections that ground an answer
+parseAnswer(text, known)           # @offset, #check and ZIP n chips in an answer
 ```
 
 ---
@@ -455,6 +485,7 @@ matchError(text, catalog, limit)   # ranked Zebra variants for a pasted string
 - [x] lightwalletd lookups on Mainnet and Testnet, txids sent in POST bodies, nothing logged
 - [x] Halo 2 and Groth16 proof verification in the native CLI
 - [x] One-box UX with verdict, skeleton loading, in-page full screen, phone layout
+- [x] Ask AI on rows, nodes, rules, Zebra matches and PCZT actions: built-in answers, your Claude Code, local models or your own key, with the payload shown before it leaves
 - [ ] Proof verification in the web app
 - [ ] Hosted demo and 2-minute video
 
