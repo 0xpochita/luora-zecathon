@@ -162,6 +162,7 @@ function GraphNode({
       }}
     >
       <g className="node-in" style={delayStyle(NODE_DELAY_MS[node.id])}>
+      {node.why && <title>{node.why}</title>}
       <circle cx={5} cy={-TITLE_GAP - 4} r={3} fill={node.failing ? "var(--red)" : "var(--fg)"} />
       <text x={15} y={-TITLE_GAP} fill="var(--fg)" fontFamily="var(--font-outfit)" fontSize={13} fontWeight={500}>
         {node.title}
@@ -309,7 +310,7 @@ export function AnatomyView({
                   {value === null ? "unknown" : formatZec(value, flow.id !== "fee")}
                 </div>
                 <Meter value={value === null ? 0 : Math.abs(value) / maxAbs} fillClassName="meter-fill" />
-                <div className="truncate text-[12.5px] text-dim" title={direction}>
+                <div className="truncate text-[12.5px] text-dim" title={flow.why ?? direction}>
                   {direction}
                 </div>
               </Inner>

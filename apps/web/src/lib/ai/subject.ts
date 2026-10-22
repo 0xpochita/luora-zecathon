@@ -196,7 +196,7 @@ export function nodeSubject(node: NodeId, tx: DecodedTx, feeZat: number | null, 
     if (tx.version < 6) fields.push(askField("note", "Ironwood exists only in v6 transactions (ZIP 229)"));
   } else {
     fields.push(
-      askField("fee", feeZat === null ? "unknown (needs the spent output values)" : String(feeZat), feeZat === null ? "unknown" : formatZec(feeZat)),
+      askField("fee", feeZat === null ? "input values unavailable (the spent output values are not known)" : String(feeZat), feeZat === null ? "input values unavailable" : formatZec(feeZat)),
       askField("logicalActions", String(tx.zip317.logicalActions)),
       askField("conventionalFee", String(tx.zip317.conventionalFeeZat), formatZec(tx.zip317.conventionalFeeZat)),
     );

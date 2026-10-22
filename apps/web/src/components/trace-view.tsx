@@ -148,7 +148,7 @@ function TraceRowView({
       )}
       <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12.5px] sm:flex-nowrap">
         <KindBadge depth={row.depth} kind={row.kind} failing={!!failing} />
-        <span className={`min-w-0 break-words sm:whitespace-nowrap ${row.depth === 0 ? "font-medium text-fg" : "text-fg"}`}><ZecText text={row.label} /></span>
+        <span title={row.why ?? undefined} className={`min-w-0 break-words sm:whitespace-nowrap ${row.depth === 0 ? "font-medium text-fg" : "text-fg"}`}><ZecText text={row.label} /></span>
         {failing && <Dot tone="bad" />}
         {row.fields.length > 0 && (
           <span className="flex basis-full flex-wrap gap-x-2.5 gap-y-0.5 text-[12px] sm:basis-auto sm:flex-nowrap">
@@ -323,6 +323,7 @@ export function TraceDetails({ row, failing }: { row: TraceRow; failing: string[
         <KindBadge depth={row.depth} kind={row.kind} failing={!!failing} />
         <span className="font-mono text-[13px] text-fg">{row.label}</span>
       </div>
+      {row.why && <p className="text-[13px] leading-relaxed text-body">{row.why}</p>}
       {failing && (
         <p className="flex items-start gap-2 text-[13px] text-text">
           <Dot tone="bad" className="mt-[7px]" />

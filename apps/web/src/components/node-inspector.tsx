@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import type { DecodedTx, OrchardLikeBundle } from "@contract/types";
 import { describeFlags, proofSummary, type NodeId } from "@/lib/anatomy";
 import { formatInt, formatZat, formatZec, zipUrl } from "@/lib/format";
+import { feeLabel } from "@/lib/fee";
 import { NODE_ICON } from "./node-icons";
 import { CopyButton, ExternalLink, Hint, Inner, InnerHeader } from "./ui";
 
@@ -209,13 +210,14 @@ function sectionFor(node: NodeId, tx: DecodedTx, feeZat: number | null): Section
         specs,
       };
     }
-    case "fee":
+    case "fee": {
+      const fee = feeLabel(feeZat, false, tx.transparent.inputs.some((input) => input.isCoinbase));
       return {
         title: "Fee",
         fields: [
           {
             label: "paid",
-            value: feeZat === null ? "unknown: needs every transparent input value" : `${formatZec(feeZat)} · ${formatZat(feeZat)}`,
+            value: fee.known ? (feeZat === null ? fee.text : `${formatZec(feeZat)} · ${formatZat(feeZat)}`) : `${fee.text}. ${fee.why}`,
             mono: feeZat !== null,
             wrap: feeZat === null,
           },
@@ -230,6 +232,7 @@ function sectionFor(node: NodeId, tx: DecodedTx, feeZat: number | null): Section
         lists: [],
         specs: [{ label: "ZIP 317 · conventional fee", url: zipUrl(317) }],
       };
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 import type { Check, DecodedTx } from "@contract/types";
 import { formatInt, formatZec, shortHash } from "./format";
+import { feeLabel, FEE_PENDING, FEE_UNAVAILABLE, FEE_UNAVAILABLE_WHY } from "./fee";
 
 export type NodeId = "tx" | "header" | "transparent" | "sapling" | "orchard" | "ironwood" | "fee";
 
@@ -9,6 +10,7 @@ export interface AnatomyNode {
   subtitle: string;
   empty: boolean;
   failing: boolean;
+  why?: string | null;
 }
 
 export const BUNDLE_IDS = ["header", "transparent", "sapling", "orchard", "ironwood"] as const;
@@ -49,6 +51,7 @@ export function failingNodes(checks: Check[] | null): Set<NodeId> {
 export function buildNodes(tx: DecodedTx, feeZat: number | null, failing: Set<NodeId>, inputsPending: boolean): AnatomyNode[] {
   const transparentEmpty = tx.transparent.inputs.length === 0 && tx.transparent.outputs.length === 0;
   const saplingEmpty = !tx.sapling || (tx.sapling.spends === 0 && tx.sapling.outputs === 0);
+  const fee = feeLabel(feeZat, inputsPending, tx.transparent.inputs.some((input) => input.isCoinbase));
   return [
     { id: "tx", title: "Transaction", subtitle: shortHash(tx.txid), empty: false, failing: failing.has("tx") },
     {
@@ -89,9 +92,10 @@ export function buildNodes(tx: DecodedTx, feeZat: number | null, failing: Set<No
     {
       id: "fee",
       title: "Fee",
-      subtitle: feeZat !== null ? formatZec(feeZat) : inputsPending ? "fetching input values…" : "needs input values",
+      subtitle: fee.text,
       empty: false,
       failing: failing.has("fee"),
+      why: fee.why,
     },
   ];
 }
@@ -102,6 +106,7 @@ export interface PoolFlow {
   field: string;
   valueZat: number | null;
   note: string;
+  why?: string | null;
 }
 
 export function poolFlows(tx: DecodedTx, inputValues: (number | null)[] | null, feeZat: number | null, inputsPending: boolean): PoolFlow[] {
@@ -118,9 +123,10 @@ export function poolFlows(tx: DecodedTx, inputValues: (number | null)[] | null, 
       note:
         transparentBalance === null
           ? inputsPending
-            ? "fetching input values…"
-            : `outputs ${formatZec(outputsZat)}, input values unknown`
+            ? FEE_PENDING
+            : `outputs ${formatZec(outputsZat)}, ${FEE_UNAVAILABLE}`
           : "no net change",
+      why: transparentBalance === null && !inputsPending ? FEE_UNAVAILABLE_WHY : null,
     },
     { id: "sapling", label: "Sapling (shielded)", field: "valueBalanceSapling", valueZat: tx.sapling?.valueBalanceZat ?? 0, note: "no net change" },
     { id: "orchard", label: "Orchard (shielded)", field: "valueBalanceOrchard", valueZat: tx.orchard?.valueBalanceZat ?? 0, note: "no net change" },
@@ -130,7 +136,8 @@ export function poolFlows(tx: DecodedTx, inputValues: (number | null)[] | null, 
       label: "Fee",
       field: "sum of all pool balances",
       valueZat: feeZat,
-      note: feeZat !== null ? "paid to the miner" : inputsPending ? "fetching input values…" : "needs transparent input values",
+      note: feeZat !== null ? "paid to the miner" : inputsPending ? FEE_PENDING : FEE_UNAVAILABLE,
+      why: feeZat === null && !inputsPending ? FEE_UNAVAILABLE_WHY : null,
     },
   ];
 }

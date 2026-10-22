@@ -1,6 +1,7 @@
 import type { Check, TraceField, TraceKind, TraceNode } from "@contract/types";
 import { nodeForCheck } from "./anatomy";
 import { formatZec } from "./format";
+import { feeLabel } from "./fee";
 
 export type TraceRowKind = TraceKind | "FEE";
 
@@ -14,6 +15,7 @@ export interface TraceRow {
   length: number | null;
   fields: TraceField[];
   empty: boolean;
+  why?: string | null;
 }
 
 export type ExpandLevel = "collapsed" | "bundles" | "everything";
@@ -49,12 +51,14 @@ export function traceRows(
       empty: node.label === "empty",
     };
   });
+  const fee = feeLabel(feeZat, inputsPending, nodes.some((node) => node.kind === "VIN" && /coinbase/i.test(node.label)));
   rows.push({
     id: "fee",
     parentId: "tx",
     depth: 1,
     kind: "FEE",
-    label: feeZat !== null ? formatZec(feeZat) : inputsPending ? "fetching input values…" : "needs the spent output values",
+    label: fee.text,
+    why: fee.why,
     offset: null,
     length: null,
     fields: [
