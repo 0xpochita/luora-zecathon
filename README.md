@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://zec.luorasec.xyz"><img src="https://img.shields.io/badge/DEMO-ZEC.LUORASEC.XYZ-000000?style=flat-square&labelColor=555555" alt="Live demo" /></a>
   <a href="https://github.com/0xpochita/luora-zecathon"><img src="https://img.shields.io/badge/SOURCE-GITHUB-000000?style=flat-square&labelColor=555555&logo=github&logoColor=white" alt="Source on GitHub" /></a>
   <img src="https://img.shields.io/badge/ZECATHON-CORE%20%26%20TOOLING-F4B728?style=flat-square&labelColor=555555" alt="Zecathon Core and Tooling" />
   <img src="https://img.shields.io/badge/BUILT%20ON-LIBRUSTZCASH-F4B728?style=flat-square&labelColor=555555" alt="Built on librustzcash" />
@@ -314,6 +315,10 @@ Pasted hex and PCZTs never leave the tab. The server routes only fetch public ch
 - Optional, only to rebuild the decoder: Rust stable, `wasm-pack`, Homebrew LLVM (`brew install llvm`) for the `wasm32` C build of `secp256k1-sys`
 - Optional, only to regenerate the regtest samples: Docker
 
+### Use the hosted app (no clone)
+
+Open **[zec.luorasec.xyz](https://zec.luorasec.xyz)**, click a sample chip, or paste a transaction, txid, PCZT or Zebra error.
+
 ### App Setup (run Luora locally)
 
 ```bash
@@ -487,7 +492,8 @@ parseAnswer(text, known)           # @offset, #check and ZIP n chips in an answe
 - [x] One-box UX with verdict, skeleton loading, in-page full screen, phone layout
 - [x] Ask AI on rows, nodes, rules, Zebra matches and PCZT actions: built-in answers, your Claude Code, local models or your own key, with the payload shown before it leaves
 - [ ] Proof verification in the web app
-- [ ] Hosted demo and 2-minute video
+- [x] Hosted demo at [zec.luorasec.xyz](https://zec.luorasec.xyz)
+- [ ] 2-minute video
 
 **One limitation worth naming.** Luora reads the public shape of a transaction. It cannot show shielded amounts, senders, recipients or memos, by design: doing so would need a viewing key, and Luora never asks for one.
 
@@ -500,6 +506,7 @@ parseAnswer(text, known)           # @offset, #check and ZIP n chips in an answe
 | **Event** | Zecathon |
 | **Track** | Core & Tooling: Zebra, librustzcash, indexers, wallet SDKs, provers |
 | **Network** | Zcash Mainnet and Testnet (NU6.3 Ironwood, NU7 on Testnet) |
+| **Demo** | [zec.luorasec.xyz](https://zec.luorasec.xyz) |
 | **Source** | [github.com/0xpochita/luora-zecathon](https://github.com/0xpochita/luora-zecathon) |
 | **Team** | Bima Jadiva, developer |
 
