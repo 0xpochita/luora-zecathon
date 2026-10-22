@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
 import { Warning } from "@phosphor-icons/react";
-import type { Check, DecodedTx, Network, PcztView as PcztData, Sample, TraceNode } from "@contract/types";
+import type { Check, DecodedTx, Network, Nu7Run, PcztView as PcztData, Sample, TraceNode } from "@contract/types";
 import { api, ApiError, errorText, type ChainInfo } from "@/lib/api";
 import { coreErrorMessage, loadCore, type CoreState } from "@/lib/core";
 import { failingNodes, type NodeId } from "@/lib/anatomy";
@@ -18,6 +18,8 @@ import { CopyIssue } from "./copy-issue";
 import { AnatomyView } from "./anatomy-view";
 import { TraceDetails, TraceSkeleton, TraceView } from "./trace-view";
 import { CheckAtControl, ChecksView, RulesSkeleton, type CheckAt } from "./checks-view";
+import { MigrationCard } from "./migration-card";
+import { nu7Option } from "@/lib/nu7";
 import { InspectBox, type Endpoints, type LookupState, type SamplesState } from "./input-panel";
 import { NodeInspector } from "./node-inspector";
 import { PcztPanel } from "./pczt-view";
@@ -325,16 +327,6 @@ export function InspectorApp() {
   const customHeight = parseHeight(heightText);
   const heightInvalid = checkAt === "custom" && heightText.trim() !== "" && customHeight === null;
   const nextBlock = loaded?.mempool && liveHeight !== null ? liveHeight + 1 : null;
-  const chosenHeight = checkAt === "mined" ? minedHeight : checkAt === "tip" ? (nextBlock ?? liveHeight) : customHeight;
-
-  const upgradeAtHeight = useMemo(() => {
-    if (!core || chosenHeight === null) return null;
-    try {
-      return core.upgrade_at(network, chosenHeight);
-    } catch {
-      return null;
-    }
-  }, [core, network, chosenHeight]);
 
   const decoded = useMemo((): { tx: DecodedTx } | { error: string } | null => {
     if (!core || !loaded) return null;
@@ -354,6 +346,27 @@ export function InspectorApp() {
     return tx.transparent.inputs.map(() => null);
   }, [tx, prevouts]);
 
+  const nu7Run = useMemo((): { run: Nu7Run } | { error: string } | null => {
+    if (!core || !loaded || !inputValues || (network === "main" && liveHeight === null)) return null;
+    try {
+      return { run: core.check_tx_at_nu7(loaded.hex, network, liveHeight ?? 0, inputValues) };
+    } catch (error) {
+      return { error: coreErrorMessage(error) };
+    }
+  }, [core, loaded, network, liveHeight, inputValues]);
+  const nu7 = nu7Run && "run" in nu7Run ? nu7Run.run : null;
+  const chosenHeight = checkAt === "mined" ? minedHeight : checkAt === "tip" ? (nextBlock ?? liveHeight) : checkAt === "nu7" ? nu7?.height ?? null : customHeight;
+
+  const upgradeAtHeight = useMemo(() => {
+    if (checkAt === "nu7") return nu7?.upgrade ?? null;
+    if (!core || chosenHeight === null) return null;
+    try {
+      return core.upgrade_at(network, chosenHeight);
+    } catch {
+      return null;
+    }
+  }, [core, network, chosenHeight, checkAt, nu7]);
+
   const feeZat = useMemo(() => {
     if (!core || !loaded || !tx || !inputValues) return null;
     try {
@@ -364,13 +377,14 @@ export function InspectorApp() {
   }, [core, loaded, tx, inputValues]);
 
   const checks = useMemo((): { list: Check[] } | { error: string } | null => {
+    if (checkAt === "nu7") return nu7Run && "error" in nu7Run ? { error: nu7Run.error } : nu7 ? { list: withHonestFee(nu7.checks, feeZat) } : null;
     if (!core || !loaded || !tx || !inputValues || chosenHeight === null) return null;
     try {
       return { list: withHonestFee(core.check_tx(loaded.hex, network, chosenHeight, inputValues), feeZat) };
     } catch (error) {
       return { error: coreErrorMessage(error) };
     }
-  }, [core, loaded, tx, inputValues, network, chosenHeight, feeZat]);
+  }, [core, loaded, tx, inputValues, network, chosenHeight, checkAt, nu7Run, nu7, feeZat]);
 
   const mempool = useMemo(() => {
     if (!core || !loaded || !tx || !inputValues || nextBlock === null) return null;
@@ -412,6 +426,10 @@ export function InspectorApp() {
   const heightLabel =
     chosenHeight === null
       ? ""
+      : checkAt === "nu7"
+        ? nu7?.hypothetical
+          ? `at a hypothetical NU7 from the next block (${formatInt(chosenHeight)})`
+          : `at NU7 activation (${formatInt(chosenHeight)})`
       : checkAt === "mined"
         ? `when mined at ${formatInt(chosenHeight)}`
         : checkAt === "tip"
@@ -526,7 +544,7 @@ export function InspectorApp() {
 
   const selectOffset = useCallback(
     (offset: number) => {
-      const row = [...(traceRowList ?? [])].reverse().find((item) => item.offset === offset);
+      const row = [...(traceRowList ?? [])].reverse().find((item) => item.offset !== null && item.offset <= offset && offset < item.offset + Math.max(item.length ?? 1, 1));
       if (!row) return;
       setView("overview");
       setOverviewMode("trace");
@@ -622,6 +640,7 @@ export function InspectorApp() {
           />
           </div>
           )}
+          {core && <MigrationCard core={core} hex={loaded.hex} network={network} height={minedHeight ?? liveHeight} onAsk={(check) => ai.ask(checkSubject(check, tx.version))} />}
           <div className="enter" style={stagger(1)}>
             <div className="flex flex-wrap items-center gap-2">
               <Tabs label="Views" idPrefix="view" value={view} options={viewOptions} onChange={setView} />
@@ -673,6 +692,7 @@ export function InspectorApp() {
                   onHeightChange={setHeightText}
                   heightInvalid={heightInvalid}
                   upgradeName={upgradeAtHeight?.name ?? null}
+                  nu7={nu7Option(network, liveHeight, nu7Run)}
                 />
                 {checks && "error" in checks ? (
                   <EmptyState icon={<Warning />} title="Rules failed to run">
@@ -681,7 +701,7 @@ export function InspectorApp() {
                 ) : chosenHeight === null ? (
                   <Hint>{rulesLine.status === "pending" ? rulesLine.text : "Pick a height to run the rules."}</Hint>
                 ) : checkList && !inputsPending ? (
-                  <ChecksView checks={checkList} focusId={focusCheck} onAsk={(check) => ai.ask(checkSubject(check, tx.version))} />
+                  <ChecksView checks={checkList} focusId={focusCheck} onAsk={(check) => ai.ask(checkSubject(check, tx.version))} onShowOffset={selectOffset} />
                 ) : (
                   <RulesSkeleton />
                 )}
@@ -764,25 +784,27 @@ export function InspectorApp() {
       {mode === null && !looking ? (
         <main className="flex flex-1 flex-col items-center justify-center px-4 pt-6 pb-16">
           <div className="flex w-full max-w-2xl flex-col gap-5">
-            <div className="flex flex-col gap-1.5 px-1 text-center">
+            <div className="enter flex flex-col gap-1.5 px-1 text-center" style={stagger(0)}>
               <h1 className="text-ui-display font-medium">Inspect a Zcash transaction</h1>
               <p className="text-[14px] text-muted">See what it moves, which rules it passes, and why a node rejected it.</p>
             </div>
-            <InspectBox
-              input={input}
-              onInputChange={(value) => {
-                setInput(value);
-                setInputError(null);
-              }}
-              onInspect={inspect}
-              inputError={inputError}
-              lookup={lookup}
-              endpoints={endpoints}
-              samples={samples}
-              onPickSample={pickSample}
-              onPickError={pickError}
-              compact={false}
-            />
+            <div className="enter" style={stagger(1)}>
+              <InspectBox
+                input={input}
+                onInputChange={(value) => {
+                  setInput(value);
+                  setInputError(null);
+                }}
+                onInspect={inspect}
+                inputError={inputError}
+                lookup={lookup}
+                endpoints={endpoints}
+                samples={samples}
+                onPickSample={pickSample}
+                onPickError={pickError}
+                compact={false}
+              />
+            </div>
           </div>
         </main>
       ) : (

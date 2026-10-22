@@ -8,7 +8,17 @@ import { Chip, Dot, ExternalLink, Hint, Inner, Input, Select, StatusMark } from 
 
 const ORDER: CheckStatus[] = ["fail", "warn", "pass", "na"];
 
-export function CheckRow({ check, onAsk, focused = false }: { check: Check; onAsk?: (check: Check) => void; focused?: boolean }) {
+export function CheckRow({
+  check,
+  onAsk,
+  onShowOffset,
+  focused = false,
+}: {
+  check: Check;
+  onAsk?: (check: Check) => void;
+  onShowOffset?: (offset: number) => void;
+  focused?: boolean;
+}) {
   return (
     <div id={`check-${check.id}`} className={`scroll-mt-24 rounded-inner transition-shadow ${focused ? "ring-2 ring-white/30" : ""}`}>
     <Inner className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 px-3 py-2.5 sm:grid-cols-[auto_minmax(0,1fr)_auto]">
@@ -18,6 +28,11 @@ export function CheckRow({ check, onAsk, focused = false }: { check: Check; onAs
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-fg">{check.title}</p>
         <p className="text-[13px] leading-relaxed break-words text-body">{check.detail}</p>
+        {check.offset !== undefined && onShowOffset && (
+          <button type="button" onClick={() => onShowOffset(check.offset!)} className="link mt-0.5 text-left text-[12.5px]">
+            Show byte {formatInt(check.offset)} in Trace
+          </button>
+        )}
         {check.source && <p className="mt-0.5 truncate font-mono text-xs text-dim" title={check.source}>{check.source}</p>}
       </div>
       <div className="col-start-2 flex min-w-0 items-start gap-2 self-start sm:col-start-3 sm:max-w-[290px] sm:justify-end">
@@ -36,7 +51,13 @@ export function CheckRow({ check, onAsk, focused = false }: { check: Check; onAs
   );
 }
 
-export type CheckAt = "mined" | "tip" | "custom";
+export type CheckAt = "mined" | "tip" | "custom" | "nu7";
+
+export interface Nu7Option {
+  label: string;
+  disabledReason: string | null;
+  note: string | null;
+}
 
 export function CheckAtControl({
   value,
@@ -47,6 +68,7 @@ export function CheckAtControl({
   onHeightChange,
   heightInvalid,
   upgradeName,
+  nu7,
 }: {
   value: CheckAt;
   onChange: (value: CheckAt) => void;
@@ -56,8 +78,10 @@ export function CheckAtControl({
   onHeightChange: (value: string) => void;
   heightInvalid: boolean;
   upgradeName: string | null;
+  nu7?: Nu7Option;
 }) {
   return (
+    <div className="flex flex-col gap-2">
     <div className="flex flex-wrap items-center gap-2">
       <label htmlFor="check-at" className="text-[13px] text-muted">
         Check at
@@ -66,7 +90,21 @@ export function CheckAtControl({
         {minedHeight !== null && <option value="mined">height it was mined ({formatInt(minedHeight)})</option>}
         <option value="tip">current tip{tipHeight !== null ? ` (${formatInt(tipHeight)})` : ""}</option>
         <option value="custom">another height…</option>
+        {nu7 && (
+          <option value="nu7" disabled={nu7.disabledReason !== null}>
+            {nu7.disabledReason ?? nu7.label}
+          </option>
+        )}
       </Select>
+      {nu7 && value !== "nu7" && nu7.disabledReason === null && (
+        <button
+          type="button"
+          onClick={() => onChange("nu7")}
+          className="inline-flex h-8 items-center rounded-tile bg-raised px-3 text-[13px] text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25"
+        >
+          Check at NU7
+        </button>
+      )}
       {value === "custom" && (
         <Input
           aria-label="Height"
@@ -89,10 +127,22 @@ export function CheckAtControl({
         upgradeName && <Chip title="Network upgrade whose rules apply at this height">{upgradeName} rules</Chip>
       )}
     </div>
+    {nu7?.note && value === "nu7" && <Hint>{nu7.note}</Hint>}
+    </div>
   );
 }
 
-export function ChecksView({ checks, onAsk, focusId = null }: { checks: Check[]; onAsk?: (check: Check) => void; focusId?: string | null }) {
+export function ChecksView({
+  checks,
+  onAsk,
+  onShowOffset,
+  focusId = null,
+}: {
+  checks: Check[];
+  onAsk?: (check: Check) => void;
+  onShowOffset?: (offset: number) => void;
+  focusId?: string | null;
+}) {
   const sorted = [...checks].sort((left, right) => ORDER.indexOf(left.status) - ORDER.indexOf(right.status));
   const attention = sorted.filter((check) => check.status === "fail" || check.status === "warn");
   const rest = sorted.filter((check) => check.status === "pass" || check.status === "na");
@@ -104,7 +154,7 @@ export function ChecksView({ checks, onAsk, focusId = null }: { checks: Check[];
       {attention.length > 0 && (
         <div className="flex flex-col gap-1.5">
           {attention.map((check) => (
-            <CheckRow key={check.id} check={check} onAsk={onAsk} focused={check.id === focusId} />
+            <CheckRow key={check.id} check={check} onAsk={onAsk} onShowOffset={onShowOffset} focused={check.id === focusId} />
           ))}
         </div>
       )}
@@ -118,7 +168,7 @@ export function ChecksView({ checks, onAsk, focusId = null }: { checks: Check[];
           </summary>
           <div className="mt-1.5 flex flex-col gap-1.5">
             {rest.map((check) => (
-              <CheckRow key={check.id} check={check} onAsk={onAsk} focused={check.id === focusId} />
+              <CheckRow key={check.id} check={check} onAsk={onAsk} onShowOffset={onShowOffset} focused={check.id === focusId} />
             ))}
           </div>
         </details>

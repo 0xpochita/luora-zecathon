@@ -9,6 +9,7 @@
 </p>
 
 <p align="center">
+  <a href="https://zec.luorasec.xyz"><img src="https://img.shields.io/badge/DEMO-ZEC.LUORASEC.XYZ-000000?style=flat-square&labelColor=555555" alt="Live demo" /></a>
   <a href="https://github.com/0xpochita/luora-zecathon"><img src="https://img.shields.io/badge/SOURCE-GITHUB-000000?style=flat-square&labelColor=555555&logo=github&logoColor=white" alt="Source on GitHub" /></a>
   <img src="https://img.shields.io/badge/ZECATHON-CORE%20%26%20TOOLING-F4B728?style=flat-square&labelColor=555555" alt="Zecathon Core and Tooling" />
   <img src="https://img.shields.io/badge/BUILT%20ON-LIBRUSTZCASH-F4B728?style=flat-square&labelColor=555555" alt="Built on librustzcash" />
@@ -74,17 +75,19 @@ Zcash changed under everyone's feet in 2026, and the tooling is behind.
 
 ### The Solution
 
-Luora answers with five pieces, each doing a job the others cannot.
+Luora answers with six pieces, each doing a job the others cannot.
 
 **1. A trace of the bytes**: `trace_tx` walks the raw transaction in serialisation order and returns every element with its exact byte offset and length: header, each transparent input and output, each Sapling spend and output, each Orchard and Ironwood action, proofs, signatures, and the fee. Encrypted parts are shown by size only. Offsets are proven by tests on real transactions.
 
 **2. The verdict first**: one sentence built from decoded values and rule results, such as *"Moved 0.0035183 ZEC from transparent (public) into Ironwood (new shielded pool). Fee 0.00015 ZEC. Valid when mined at 3,495,600."* Then the anatomy graph and the value balance of each pool.
 
-**3. Rules at any height**: ten consensus and fee checks run in the browser through `zcash_primitives` and `zcash_protocol`: branch ID, version, expiry, reserved flags, the Orchard turnstile, cross-address, the ZIP 257 window, Halo 2 proof length, coinbase rules and the fee. Each cites its ZIP clause and the Zebra or librustzcash line it mirrors. Move the height and see which rule flips.
+**3. Rules at any height, and at NU7**: twelve consensus, policy and fee checks run in the browser through `zcash_primitives` and `zcash_protocol`: branch ID, version, expiry, reserved flags, the Orchard turnstile, cross-address, the ZIP 257 window, Halo 2 proof length, coinbase rules, the fee, the NU7 shielded action limits (ZIP 218, as Zebra's mempool enforces them) and a serialization round-trip (`Transaction::write` must give back the same bytes and txid, the bug classes of librustzcash #3115 and #3137). Each cites its ZIP clause and the Zebra or librustzcash line it mirrors. Move the height and see which rule flips, or press **Check at NU7**: Testnet at its activation height 4,465,026; Mainnet, which has no NU7 height yet (librustzcash #3171), as a clearly labelled hypothetical NU7 from the next block. A v4 transaction that is green at the tip turns red at NU7 (ZIP 2003).
 
 **4. Why Zebra said no**: paste an error string and get the exact variant from a catalog extracted with `syn` from Zebra v7.0.0-rc.0's own source, the pipeline stage that raised it, the rule behind it and how to fix it. The matcher is tested against real rejections recorded from a regtest `zebrad`.
 
-**5. PCZT before you sign**: `inspect_pczt` reads a Partially Created Zcash Transaction with the `pczt` crate, shows which of the nine ZIP 374 roles have run, every action's value and recipient, and warns when a shown address differs from the committed one or when a signature is missing before extraction.
+**5. Does this migration blend in?**: for transactions that move Orchard funds, `zip318_tx` calls librustzcash's own `zcash_protocol::zip318::classify` on public evidence only (action counts, other pools, the amount entering Ironwood, the rolling expiry, the fee) and shows **Blends in**, **Fingerprintable** or **Unknown** with the reason, e.g. *"0.09775 ZEC enters Ironwood. It is not a {1,2,5}×10^k denomination"*. Send-to-self and anchor-on-grid need a viewing key or a tree-state lookup, so they stay Unknown, as ZIP 318 allows. The label names a conformance class, never a provenance.
+
+**6. PCZT before you sign**: `inspect_pczt` reads a Partially Created Zcash Transaction with the `pczt` crate, shows which of the nine ZIP 374 roles have run, every action's value and recipient, and warns when a shown address differs from the committed one or when a signature is missing before extraction.
 
 ---
 
@@ -127,13 +130,16 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **Byte-Exact Trace**: every element of the transaction in serialisation order with its offset and size, Phalcon-style rows with kind badges, indent guides and folding
 - **Verdict Card**: what moved, from which pool to which, the fee and how many rules pass, in one sentence
 - **Anatomy Graph**: the same transaction as a node graph, plus each pool's net value balance
-- **Rules At Any Height**: ten checks with ZIP links and source lines; check at the mined height, the live tip or any height
+- **Rules At Any Height**: twelve checks with ZIP links and source lines; check at the mined height, the live tip or any height
+- **NU7 Readiness**: one click **Check at NU7** (Testnet at 4,465,026; Mainnet as a labelled hypothetical), plus the ZIP 218 limits of 330 Orchard, 330 Ironwood and 300 Sapling actions that Zebra's mempool enforces from NU7
+- **ZIP 318 Migration Check**: Blends in / Fingerprintable / Unknown for Orchard to Ironwood migrations, straight from `zcash_protocol::zip318`, with the field that decides it
+- **Serialization Round-Trip**: write the parsed transaction back and compare bytes and txid; a mismatch names the first differing byte and jumps to its Trace row
 - **ZIP 2009 Aware Fees**: the 1,000-zatoshi marginal fee from Mainnet height 3,590,000, with a warning when an early switch could fingerprint a wallet
 - **Why Rejected**: 285 Zebra error variants with stage, rule and fix, matched against what you paste
 - **PCZT Inspector**: nine signing roles, per-action values and recipients, address and signature checks
 - **Auto-Detect Input**: one box for txid, raw hex, PCZT or error text; txids are tried on Mainnet, then Testnet
 - **Live Chain Chip**: the network's current height and active upgrade, read from lightwalletd
-- **Real Samples**: nine real mainnet and testnet transactions, one click each
+- **Real Samples**: eleven real mainnet and testnet transactions, one click each
 - **In-Page Full Screen**: the Trace and the graph grow to fill the window; the detail drawer still opens
 - **Skeleton Loading And Motion**: shaped placeholders while data loads, staged entrance after; both respect reduced motion
 - **Phone Ready**: every view at 390 px, the drawer becomes a bottom sheet
@@ -145,6 +151,8 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **Keyboard First**: ↑ ↓ move through rows, ← → fold, Enter opens details, A asks AI about the selection, Esc closes
 
 <img width="1440" alt="Rules: consensus and fee checks at a chosen height" src="docs/screens/ux/after-1440-rules-at-tip.png" />
+
+<img width="1440" alt="ZIP 318: a 0.09775 ZEC Orchard to Ironwood crossing labelled Fingerprintable" src="docs/screens/zip318/fingerprintable-desktop.jpg" />
 
 ---
 
@@ -184,9 +192,11 @@ librustzcash is the engine. Luora calls it; it does not re-implement Zcash parsi
 |---|---|
 | `zcash_primitives::transaction::Transaction::read` | Parse v4, v5 and v6 transactions |
 | `Transaction::txid` | ZIP 244 transaction id, round-tripped in every fixture test |
+| `Transaction::write` | Serialization round-trip check: same bytes, same txid |
 | `transaction::fees::zip317::FeeRule` | Conventional fee and logical actions |
 | `zcash_protocol::consensus::BranchId::for_height` | The branch ID a height requires |
-| `zcash_protocol::consensus::Parameters` | Mainnet, Testnet and local regtest upgrade heights |
+| `zcash_protocol::consensus::Parameters` | Mainnet, Testnet and local regtest upgrade heights, NU7 on Testnet and as a hypothetical on Mainnet |
+| `zcash_protocol::zip318` | `Zip318Evidence`, `classify`, `PoolMigrationConstants` (`is_canonical_denomination`, `is_canonical_expiry_value`, `canonical_expiry`), `BlockSpacing::for_network`: the ZIP 318 migration label |
 | `zcash_address` / `zcash_transparent` | Transparent output addresses |
 | `pczt::Pczt::parse` + `Verifier` | Read a PCZT and its roles |
 | `orchard` / `sapling-crypto` bundles | Actions, spends, outputs, flags, anchors, proofs |
@@ -318,6 +328,10 @@ Pasted hex and PCZTs never leave the tab. The server routes only fetch public ch
 - Optional, only to rebuild the decoder: Rust stable, `wasm-pack`, Homebrew LLVM (`brew install llvm`) for the `wasm32` C build of `secp256k1-sys`
 - Optional, only to regenerate the regtest samples: Docker
 
+### Use the hosted app (no clone)
+
+Open **[zec.luorasec.xyz](https://zec.luorasec.xyz)**, click a sample chip, or paste a transaction, txid, PCZT or Zebra error.
+
 ### App Setup (run Luora locally)
 
 ```bash
@@ -422,6 +436,8 @@ A mined transaction is checked at the height it was mined, so an old transaction
 | Sample | Network | Height | txid |
 |---|---|---|---|
 | v6 Ironwood transfer | Mainnet | 3,495,600 | `30cdd41f…fc021c` |
+| Ironwood migration transfer | Mainnet | 3,526,196 | `385e6dc4…118994` |
+| Migration with an odd amount | Mainnet | 3,524,451 | `ae5e2e90…574f3c` |
 | Orchard and Ironwood in one transaction | Mainnet | 3,525,568 | `1bee124c…319b62` |
 | Orchard after NU6.3 | Mainnet | 3,525,366 | `07ea19f2…b438b7` |
 | Sapling shielded transfer | Mainnet | 3,525,428 | `4faf6339…bc5615` |
@@ -433,7 +449,7 @@ A mined transaction is checked at the height it was mined, so an old transaction
 
 ### Test fixtures
 
-Seven real transactions (v4 transparent, v4 coinbase, v5 Sapling, v5 Orchard, v6 Ironwood, v6 coinbase into Ironwood, and a testnet v6 built from our own PCZTs), each with its prevout values. Every test asserts the ZIP 244 txid round-trips, so the decode is provably right. How each was fetched: [`crates/core/tests/fixtures/README.md`](crates/core/tests/fixtures/README.md).
+Ten real transactions (v4 transparent, v4 coinbase, v5 Sapling, v5 Orchard, v6 Ironwood, v6 coinbase into Ironwood, a testnet v6 built from our own PCZTs, and three ZIP 318 shapes: a canonical 10 ZEC crossing, a 0.09775 ZEC crossing and a 16-action preparation transaction), each with its prevout values. Every test asserts the ZIP 244 txid round-trips, so the decode is provably right. How each was fetched: [`crates/core/tests/fixtures/README.md`](crates/core/tests/fixtures/README.md).
 
 ### Real PCZTs, and a real finding
 
@@ -458,7 +474,9 @@ Five PCZTs were made with `zcash-devtool` on Testnet, from a throwaway wallet fu
 ```
 decode_tx(hex, network)                       # DecodedTx: header, pools, value balances, ZIP 317 inputs
 trace_tx(hex, network)                        # TraceNode[]: every element with offset and length
-check_tx(hex, network, height, inputValues)   # Check[]: ten rules with ZIP and source
+check_tx(hex, network, height, inputValues)   # Check[]: twelve rules with ZIP and source
+check_tx_at_nu7(hex, network, tip, inputValues)  # Nu7Run: { height, hypothetical, upgrade, checks }
+zip318_tx(hex, network, height)               # Zip318View: classification + reasons from zcash_protocol::zip318
 fee_zat(hex, inputValues)                     # fee in zatoshi, null if an input value is unknown
 inspect_pczt(base64OrHex, network)            # PcztView: roles, actions, signer checks
 upgrade_at(network, height)                   # { name, branchId, activationHeight }
@@ -484,7 +502,10 @@ parseAnswer(text, known)           # @offset, #check and ZIP n chips in an answe
 - [x] librustzcash decoder compiled to WASM, running in the browser
 - [x] v4, v5 and v6 (Ironwood) transactions, with ZIP 244 txids verified in tests
 - [x] Byte-exact Trace as the default view, Graph as the second
-- [x] Ten consensus and fee checks at any height, each with its ZIP and source line
+- [x] Twelve consensus, policy and fee checks at any height, each with its ZIP and source line
+- [x] Check at NU7 in one click, with the ZIP 218 shielded action limits
+- [x] ZIP 318 migration label from `zcash_protocol::zip318`, tested on real mainnet migrations
+- [x] Serialization round-trip check (librustzcash #3115, #3137)
 - [x] ZIP 2009 fee from Mainnet height 3,590,000
 - [x] Zebra error catalog extracted from source, matched against real regtest rejections
 - [x] PCZT inspector with signer checks, tested on real Testnet PCZTs
@@ -496,7 +517,8 @@ parseAnswer(text, known)           # @offset, #check and ZIP n chips in an answe
 - [x] Mempool "why stuck": rules at tip + 1, blocks left before expiry, fee against ZIP 317 and ZIP 2009
 - [x] Honest fee: "input values unavailable" everywhere a fee is shown when an input value is unknown
 - [ ] Proof verification in the web app
-- [ ] Hosted demo and 2-minute video
+- [x] Hosted demo at [zec.luorasec.xyz](https://zec.luorasec.xyz)
+- [ ] 2-minute video
 
 **One limitation worth naming.** Luora reads the public shape of a transaction. It cannot show shielded amounts, senders, recipients or memos, by design: doing so would need a viewing key, and Luora never asks for one.
 
@@ -509,6 +531,7 @@ parseAnswer(text, known)           # @offset, #check and ZIP n chips in an answe
 | **Event** | Zecathon |
 | **Track** | Core & Tooling: Zebra, librustzcash, indexers, wallet SDKs, provers |
 | **Network** | Zcash Mainnet and Testnet (NU6.3 Ironwood, NU7 on Testnet) |
+| **Demo** | [zec.luorasec.xyz](https://zec.luorasec.xyz) |
 | **Source** | [github.com/0xpochita/luora-zecathon](https://github.com/0xpochita/luora-zecathon) |
 | **Team** | Bima Jadiva, developer |
 
