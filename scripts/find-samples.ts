@@ -15,6 +15,20 @@ import { repoPath } from "./source-checkout";
 
 const KNOWN_IRONWOOD_TXID = "30cdd41fc24b39fa8b1e47078f17e0b56d4db2c09df44be6f7e484a9f1fc021c";
 const KNOWN_IRONWOOD_HEIGHT = 3_495_600;
+const ZIP318_SAMPLES = [
+  {
+    txid: "385e6dc4dcde1c4ce9ac33b589b0dc194c3d8216a79e696ec6622f48b3118994",
+    height: 3_526_196,
+    label: "Ironwood migration transfer",
+    why: "Version 6 transaction with 2 Orchard actions and 1 Ironwood action moving exactly 10 ZEC across the turnstile with the canonical fee and rolling expiry: the ZIP 318 transfer shape that blends in with every other migration.",
+  },
+  {
+    txid: "ae5e2e90aa1b069b78f5c8e664192a7b7face18af78b1dfd232cd6790c574f3c",
+    height: 3_524_451,
+    label: "Migration with an odd amount",
+    why: "Same 2 Orchard to 1 Ironwood shape, but 0.09775 ZEC crosses, which is not a {1,2,5}×10^k denomination, so ZIP 318 classifies it as nonconforming and the amount alone can single it out.",
+  },
+];
 const BLOCKS_TO_SCAN = Number(process.env.SAMPLE_BLOCKS ?? 400);
 const BATCH = 40;
 const NU6_3_MAINNET_HEIGHT = 3_428_143;
@@ -128,6 +142,15 @@ async function main() {
         `Version ${header.version} transaction (ZIP 229) with ${count(tx.ironwoodActions.length, "Ironwood action")} and ${count(tx.vin.length, "transparent input")}; tools written before NU6.3 show transfers like this as 0.0 ZEC (lifinance/data-types #281).`,
     ),
   );
+
+  for (const known of ZIP318_SAMPLES) {
+    const block = await getBlock("main", known.height);
+    const tx = block.vtx.find((item) => compactTxid(item) === known.txid);
+    if (!tx) throw new Error(`${known.txid} is not in block ${known.height}`);
+    samples.push(
+      await describe({ network: "main", height: known.height, tx, txid: known.txid, pools: pools(tx), size: shape(tx) }, known.label, () => known.why),
+    );
+  }
 
   const mainTip = Number((await getLightdInfo("main")).blockHeight);
   const main = await scan("main", mainTip, BLOCKS_TO_SCAN);
