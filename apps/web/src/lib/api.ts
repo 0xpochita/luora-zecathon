@@ -13,6 +13,7 @@ export interface TxLookup {
   txid: string;
   hex: string;
   height: number | null;
+  mempool?: boolean;
   endpoint: string;
 }
 

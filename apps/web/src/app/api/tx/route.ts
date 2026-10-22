@@ -8,8 +8,8 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
     const { txid, network } = await readTxRequest(request);
-    const { raw, height } = await getTransaction(network, txid);
-    return jsonOk({ txid, hex: raw.toString("hex"), height, endpoint: endpointLabel(network) });
+    const { raw, height, mempool } = await getTransaction(network, txid);
+    return jsonOk({ txid, hex: raw.toString("hex"), height, mempool, endpoint: endpointLabel(network) });
   } catch (error) {
     return jsonError(error);
   }

@@ -182,12 +182,13 @@ export function getBlock(network: Network, height: number): Promise<CompactBlock
 export async function getTransaction(
   network: Network,
   txid: string,
-): Promise<{ raw: Buffer; height: number | null }> {
+): Promise<{ raw: Buffer; height: number | null; mempool: boolean }> {
   const response = await unary<RawTransaction>(network, "GetTransaction", {
     hash: displayTxidToInternalBytes(txid),
   });
-  const mined = response.height !== MEMPOOL_HEIGHT && response.height !== NON_MAIN_CHAIN_HEIGHT;
-  return { raw: response.data, height: mined ? Number(response.height) : null };
+  const mempool = response.height === MEMPOOL_HEIGHT;
+  const mined = !mempool && response.height !== NON_MAIN_CHAIN_HEIGHT;
+  return { raw: response.data, height: mined ? Number(response.height) : null, mempool };
 }
 
 export function getBlockRange(
