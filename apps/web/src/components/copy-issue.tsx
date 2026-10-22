@@ -58,7 +58,7 @@ export function CopyIssue({
       </Button>
       <Drawer open={open} onClose={() => setOpen(false)} title="Copy as GitHub issue">
         {current && (
-          <div className="flex flex-col gap-3 text-[13px]">
+          <div className="flex flex-col gap-3 text-left text-[13px] whitespace-normal text-fg">
             <Hint>
               Markdown for a bug report: what Luora found, the rules with their ZIP and source lines, and the decoder versions.
               Read it before posting; a GitHub issue is public.
@@ -78,8 +78,10 @@ export function CopyIssue({
                 <p className="flex items-start gap-2 text-[12.5px] leading-relaxed text-body">
                   <Dot tone="warn" className="mt-[6px]" />
                   <span>
-                    Anyone with the link can decode it. Unbroadcast hex shows its transparent addresses and amounts, and posting
-                    the issue publishes them. The {rawKind} goes after the <span className="font-mono text-xs">#</span> in the
+                    Anyone with the link can decode it.{" "}
+                    {rawKind === "PCZT"
+                      ? "A PCZT shows every action's value and recipient address, unencrypted, and posting the issue publishes them."
+                      : "Unbroadcast hex shows its transparent addresses and amounts, and posting the issue publishes them."} The {rawKind} goes after the <span className="font-mono text-xs">#</span> in the
                     link, a part browsers never send to any server, Luora&apos;s included.
                   </span>
                 </p>

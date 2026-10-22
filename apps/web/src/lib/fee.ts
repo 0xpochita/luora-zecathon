@@ -4,7 +4,7 @@ import { formatZec } from "./format";
 export const FEE_UNAVAILABLE = "input values unavailable";
 
 export const FEE_UNAVAILABLE_WHY =
-  "The fee is the value of the spent transparent outputs minus what this transaction pays out. Those input values are not inside the transaction, and the indexer did not return them (Zebra's built-in lightwalletd server omits transparent vin/vout, Zebra #11238), so Luora shows no number rather than a wrong one.";
+  "The fee is the value of the spent transparent outputs minus what this transaction pays out. Those input values are not inside the transaction, and until the indexer returns them (Zebra's built-in lightwalletd server omits transparent vin/vout, Zebra #11238) Luora shows no number rather than a wrong one.";
 
 export const FEE_PENDING = "fetching input values…";
 

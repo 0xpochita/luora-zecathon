@@ -177,7 +177,7 @@ function GraphNode({
         filter={selected ? `url(#float-${layout.name})` : undefined}
       />
       <Icon x={12} y={13} width={18} height={18} color="var(--muted)" />
-      <text x={38} y={27} fill="var(--port)" fontFamily="var(--font-geist-mono)" fontSize={11.5}>
+      <text x={38} y={27} fill="var(--port)" fontFamily="var(--font-geist-mono)" fontSize={node.subtitle.length > 21 ? 9.75 : 11.5}>
         {node.subtitle}
       </text>
       {onAsk && <GraphAskButton x={w - 30} y={11} label={`Ask AI about ${node.title}`} onAsk={onAsk} />}
@@ -306,8 +306,8 @@ export function AnatomyView({
                   <Dot tone={value === null || value === 0 ? "neutral" : "warn"} />
                   {flow.label}
                 </div>
-                <div className="truncate font-mono text-[14px] text-fg" title={value === null ? undefined : formatZec(value)}>
-                  {value === null ? "unknown" : formatZec(value, flow.id !== "fee")}
+                <div className="truncate font-mono text-[14px] text-fg" title={value === null ? (flow.why ?? undefined) : formatZec(value)}>
+                  {value === null ? (flow.why ? "unavailable" : "unknown") : formatZec(value, flow.id !== "fee")}
                 </div>
                 <Meter value={value === null ? 0 : Math.abs(value) / maxAbs} fillClassName="meter-fill" />
                 <div className="truncate text-[12.5px] text-dim" title={flow.why ?? direction}>

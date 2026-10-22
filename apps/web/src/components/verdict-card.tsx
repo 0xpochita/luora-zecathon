@@ -74,9 +74,9 @@ export function VerdictCard({
     ) : null;
   return (
     <section aria-label="Verdict" className="flex flex-col gap-3 rounded-card border border-border bg-card-grad p-4 shadow-soft">
-      <div className="flex items-start gap-3">
+      <div className="flex flex-wrap items-start gap-3">
         <Dot tone={mempool ? (mempool.expired ? "bad" : "warn") : tone} className="mt-[9px] size-2" />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-[15rem] flex-1 flex-col gap-1">
           {mempool && <p className="text-[16px] leading-snug font-medium text-fg">In the mempool, not mined yet.</p>}
           <p className="text-[16px] leading-snug text-fg">{movement}</p>
           <p className="text-[14px] leading-relaxed text-body">
@@ -90,7 +90,7 @@ export function VerdictCard({
             )}
           </p>
         </div>
-        {actions && <div className="flex flex-none items-center gap-2">{actions}</div>}
+        {actions && <div className="ml-auto flex flex-none items-center gap-2">{actions}</div>}
       </div>
 
       {mempool && <MempoolPanel status={mempool} />}
