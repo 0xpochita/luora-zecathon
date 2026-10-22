@@ -104,6 +104,7 @@ export function InspectBox({
   compact: boolean;
 }) {
   const hint = kindHint(input, endpoints);
+  const multiline = input.trim().includes("\n");
   const chips = samples.status === "ready" ? samples.entries.filter((sample) => SAMPLE_CHIPS[sample.txid]) : [];
   const others = samples.status === "ready" ? samples.entries.filter((sample) => !SAMPLE_CHIPS[sample.txid]) : [];
   return (
@@ -118,10 +119,10 @@ export function InspectBox({
         <label htmlFor="tx-input" className={compact ? "sr-only" : "px-1 text-[14px] font-medium text-fg"}>
           Paste a Zcash transaction, txid, PCZT, Zebra error or zebrad logs
         </label>
-        <div className={`flex gap-2 ${compact ? "items-center" : "flex-col"}`}>
+        <div className={`flex gap-2 ${compact ? (multiline ? "items-start" : "items-center") : "flex-col"}`}>
           <Textarea
             id="tx-input"
-            rows={compact ? 1 : 3}
+            rows={compact ? Math.min(multiline ? input.split("\n").length : 1, 14) : 3}
             wrap={compact ? "off" : "soft"}
             spellCheck={false}
             autoComplete="off"
@@ -137,7 +138,7 @@ export function InspectBox({
             placeholder={compact ? "Paste another transaction, txid, PCZT or Zebra error" : "e.g. a 64-character txid, raw hex 0500008…, a PCZT, or the error Zebra returned"}
             aria-invalid={!!inputError}
             aria-describedby="tx-input-hint tx-input-error"
-            className={`min-w-0 flex-1 font-mono text-xs ${compact ? "" : "break-all"} ${compact ? "h-9 resize-none! py-2" : "min-h-24"}`}
+            className={`min-w-0 flex-1 font-mono text-xs ${compact ? "" : "break-all"} ${compact ? (multiline ? "max-h-80 min-h-9 py-2 [field-sizing:content]" : "h-9 resize-none! py-2") : "min-h-24"}`}
           />
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
             <Button type="submit" variant="accent" disabled={lookup.status === "loading"} aria-busy={lookup.status === "loading"}>
