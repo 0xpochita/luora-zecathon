@@ -118,7 +118,7 @@ export function useAskAi({ env, known, current }: { env: AskEnv | null; known: K
         setTurns((list) => (list.length ? [...list.slice(0, -1), patch(list[list.length - 1])] : list));
       };
       if (provider === "none") {
-        const text = builtinAnswer(prompt, question, about, env, excerpts, optIns);
+        const text = builtinAnswer(prompt, question, about, env, excerpts, { txid: true, addresses: true, hashes: true, hex: false });
         patchLast((turn) => ({ ...turn, content: text, streaming: false }));
         return;
       }
@@ -565,11 +565,12 @@ export function AiStatusButton({ ai }: { ai: AskAi }): ReactNode {
     <button
       type="button"
       onClick={() => ai.setConnectOpen(true)}
-      className="inline-flex h-6 items-center gap-1.5 rounded-chip bg-raised px-2 text-[12.5px] text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
-      title="Connect AI"
+      className="inline-flex h-6 items-center gap-1.5 rounded-chip bg-raised px-2 text-[12.5px] whitespace-nowrap text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+      title={`Connect AI · ${provider === "none" ? "None" : PROVIDER_LABEL[provider]}`}
+      aria-label={`Connect AI, now ${provider === "none" ? "None" : PROVIDER_LABEL[provider]}`}
     >
       <Sparkle weight="fill" className="text-[12px]" />
-      AI · {provider === "none" ? "None" : PROVIDER_LABEL[provider]}
+      AI<span className="hidden sm:inline"> · {provider === "none" ? "None" : PROVIDER_LABEL[provider]}</span>
     </button>
   );
 }

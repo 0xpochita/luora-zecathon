@@ -82,6 +82,7 @@ function scoreSection(section: ZipSection, clauseWords: string[][], keywords: st
     if (bodyText.includes(keyword)) score += 1;
   }
   if (/specification|consensus|fee calculation/i.test(section.trail.join(" "))) score += 2;
+  if (/rationale|alternatives|discussion|motivation/i.test(section.trail.join(" "))) score -= 6;
   return score;
 }
 

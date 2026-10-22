@@ -148,6 +148,9 @@ function checkLine(check: Check): string {
 
 function excerptLine(excerpt: ZipSection): string {
   const sentence = excerpt.text
+    .split("\n")
+    .filter((line) => !/^\s*(\||::|\.\. )/.test(line))
+    .join(" ")
     .replace(/\s+/g, " ")
     .replace(/[`*]/g, "")
     .trim();
@@ -181,7 +184,14 @@ export function builtinAnswer(prompt: QuickPrompt | null, question: string, subj
     if (subject.checks.length === 0) {
       lines.push(`No rule Luora runs is tied directly to ${subject.title}${where}. The rules for the whole transaction are in the Rules tab.`);
     } else {
-      lines.push(failing.length ? `${failing.length} of ${subject.checks.length} related rules need attention ${env.heightLabel}:` : `All ${subject.checks.length} related rules pass or do not apply ${env.heightLabel}:`);
+      const count = subject.checks.length;
+      lines.push(
+        failing.length
+          ? `${failing.length} of ${count} related rule${count === 1 ? "" : "s"} need${failing.length === 1 ? "s" : ""} attention ${env.heightLabel}:`
+          : count === 1
+            ? `The related rule ${subject.checks[0].status === "na" ? "does not apply" : "passes"} ${env.heightLabel}:`
+            : `All ${count} related rules pass or do not apply ${env.heightLabel}:`,
+      );
       lines.push(...subject.checks.map(checkLine));
       const sources = subject.checks.flatMap((check) => (check.source ? [check.source] : []));
       if (sources.length) lines.push("", `Each rule mirrors the source line it cites, e.g. ${sources[0]}.`);
@@ -199,6 +209,7 @@ export function builtinAnswer(prompt: QuickPrompt | null, question: string, subj
   } else {
     lines.push(`${subject.title}${where}${subject.parents.length ? `, inside ${subject.parents.join(" › ")}` : ""}.`);
     lines.push("", topic.explain);
+    for (const note of subject.notes) lines.push("", note);
     if (fieldLines.length) lines.push("", "Here:", ...fieldLines);
     if (failing.length) lines.push("", "Flagged:", ...failing.map(checkLine));
     if (prompt === null && question.trim()) lines.push("", "Built-in answers cover the four quick questions. For a free question, connect an AI in Connect AI; until then, here is the closest ZIP text.");

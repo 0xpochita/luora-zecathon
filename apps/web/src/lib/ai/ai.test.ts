@@ -76,6 +76,18 @@ describe("payload builder", () => {
     expect(withHashes).toContain(nullifier);
   });
 
+  it("scrubs addresses and 64-hex ids from free text such as check details", () => {
+    const detail = `Ironwood action 3 shows ${address}, an address for Test; prevout ${PREV}.`;
+    const subject = { ...checkSubject(checks[0], 6), checks: [{ ...checks[0], detail }], fields: [] };
+    const plain = buildPayload(subject, env, [], NO_OPT_INS, "q").context;
+    expect(plain).not.toContain(address);
+    expect(plain).not.toContain(PREV);
+    expect(plain).toContain("[address not sent]");
+    const opted = buildPayload(subject, env, [], { ...NO_OPT_INS, addresses: true, txid: true }, "q").context;
+    expect(opted).toContain(address);
+    expect(opted).toContain(PREV);
+  });
+
   it("classifies hashes and sizes", () => {
     expect(fieldPrivacy("nullifier", nullifier, `${nullifier.slice(0, 8)}…`)).toBe("hash");
     expect(fieldPrivacy("encCiphertext", "00", "580 B, encrypted", true)).toBe("size");
@@ -92,6 +104,11 @@ describe("payload builder", () => {
     expect(payload.messages.map((message) => message.role)).toEqual(["user", "assistant", "user"]);
     expect(payload.messages[0].content).toContain("#branch-id PASS");
     expect(payload.messages[2].content).toBe("and at NU7?");
+    const leaky = buildPayload(subject, env, [], NO_OPT_INS, "next", [
+      { role: "user", content: "Explain" },
+      { role: "assistant", content: `address = ${address}` },
+    ]);
+    expect(leaky.messages[1].content).not.toContain(address);
   });
 });
 

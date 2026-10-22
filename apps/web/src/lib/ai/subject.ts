@@ -42,6 +42,18 @@ const TXID_FIELDS = new Set(["txid", "prevout"]);
 const ADDRESS_FIELDS = new Set(["address", "scriptPubKey", "recipient", "userAddress"]);
 const HASH_FIELDS = new Set(["anchor", "anchorSapling", "cmu", "cmx", "cv", "ephemeralKey", "nullifier", "rk", "nullifiers", "commitments"]);
 
+const KIND_HINTS: Record<string, string[]> = {
+  HEADER: ["header_digest", "consensus_branch_id", "nExpiryHeight"],
+  VIN: ["prevouts_digest", "sequence_digest"],
+  VOUT: ["outputs_digest"],
+  SPEND: ["sapling_spends_digest", "nullifier"],
+  OUTPUT: ["sapling_outputs_digest", "cmu"],
+  ACTION: ["orchard_actions_compact_digest", "cmx"],
+  BALANCE: ["valueBalance"],
+  PROOF: ["proofs"],
+  FEE: ["Fee calculation"],
+};
+
 const BUNDLE_ZIPS: Record<NodeId, number[]> = {
   tx: [244, 225],
   header: [225, 244, 203],
@@ -114,7 +126,7 @@ export function traceRowSubject(row: TraceRow, rows: TraceRow[], checks: Check[]
     fields: row.fields.map((field) => askField(field.name, field.value, field.display, field.encrypted)),
     checks: related,
     zips: zipsFor(node, related, version),
-    keywords: [row.kind, ...row.fields.map((field) => field.name)],
+    keywords: [row.kind, ...(KIND_HINTS[row.kind] ?? []), ...row.fields.map((field) => field.name)],
     notes: row.offset === null ? ["This row is computed by Luora, it is not stored in the transaction bytes."] : [],
   };
 }
@@ -233,7 +245,7 @@ export function zebraSubject(entry: ZebraErrorEntry, reason: string): AskSubject
     fields: [
       askField("message", entry.message),
       askField("stage", entry.stage),
-      askField("source", `${entry.crate}/${entry.file}:${entry.line}`),
+      askField("source", `${entry.file.startsWith(`${entry.crate}/`) ? entry.file : `${entry.crate}/${entry.file}`}:${entry.line}`),
       askField("zebraVersion", entry.zebraVersion),
       askField("matchedBy", reason),
     ],

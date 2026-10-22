@@ -38,6 +38,26 @@ export const SYSTEM_PROMPT = [
   "Keep answers under 200 words unless the user asks for more. Use short paragraphs or a short list. No headings.",
 ].join("\n");
 
+const SHIELDED_ADDRESS = /\b(?:u1|utest1|zs1|ztestsapling1|tex1|textest1)[02-9ac-hj-np-z]{20,}\b/g;
+const TRANSPARENT_ADDRESS = /\bt[1-3mn][1-9A-HJ-NP-Za-km-z]{30,40}\b/g;
+const HEX_ID = /\b[0-9a-fA-F]{64}\b/g;
+
+export function redactText(text: string, optIns: OptIns): { text: string; withheld: string[] } {
+  const withheld: string[] = [];
+  let out = text;
+  if (!optIns.addresses) {
+    const before = out;
+    out = out.replace(SHIELDED_ADDRESS, "[address not sent]").replace(TRANSPARENT_ADDRESS, "[address not sent]");
+    if (out !== before) withheld.push("addresses");
+  }
+  if (!optIns.txid && !optIns.hashes) {
+    const before = out;
+    out = out.replace(HEX_ID, "[id or hash not sent]");
+    if (out !== before) withheld.push("txid", "hashes");
+  }
+  return { text: out, withheld };
+}
+
 function clip(text: string, limit = VALUE_CHAR_LIMIT): string {
   return text.length > limit ? `${text.slice(0, limit)}… (${text.length} chars)` : text;
 }
@@ -58,8 +78,11 @@ export function renderField(field: AskField, optIns: OptIns): { line: string; wi
         : { line: `${field.name} = [exact bytes not sent${field.display.includes("×") ? `; ${field.display}` : ""}]`, withheld: "hashes" };
     case "size":
       return { line: `${field.name} = ${field.display}`, withheld: null };
-    default:
-      return { line: field.display !== field.value ? `${field.name} = ${clip(field.value)} (${field.display})` : `${field.name} = ${clip(field.value)}`, withheld: null };
+    default: {
+      const line = field.display !== field.value ? `${field.name} = ${clip(field.value)} (${field.display})` : `${field.name} = ${clip(field.value)}`;
+      const redacted = redactText(line, optIns);
+      return { line: redacted.text, withheld: redacted.withheld[0] ?? null };
+    }
   }
 }
 
@@ -85,13 +108,18 @@ export function buildContext(subject: AskSubject, env: AskEnv, excerpts: ZipSect
       if (rendered.withheld) withheld.add(rendered.withheld);
     }
   }
-  for (const note of subject.notes) lines.push(`Note: ${note}`);
+  const scrub = (text: string) => {
+    const redacted = redactText(text, optIns);
+    for (const item of redacted.withheld) withheld.add(item);
+    return redacted.text;
+  };
+  for (const note of subject.notes) lines.push(`Note: ${scrub(note)}`);
   if (subject.checks.length) {
     lines.push("");
     lines.push("Related checks (computed by Luora in the browser with librustzcash):");
     for (const check of subject.checks) {
       const zip = check.zip ? ` [ZIP ${check.zip.number}${check.zip.clause ? ` § ${check.zip.clause}` : ""}]` : "";
-      lines.push(`- #${check.id} ${check.status.toUpperCase()}: ${check.title}. ${check.detail}${zip}${check.source ? ` (mirrors ${check.source})` : ""}`);
+      lines.push(`- #${check.id} ${check.status.toUpperCase()}: ${check.title}. ${scrub(check.detail)}${zip}${check.source ? ` (mirrors ${check.source})` : ""}`);
     }
   }
   if (excerpts.length) {
@@ -121,10 +149,11 @@ export function buildPayload(
   history: ChatTurn[] = [],
 ): AskPayload {
   const { text, withheld } = buildContext(subject, env, excerpts, optIns);
+  const scrubbed = history.map((turn) => (turn.role === "assistant" ? { ...turn, content: redactText(turn.content, optIns).text } : turn));
   const first = `Context from Luora:\n${text}\n\nQuestion: ${question}`;
   const messages: ChatTurn[] =
     history.length === 0
       ? [{ role: "user", content: first }]
-      : [{ role: "user", content: `Context from Luora:\n${text}\n\nQuestion: ${history[0].content}` }, ...history.slice(1), { role: "user", content: question }];
+      : [{ role: "user", content: `Context from Luora:\n${text}\n\nQuestion: ${scrubbed[0].content}` }, ...scrubbed.slice(1), { role: "user", content: question }];
   return { system: SYSTEM_PROMPT, context: text, question, messages, withheld };
 }
