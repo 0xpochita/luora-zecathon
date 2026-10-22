@@ -1,4 +1,4 @@
-use luora_z_core::{Check, CheckStatus, DecodedTx, check_tx, decode_tx, fee_zat, inspect_pczt, upgrade_at};
+use luora_z_core::{Check, CheckStatus, DecodedTx, check_tx, check_tx_at_nu7, decode_tx, fee_zat, inspect_pczt, upgrade_at};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -16,7 +16,7 @@ fn fixture(name: &str) -> Fixture {
     serde_json::from_str(&std::fs::read_to_string(path).unwrap()).unwrap()
 }
 
-const ALL: [&str; 7] = [
+const ALL: [&str; 10] = [
     "v6-testnet-ironwood-pczt",
     "v4-transparent",
     "v4-coinbase",
@@ -24,6 +24,9 @@ const ALL: [&str; 7] = [
     "v5-orchard",
     "v6-ironwood",
     "v6-coinbase-ironwood",
+    "v6-zip318-transfer",
+    "v6-zip318-odd-amount",
+    "v6-zip318-preparation",
 ];
 
 fn decoded(name: &str) -> (Fixture, DecodedTx) {
@@ -50,7 +53,7 @@ fn no_fixture_fails_a_check_at_its_mined_height() {
     for name in ALL {
         let fx = fixture(name);
         let checks = check_tx(&fx.hex, &fx.network, fx.height, &fx.transparent_input_values_zat).unwrap();
-        assert_eq!(checks.len(), 10, "{name}");
+        assert_eq!(checks.len(), 12, "{name}");
         for c in &checks {
             assert_ne!(c.status, CheckStatus::Fail, "{name}: {} {}", c.id, c.detail);
         }
@@ -277,4 +280,60 @@ fn zip2009_fee_applies_from_mainnet_height_3590000() {
     assert_eq!(status_of(&after, "zip317-fee"), CheckStatus::Pass);
     let tx = decode_tx(&fx.hex, "main").unwrap();
     assert_eq!(tx.zip317.logical_actions, 2);
+}
+
+#[test]
+fn every_fixture_round_trips_through_transaction_write() {
+    for name in ALL {
+        let fx = fixture(name);
+        let checks = check_tx(&fx.hex, &fx.network, fx.height, &fx.transparent_input_values_zat).unwrap();
+        let rt = checks.iter().find(|c| c.id == "serialization-round-trip").unwrap();
+        assert_eq!(rt.status, CheckStatus::Pass, "{name}: {}", rt.detail);
+        assert!(rt.detail.contains(&fx.txid), "{name}");
+        assert!(rt.offset.is_none(), "{name}");
+    }
+}
+
+#[test]
+fn nu7_budget_is_na_before_nu7_and_passes_on_testnet_after() {
+    let fx = fixture("v6-ironwood");
+    let checks = check_tx(&fx.hex, &fx.network, fx.height, &fx.transparent_input_values_zat).unwrap();
+    assert_eq!(status_of(&checks, "nu7-shielded-budget"), CheckStatus::Na);
+    let fx = fixture("v6-testnet-ironwood-pczt");
+    let checks = check_tx(&fx.hex, &fx.network, fx.height, &fx.transparent_input_values_zat).unwrap();
+    let budget = checks.iter().find(|c| c.id == "nu7-shielded-budget").unwrap();
+    assert_eq!(budget.status, CheckStatus::Pass, "{}", budget.detail);
+    assert!(budget.detail.contains("shielded cost"));
+}
+
+#[test]
+fn check_at_nu7_uses_the_testnet_activation_height() {
+    let fx = fixture("v6-testnet-ironwood-pczt");
+    let run = check_tx_at_nu7(&fx.hex, "test", 0, &fx.transparent_input_values_zat).unwrap();
+    assert_eq!(run.height, 4_465_026);
+    assert!(!run.hypothetical);
+    assert_eq!(run.upgrade.branch_id, "0x77190ad9");
+    assert_eq!(status_of(&run.checks, "branch-id"), CheckStatus::Pass);
+}
+
+#[test]
+fn mainnet_v4_is_green_at_its_height_and_red_at_a_hypothetical_nu7() {
+    let fx = fixture("v4-transparent");
+    let tip = 3_526_660;
+    let now = check_tx(&fx.hex, "main", tip, &fx.transparent_input_values_zat).unwrap();
+    assert_eq!(status_of(&now, "version"), CheckStatus::Pass);
+    let run = check_tx_at_nu7(&fx.hex, "main", tip, &fx.transparent_input_values_zat).unwrap();
+    assert!(run.hypothetical);
+    assert_eq!(run.height, tip + 1);
+    assert_eq!(run.upgrade.name, "NU7");
+    assert_eq!(status_of(&run.checks, "version"), CheckStatus::Fail);
+    assert_eq!(status_of(&run.checks, "nu7-shielded-budget"), CheckStatus::Pass);
+}
+
+#[test]
+fn mainnet_v6_needs_the_nu7_branch_id_at_nu7() {
+    let fx = fixture("v6-ironwood");
+    let run = check_tx_at_nu7(&fx.hex, "main", 3_526_660, &fx.transparent_input_values_zat).unwrap();
+    assert_eq!(status_of(&run.checks, "branch-id"), CheckStatus::Fail);
+    assert_eq!(status_of(&run.checks, "version"), CheckStatus::Pass);
 }

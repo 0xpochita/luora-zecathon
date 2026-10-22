@@ -4,7 +4,7 @@ use zcash_protocol::consensus::{BlockHeight, BranchId, NetworkUpgrade, Parameter
 use zcash_protocol::value::ZatBalance;
 
 use crate::decode::{
-    FeeInputs, ZIP2009_MARGINAL_FEE, canonical_halo2_proof_bytes, fee_paid, has_explicit_branch_id, is_coinbase,
+    FeeInputs, ZIP2009_MARGINAL_FEE, display_hex, canonical_halo2_proof_bytes, fee_paid, has_explicit_branch_id, is_coinbase,
     parse_tx, version_number, zip2009_active,
 };
 use crate::model::{Check, CheckStatus, CoreError, ZipRef};
@@ -67,6 +67,7 @@ fn check(
         detail,
         zip,
         source: Some(source.to_string()),
+        offset: None,
     }
 }
 
@@ -755,6 +756,159 @@ fn fee_check(tx: &Transaction, net: Net, height: BlockHeight, input_values: &[Op
     )
 }
 
+const ZEBRA_NU7_REV: &str = "zebra c76a8677";
+pub const GLOBAL_SHIELDED_BUDGET: usize = 330;
+pub const ORCHARD_BLOCK_ACTION_LIMIT: usize = 330;
+pub const SAPLING_BLOCK_IO_LIMIT: usize = 300;
+pub const SPROUT_BLOCK_JOIN_SPLIT_LIMIT: usize = 0;
+
+fn nu7_budget_check(tx: &Transaction, net: Net, height: BlockHeight) -> Check {
+    let source = format!(
+        "{ZEBRA_NU7_REV} zebra-consensus/src/block.rs:191 GLOBAL_SHIELDED_BUDGET, :252 ShieldedActionCounts::exceeded_limit; zebra-consensus/src/transaction.rs:491 mempool check (ZcashFoundation/zebra#11529)"
+    );
+    let title = "NU7 shielded action limits";
+    let fee_inputs = FeeInputs::of(tx);
+    let orchard = fee_inputs.orchard_actions;
+    let ironwood = fee_inputs.ironwood_actions;
+    let sapling = fee_inputs.sapling_spends + fee_inputs.sapling_outputs;
+    let joinsplits = fee_inputs.joinsplits;
+    let cost = orchard + ironwood + sapling + 2 * joinsplits;
+    let counts = format!(
+        "{orchard} Orchard actions (limit {ORCHARD_BLOCK_ACTION_LIMIT}), {ironwood} Ironwood actions (limit {ORCHARD_BLOCK_ACTION_LIMIT}), {sapling} Sapling spends and outputs (limit {SAPLING_BLOCK_IO_LIMIT}), {joinsplits} JoinSplits (limit {SPROUT_BLOCK_JOIN_SPLIT_LIMIT}), shielded cost {cost} (budget {GLOBAL_SHIELDED_BUDGET})"
+    );
+    let clause = zip(218, "Shielded pool action limits");
+    if !nu_active(net, NetworkUpgrade::Nu7, height) {
+        return check(
+            "nu7-shielded-budget",
+            title,
+            CheckStatus::Na,
+            format!(
+                "These per-block limits apply from NU7, which activates at {}. This transaction has {counts}.",
+                activation(net, NetworkUpgrade::Nu7)
+            ),
+            clause,
+            &source,
+        );
+    }
+    let exceeded = [
+        ("Orchard actions", orchard, ORCHARD_BLOCK_ACTION_LIMIT),
+        ("Ironwood actions", ironwood, ORCHARD_BLOCK_ACTION_LIMIT),
+        ("Sapling inputs and outputs", sapling, SAPLING_BLOCK_IO_LIMIT),
+        ("Sprout JoinSplits", joinsplits, SPROUT_BLOCK_JOIN_SPLIT_LIMIT),
+        ("shielded actions across all pools", cost, GLOBAL_SHIELDED_BUDGET),
+    ]
+    .into_iter()
+    .find(|&(_, count, limit)| count > limit);
+    match exceeded {
+        Some((pool, count, limit)) => check(
+            "nu7-shielded-budget",
+            title,
+            CheckStatus::Fail,
+            format!(
+                "Zebra refuses it with TransactionError::TooManyShieldedActions: \"mempool transaction has {count} {pool}, exceeding the next block's ZIP 218 limit of {limit}\", and no NU7 block can hold it. This transaction has {counts}. Split it into smaller transactions."
+            ),
+            clause,
+            &source,
+        ),
+        None => check(
+            "nu7-shielded-budget",
+            title,
+            CheckStatus::Pass,
+            format!("Fits one NU7 block: {counts}."),
+            clause,
+            &source,
+        ),
+    }
+}
+
+fn round_trip_check(tx: &Transaction, bytes: &[u8]) -> Check {
+    let source = format!(
+        "{LIBRUSTZCASH_REV} zcash_primitives/src/transaction/mod.rs:1183 Transaction::write; bug classes librustzcash#3115 and #3137"
+    );
+    let title = "Serialization round-trip";
+    let clause = match tx.version() {
+        TxVersion::V6 => zip(229, "Version 6 transaction format"),
+        TxVersion::V5 => zip(225, "Version 5 transaction format"),
+        _ => None,
+    };
+    let mut written = Vec::with_capacity(bytes.len());
+    if let Err(e) = tx.write(&mut written) {
+        return check(
+            "serialization-round-trip",
+            title,
+            CheckStatus::Fail,
+            format!(
+                "zcash_primitives read this transaction, but Transaction::write refuses to write it back: {e}. This is the read/write asymmetry of librustzcash#3115; software that re-serialises transactions, Zebra included, can not relay it."
+            ),
+            clause,
+            &source,
+        );
+    }
+    if written != bytes {
+        let offset = written
+            .iter()
+            .zip(bytes)
+            .position(|(a, b)| a != b)
+            .unwrap_or(written.len().min(bytes.len()));
+        let byte = |data: &[u8]| data.get(offset).map_or("end of data".to_string(), |b| format!("0x{b:02x}"));
+        let mut failed = check(
+            "serialization-round-trip",
+            title,
+            CheckStatus::Fail,
+            format!(
+                "Transaction::write gives {} bytes for {} input bytes, first differing at byte offset {} (input {}, written {}). A transaction whose bytes do not round-trip can be relayed in a form its signer never saw (librustzcash#3115).",
+                group_thousands(&written.len().to_string()),
+                group_thousands(&bytes.len().to_string()),
+                group_thousands(&offset.to_string()),
+                byte(bytes),
+                byte(&written)
+            ),
+            clause,
+            &source,
+        );
+        failed.offset = Some(offset);
+        return failed;
+    }
+    let reread = match parse_tx(&written) {
+        Ok(reread) => reread,
+        Err(e) => {
+            return check(
+                "serialization-round-trip",
+                title,
+                CheckStatus::Fail,
+                format!("The written bytes equal the input, yet reading them again fails: {}.", e.message),
+                clause,
+                &source,
+            );
+        }
+    };
+    let txid = display_hex(tx.txid().as_ref());
+    let reread_txid = display_hex(reread.txid().as_ref());
+    if txid != reread_txid {
+        return check(
+            "serialization-round-trip",
+            title,
+            CheckStatus::Fail,
+            format!(
+                "Same bytes, different txid: {txid} on the first read, {reread_txid} after writing and reading again. This is the txid mismatch class of librustzcash#3137."
+            ),
+            clause,
+            &source,
+        );
+    }
+    check(
+        "serialization-round-trip",
+        title,
+        CheckStatus::Pass,
+        format!(
+            "Transaction::write reproduces all {} bytes, and reading them again gives the same txid {txid}.",
+            group_thousands(&bytes.len().to_string())
+        ),
+        clause,
+        &source,
+    )
+}
+
 pub fn run_checks(
     bytes: &[u8],
     net: Net,
@@ -774,5 +928,7 @@ pub fn run_checks(
         proof_length_check(&tx, net, height),
         coinbase_shielded_check(&tx, net, height),
         fee_check(&tx, net, height, input_values),
+        nu7_budget_check(&tx, net, height),
+        round_trip_check(&tx, bytes),
     ])
 }

@@ -61,6 +61,17 @@ pub fn check_tx(
 }
 
 #[wasm_bindgen]
+pub fn check_tx_at_nu7(
+    hex: &str,
+    network: &str,
+    tip_height: u32,
+    transparent_input_values_zat: JsValue,
+) -> Result<JsValue, JsValue> {
+    let values = input_values(transparent_input_values_zat)?;
+    finish(crate::check_tx_at_nu7(hex, network, tip_height, &values))
+}
+
+#[wasm_bindgen]
 pub fn fee_zat(hex: &str, transparent_input_values_zat: JsValue) -> Result<JsValue, JsValue> {
     let values = input_values(transparent_input_values_zat)?;
     finish(crate::fee_zat(hex, &values))

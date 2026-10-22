@@ -318,6 +318,7 @@ fn make_check(id: &str, title: &str, status: CheckStatus, detail: String, zip: O
         detail,
         zip,
         source: Some(source.to_string()),
+        offset: None,
     }
 }
 

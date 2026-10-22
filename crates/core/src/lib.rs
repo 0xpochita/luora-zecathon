@@ -31,6 +31,36 @@ pub fn check_tx(
     )
 }
 
+pub fn check_tx_at_nu7(
+    hex: &str,
+    network: &str,
+    tip_height: u32,
+    transparent_input_values_zat: &[Option<u64>],
+) -> Result<Nu7Run, CoreError> {
+    use zcash_protocol::consensus::{NetworkUpgrade, Parameters};
+    let bytes = decode::hex_to_bytes(hex)?;
+    let net = Net::parse(network)?;
+    let (net, height, hypothetical) = match net.activation_height(NetworkUpgrade::Nu7) {
+        Some(height) => (net, u32::from(height), false),
+        None if net == Net::Main => {
+            let height = tip_height.saturating_add(1);
+            (Net::MainWithNu7At(height), height, true)
+        }
+        None => {
+            return Err(CoreError::new(
+                "nu7-not-scheduled",
+                format!("NU7 has no activation height on {network}"),
+            ));
+        }
+    };
+    Ok(Nu7Run {
+        height,
+        hypothetical,
+        upgrade: network::upgrade_at(net, height),
+        checks: checks::run_checks(&bytes, net, height, transparent_input_values_zat)?,
+    })
+}
+
 pub fn fee_zat(hex: &str, transparent_input_values_zat: &[Option<u64>]) -> Result<Option<u64>, CoreError> {
     decode::fee_zat(&decode::hex_to_bytes(hex)?, transparent_input_values_zat)
 }
