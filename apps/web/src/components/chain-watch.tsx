@@ -65,7 +65,7 @@ function BackendRow({ report, target, reference }: { report: BackendReport; targ
           </span>
         )}
         {report.latencyMs !== null && <span>{formatInt(report.latencyMs)} ms</span>}
-        {report.calls > 0 && <span>{report.calls} block lookups</span>}
+        {report.calls > 0 && <span>{report.calls} block {report.calls === 1 ? "lookup" : "lookups"}</span>}
       </div>
       {report.error && <Hint>{report.error}</Hint>}
       {report.fork && (
