@@ -38,6 +38,7 @@ export interface Check {
   detail: string;
   zip: { number: number; clause?: string; url: string } | null;
   source?: string;
+  offset?: number;
 }
 
 export interface PcztView {
@@ -82,6 +83,27 @@ export interface TraceNode {
   fields: TraceField[];
 }
 
+export type Zip318Classification = "preparation" | "transfer" | "nonconforming" | "unknown" | "not-a-migration-shape";
+
+export interface Zip318Reason {
+  field: string;
+  ok: boolean | null;
+  detail: string;
+  zip: { number: number; clause?: string; url: string };
+}
+
+export interface Zip318View {
+  classification: Zip318Classification;
+  reasons: Zip318Reason[];
+}
+
+export interface Nu7Run {
+  height: number;
+  hypothetical: boolean;
+  upgrade: { name: string; branchId: string; activationHeight: number };
+  checks: Check[];
+}
+
 export interface LuoraZCore {
   decode_tx(hex: string, network: Network): DecodedTx;
   check_tx(hex: string, network: Network, height: number, transparentInputValuesZat: (number | null)[]): Check[];
@@ -89,6 +111,8 @@ export interface LuoraZCore {
   inspect_pczt(base64OrHex: string, network: Network): PcztView;
   upgrade_at(network: Network, height: number): { name: string; branchId: string; activationHeight: number };
   trace_tx(hex: string, network: Network): TraceNode[];
+  zip318_tx(hex: string, network: Network, height: number): Zip318View;
+  check_tx_at_nu7(hex: string, network: Network, tipHeight: number, transparentInputValuesZat: (number | null)[]): Nu7Run;
 }
 
 export interface Sample { label: string; network: Network; txid: string; height: number; why: string; pools: string[] }
