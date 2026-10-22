@@ -22,6 +22,25 @@ export function check_tx(hex, network, height, transparent_input_values_zat) {
 /**
  * @param {string} hex
  * @param {string} network
+ * @param {number} tip_height
+ * @param {any} transparent_input_values_zat
+ * @returns {any}
+ */
+export function check_tx_at_nu7(hex, network, tip_height, transparent_input_values_zat) {
+    const ptr0 = passStringToWasm0(hex, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(network, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.check_tx_at_nu7(ptr0, len0, ptr1, len1, tip_height, transparent_input_values_zat);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {string} hex
+ * @param {string} network
  * @returns {any}
  */
 export function decode_tx(hex, network) {
@@ -94,6 +113,24 @@ export function upgrade_at(network, height) {
     const ptr0 = passStringToWasm0(network, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
     const len0 = WASM_VECTOR_LEN;
     const ret = wasm.upgrade_at(ptr0, len0, height);
+    if (ret[2]) {
+        throw takeFromExternrefTable0(ret[1]);
+    }
+    return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * @param {string} hex
+ * @param {string} network
+ * @param {number} height
+ * @returns {any}
+ */
+export function zip318_tx(hex, network, height) {
+    const ptr0 = passStringToWasm0(hex, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(network, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.zip318_tx(ptr0, len0, ptr1, len1, height);
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
