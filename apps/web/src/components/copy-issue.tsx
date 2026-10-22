@@ -71,7 +71,7 @@ export function CopyIssue({
                     type="checkbox"
                     checked={includeRaw}
                     onChange={(event) => setIncludeRaw(event.target.checked)}
-                    className="mt-[3px] size-3.5 flex-none accent-[#f4f4f5]"
+                    className="mt-[3px] size-3.5 flex-none accent-primary"
                   />
                   Include the raw {rawKind} in the link
                 </label>

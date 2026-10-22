@@ -293,7 +293,7 @@ function RichLine({ text, known, onOffset, onCheck }: { text: string; known: Kno
             type="button"
             onClick={() => (segment.type === "offset" ? onOffset(segment.offset) : onCheck(segment.id))}
             title={segment.type === "offset" ? `Select the trace row at byte ${segment.offset}` : `Show the rule ${segment.id}`}
-            className="mx-0.5 inline-flex h-[20px] items-center rounded-[6px] bg-raised px-1.5 align-[1px] font-mono text-[11.5px] text-text outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+            className="mx-0.5 inline-flex h-[20px] items-center rounded-[6px] bg-raised px-1.5 align-[1px] font-mono text-[11.5px] text-text outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
           >
             {segment.text}
           </button>
@@ -355,7 +355,7 @@ function PayloadPreview({ ai, destination }: { ai: AskAi; destination: string })
               type="checkbox"
               checked={ai.optIns[option.key]}
               onChange={(event) => ai.setOptIns({ ...ai.optIns, [option.key]: event.target.checked })}
-              className="mt-[3px] size-3.5 flex-none accent-[#f4f4f5]"
+              className="mt-[3px] size-3.5 flex-none accent-primary"
             />
             {option.label}
           </label>
@@ -410,7 +410,7 @@ export function AskPanel({ ai, onOffset, onCheck }: { ai: AskAi; onOffset: (offs
         <button
           type="button"
           onClick={() => ai.setConnectOpen(true)}
-          className="ml-auto inline-flex h-7 max-w-[200px] items-center gap-1.5 truncate rounded-chip bg-raised px-2.5 text-[12.5px] text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+          className="ml-auto inline-flex h-7 max-w-[200px] items-center gap-1.5 truncate rounded-chip bg-raised px-2.5 text-[12.5px] text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
           title="Connect AI"
         >
           <Dot tone={provider === "none" ? "neutral" : "ok"} />
@@ -438,7 +438,7 @@ export function AskPanel({ ai, onOffset, onCheck }: { ai: AskAi; onOffset: (offs
                 key={prompt.id}
                 type="button"
                 onClick={() => send(prompt.label, prompt.id)}
-                className="flex h-9 items-center gap-2 rounded-tile bg-raised px-3 text-left text-[13px] text-text outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+                className="flex h-9 items-center gap-2 rounded-tile bg-raised px-3 text-left text-[13px] text-text outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
               >
                 {prompt.label}
                 <CaretRight className="ml-auto flex-none text-muted" />
@@ -500,7 +500,7 @@ export function AskPanel({ ai, onOffset, onCheck }: { ai: AskAi; onOffset: (offs
                 key={prompt.id}
                 type="button"
                 onClick={() => send(prompt.label, prompt.id)}
-                className="h-7 flex-none rounded-chip bg-raised px-2.5 text-[12px] text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+                className="h-7 flex-none rounded-chip bg-raised px-2.5 text-[12px] text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
               >
                 {prompt.label}
               </button>
@@ -542,7 +542,7 @@ export function AskPanel({ ai, onOffset, onCheck }: { ai: AskAi; onOffset: (offs
           <span className="min-w-0 flex-1 truncate text-[12px] text-dim">
             {provider === "none" ? "Built-in: nothing leaves this tab." : `Sends to ${destination}. Not sent: ${["txid", "addresses", "hashes", "hex"].filter((key) => !ai.optIns[key as keyof OptIns]).join(", ") || "nothing withheld"}.`}
           </span>
-          <button type="button" onClick={() => setShowPayload((value) => !value)} aria-expanded={showPayload} className="flex-none text-[12px] text-muted underline decoration-white/20 underline-offset-2 hover:text-fg">
+          <button type="button" onClick={() => setShowPayload((value) => !value)} aria-expanded={showPayload} className="flex-none text-[12px] text-muted underline decoration-overlay/20 underline-offset-2 hover:text-fg">
             What will be sent
           </button>
         </div>
@@ -565,7 +565,7 @@ export function AiStatusButton({ ai }: { ai: AskAi }): ReactNode {
     <button
       type="button"
       onClick={() => ai.setConnectOpen(true)}
-      className="inline-flex h-6 items-center gap-1.5 rounded-chip bg-raised px-2 text-[12.5px] whitespace-nowrap text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+      className="inline-flex h-6 items-center gap-1.5 rounded-chip bg-raised px-2 text-[12.5px] whitespace-nowrap text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
       title={`Connect AI · ${provider === "none" ? "None" : PROVIDER_LABEL[provider]}`}
       aria-label={`Connect AI, now ${provider === "none" ? "None" : PROVIDER_LABEL[provider]}`}
     >

@@ -39,7 +39,7 @@ The project's notes live in this repository:
 
 | Section | Pages |
 |---|---|
-| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) · [Copy as issue, mempool, honest fee](docs/handoff/issue.md) · [Block Trace](docs/handoff/block.md) |
+| How it was built | [Core (librustzcash → WASM)](docs/handoff/core.md) · [Chain data and Zebra catalog](docs/handoff/data.md) · [Web app](docs/handoff/web.md) · [UX and Trace](docs/handoff/ux.md) · [Ask AI](docs/handoff/ai.md) · [Copy as issue, mempool, honest fee](docs/handoff/issue.md) · [Block Trace](docs/handoff/block.md) · [Light and dark theme](docs/handoff/theme.md) |
 | Data contract | [`contract/types.ts`](contract/types.ts), the shapes shared by the WASM module, the UI and the server routes |
 | Real data | [`data/samples.json`](data/samples.json) · [`data/zebra-errors.json`](data/zebra-errors.json) · [`data/zebra-error-samples.json`](data/zebra-error-samples.json) · [`data/upgrades.json`](data/upgrades.json) · [`data/zips/`](data/zips) · [test fixtures](crates/core/tests/fixtures/README.md) |
 | Specs used | [ZIP 203](https://zips.z.cash/zip-0203) · [ZIP 225](https://zips.z.cash/zip-0225) · [ZIP 229](https://zips.z.cash/zip-0229) · [ZIP 244](https://zips.z.cash/zip-0244) · [ZIP 257](https://zips.z.cash/zip-0257) · [ZIP 258](https://zips.z.cash/zip-0258) · [ZIP 317](https://zips.z.cash/zip-0317) · [ZIP 2009](https://zips.z.cash/zip-2009) · [ZIP 374](https://zips.z.cash/zip-0374) |
@@ -145,6 +145,7 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **In-Page Full Screen**: the Trace and the graph grow to fill the window; the detail drawer still opens
 - **Skeleton Loading And Motion**: shaped placeholders while data loads, staged entrance after; both respect reduced motion
 - **Phone Ready**: every view at 390 px, the drawer becomes a bottom sheet
+- **Light And Dark**: follows the system theme by default; the sun/moon/monitor button in the top bar pins Light or Dark, remembered in this browser and applied before the first paint
 - **Ask AI**: a sparkle on every Trace row, Graph node, rule, Zebra match and PCZT action; answers cite the ZIP text, chips like `@1706` and `#branch-id` jump to the row or rule, and with no AI connected a built-in answer is assembled from the real fields
 - **Copy As GitHub Issue**: one click turns a verdict, a Zebra match or a PCZT into Markdown with the failing rules, ZIP links, source lines and decoder versions, previewed before copying
 - **Shareable Links, Privacy First**: a txid link as before; pasted hex or a PCZT goes into the link only if you tick the box, and only after the `#`, which browsers never send to a server

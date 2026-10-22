@@ -84,7 +84,7 @@ export function MigrationCard({
       )}
       {rest.length > 0 && (
         <details className="group flex flex-col gap-1.5">
-          <summary className="flex h-9 list-none items-center gap-2 rounded-tile bg-raised px-3 text-[13px] text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25 [&::-webkit-details-marker]:hidden">
+          <summary className="flex h-9 list-none items-center gap-2 rounded-tile bg-raised px-3 text-[13px] text-text outline-none hover:bg-hover focus-visible:ring-2 focus-visible:ring-overlay/25 [&::-webkit-details-marker]:hidden">
             <Dot tone="ok" />
             {rest.length - unknown} of {view.reasons.length} shape rules match
             {unknown > 0 ? `, ${unknown} unknown from public data` : ""}

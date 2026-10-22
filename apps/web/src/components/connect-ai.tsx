@@ -109,7 +109,7 @@ export function ConnectAiDialog({ ai }: { ai: AskAi }) {
       onClose={() => ai.setConnectOpen(false)}
       onClick={(event) => event.target === event.currentTarget && ai.setConnectOpen(false)}
       aria-labelledby="connect-ai-title"
-      className="m-auto max-h-[92dvh] w-[min(560px,calc(100vw-24px))] overflow-hidden rounded-card border border-border bg-card-grad p-0 text-fg shadow-float backdrop:bg-[rgba(5,5,6,.55)]"
+      className="m-auto max-h-[92dvh] w-[min(560px,calc(100vw-24px))] overflow-hidden rounded-card border border-border bg-card-grad p-0 text-fg shadow-float backdrop:bg-scrim"
     >
       <div className="flex max-h-[92dvh] flex-col">
         <header className="flex items-center gap-2 px-4 pt-3.5 pb-2.5 text-[14px]">
@@ -136,12 +136,12 @@ export function ConnectAiDialog({ ai }: { ai: AskAi }) {
                     setChoice(item.id);
                     setTest({ status: "idle" });
                   }}
-                  className={`flex flex-col gap-1 rounded-inner border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
-                    active ? "border-white/25 bg-hover" : "border-border bg-inner-grad hover:border-border-strong"
+                  className={`flex flex-col gap-1 rounded-inner border px-3 py-2.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-overlay/25 ${
+                    active ? "border-overlay/25 bg-hover" : "border-border bg-inner-grad hover:border-border-strong"
                   }`}
                 >
                   <span className="flex items-center gap-2 font-medium text-fg">
-                    <Dot tone={active ? "solid" : "neutral"} />
+                    <Dot tone={active ? "ok" : "neutral"} />
                     {item.title}
                   </span>
                   <span className="text-[12.5px] leading-snug text-body">{item.who}</span>
@@ -246,7 +246,7 @@ export function ConnectAiDialog({ ai }: { ai: AskAi }) {
                 )}
               </label>
               <label className="flex items-start gap-2 text-[12.5px] text-text">
-                <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} className="mt-[3px] size-3.5 accent-[#f4f4f5]" />
+                <input type="checkbox" checked={remember} onChange={(event) => setRemember(event.target.checked)} className="mt-[3px] size-3.5 accent-primary" />
                 Remember keys in this browser tab session (sessionStorage, gone when the tab closes)
               </label>
               <Hint>

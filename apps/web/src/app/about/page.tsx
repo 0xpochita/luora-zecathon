@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowLeft } from "@phosphor-icons/react/ssr";
 import { BrandLogo } from "@/components/brand";
 import { ExternalLink, Panel } from "@/components/ui";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
   title: "About · Luora",
@@ -50,11 +51,14 @@ export default function AboutPage() {
       <header className="flex items-center gap-3 px-4 pt-4 pb-3">
         <Link
           href="/"
-          className="inline-flex h-8 items-center gap-2 rounded-tile bg-raised px-3 text-[13px] text-muted transition-colors outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+          className="inline-flex h-8 items-center gap-2 rounded-tile bg-raised px-3 text-[13px] text-muted transition-colors outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
         >
           <ArrowLeft />
           Back to the inspector
         </Link>
+        <div className="ml-auto">
+          <ThemeToggle />
+        </div>
       </header>
       <main className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-12">
         <div className="flex items-center gap-3 px-1 pt-4 pb-2">

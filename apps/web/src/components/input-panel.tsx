@@ -52,14 +52,14 @@ function PrivacyNote({ endpoints }: { endpoints: Endpoints }) {
         popoverTarget="privacy-details"
         aria-label="How your data is handled"
         title="How your data is handled"
-        className="inline-flex size-6 items-center justify-center rounded-chip text-[14px] text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+        className="inline-flex size-6 items-center justify-center rounded-chip text-[14px] text-muted outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
       >
         <Info />
       </button>
       <div
         id="privacy-details"
         popover="auto"
-        className="m-auto w-[min(420px,calc(100vw-32px))] rounded-card border border-border bg-card-grad p-4 text-[13px] leading-relaxed text-body shadow-float backdrop:bg-black/40"
+        className="m-auto w-[min(420px,calc(100vw-32px))] rounded-card border border-border bg-card-grad p-4 text-[13px] leading-relaxed text-body shadow-float backdrop:bg-scrim"
       >
         <p className="pb-2 text-[14px] font-medium text-fg">How your data is handled</p>
         <ul className="flex list-disc flex-col gap-1.5 pl-4">
@@ -197,7 +197,7 @@ export function InspectBox({
                   type="button"
                   title={`${sample.why} (${NETWORK_LABEL[sample.network]}, height ${formatInt(sample.height)})`}
                   onClick={() => onPickSample(sample)}
-                  className="enter inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25"
+                  className="enter inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-overlay/25"
                 >
                   {SAMPLE_CHIPS[sample.txid]}
                 </button>
@@ -207,7 +207,7 @@ export function InspectBox({
                   type="button"
                   title={ERROR_CHIP.why}
                   onClick={() => onPickError(ERROR_CHIP.text)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-overlay/25"
                 >
                   <Dot tone="bad" />
                   {ERROR_CHIP.label}
@@ -220,7 +220,7 @@ export function InspectBox({
                     type="button"
                     title={chip.why}
                     onClick={() => onPickStall(chip.text)}
-                    className="inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-overlay/25"
                   >
                     <Dot tone="warn" />
                     {chip.label}
@@ -230,7 +230,7 @@ export function InspectBox({
             {samples.status === "loading" && <span className="skeleton ml-1 h-3 w-28 rounded-full" aria-hidden />}
             {others.length > 0 && (
               <details className="group px-1">
-                <summary className="inline-flex list-none items-center gap-1 rounded-chip text-[12.5px] text-dim outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25 [&::-webkit-details-marker]:hidden">
+                <summary className="inline-flex list-none items-center gap-1 rounded-chip text-[12.5px] text-dim outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25 [&::-webkit-details-marker]:hidden">
                   {others.length} more examples
                   <CaretRight className="transition-transform group-open:rotate-90" />
                 </summary>
@@ -241,7 +241,7 @@ export function InspectBox({
                         type="button"
                         onClick={() => onPickSample(sample)}
                         title={sample.why}
-                        className="flex w-full items-center gap-2 rounded-tile px-2.5 py-1.5 text-left text-[13px] text-body outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+                        className="flex w-full items-center gap-2 rounded-tile px-2.5 py-1.5 text-left text-[13px] text-body outline-none hover:bg-hover hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
                       >
                         {sample.label}
                         <span className="ml-auto font-mono text-[11.5px] text-dim">

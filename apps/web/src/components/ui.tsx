@@ -18,7 +18,7 @@ export const TONE_DOT: Record<Tone, string> = {
 export const STATUS_TONE: Record<CheckStatus, Tone> = { pass: "ok", fail: "bad", warn: "warn", na: "neutral" };
 export const STATUS_LABEL: Record<CheckStatus, string> = { pass: "Pass", fail: "Fail", warn: "Warn", na: "N/A" };
 
-const FOCUS_RING = "outline-none focus-visible:ring-2 focus-visible:ring-white/25";
+const FOCUS_RING = "outline-none focus-visible:ring-2 focus-visible:ring-overlay/25";
 
 export function tile(active: boolean) {
   return `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-tile transition-colors ${FOCUS_RING} ${
@@ -64,8 +64,8 @@ export function Chip({
 }
 
 const BUTTON_VARIANTS = {
-  primary: "rounded-tile bg-primary text-primary-fg shadow-soft hover:bg-white",
-  accent: "rounded-chip bg-mint text-primary-fg hover:bg-[#a7f3c4]",
+  primary: "rounded-tile bg-primary text-primary-fg shadow-soft hover:bg-primary-hover",
+  accent: "rounded-chip bg-mint text-primary-fg hover:bg-mint-hover",
   secondary: "rounded-tile bg-raised text-fg hover:bg-hover",
   ghost: "rounded-tile text-muted hover:bg-hover hover:text-fg",
 } as const;
@@ -228,7 +228,7 @@ export function InnerHeader({ icon, children, aside }: { icon: ReactNode; childr
 }
 
 const FIELD =
-  "border border-border text-[13px] text-[#f0f0f2] outline-none transition-colors placeholder:text-dim hover:border-border-strong focus:border-white/25";
+  "border border-border text-[13px] text-field-fg outline-none transition-colors placeholder:text-dim hover:border-border-strong focus:border-overlay/25";
 
 export function Input({ className = "", ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={`${FIELD} h-9 rounded-inner bg-field px-3 ${className}`} {...props} />;
@@ -239,7 +239,7 @@ export function Textarea({ className = "", ...props }: TextareaHTMLAttributes<HT
 }
 
 export function Select({ className = "", ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={`select-caret h-9 rounded-tile bg-inset pr-8 pl-3 text-[13px] text-[#f0f0f2] ${FOCUS_RING} ${className}`} {...props} />;
+  return <select className={`select-caret h-9 rounded-tile bg-inset pr-8 pl-3 text-[13px] text-field-fg ${FOCUS_RING} ${className}`} {...props} />;
 }
 
 export function Meter({
@@ -254,9 +254,9 @@ export function Meter({
   fillClassName?: string;
 }) {
   return (
-    <i className={`block h-1.5 flex-none overflow-hidden rounded-full bg-[#151517] shadow-[inset_0_0_0_1px_var(--border)] ${className}`}>
+    <i className={`block h-1.5 flex-none overflow-hidden rounded-full bg-track shadow-[inset_0_0_0_1px_var(--border)] ${className}`}>
       <b
-        className={`block h-full rounded-full ${bad ? "bg-red" : "bg-[#d4d4d8]"} ${fillClassName}`}
+        className={`block h-full rounded-full ${bad ? "bg-red" : "bg-meter"} ${fillClassName}`}
         style={{ width: `${value <= 0 ? 0 : Math.max(2, Math.min(1, value) * 100)}%` }}
       />
     </i>

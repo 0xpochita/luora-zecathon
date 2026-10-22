@@ -68,7 +68,7 @@ export function VerdictCard({
     ) : inputsPending ? (
       "Fee: fetching the values of the spent inputs…"
     ) : fee.why ? (
-      <span title={fee.why} className="underline decoration-dotted decoration-white/30 underline-offset-4">
+      <span title={fee.why} className="underline decoration-dotted decoration-overlay/30 underline-offset-4">
         Fee: {fee.text}.
       </span>
     ) : null;
@@ -158,7 +158,7 @@ export function VerdictCard({
           <button
             type="button"
             onClick={onShowDetails}
-            className="ml-auto inline-flex flex-none items-center gap-0.5 rounded-chip text-[12.5px] text-muted outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-white/25"
+            className="ml-auto inline-flex flex-none items-center gap-0.5 rounded-chip text-[12.5px] text-muted outline-none hover:text-fg focus-visible:ring-2 focus-visible:ring-overlay/25"
           >
             Details
             <CaretRight />
