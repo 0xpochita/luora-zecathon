@@ -172,8 +172,73 @@
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
   summary,
-  label[for] {
+  label[for],
+  select:not(:disabled),
+  option:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  label:has(> input[type="checkbox"], > input[type="radio"], > select) {
     cursor: pointer;
+  }
+
+  @supports (appearance: base-select) {
+    select,
+    ::picker(select) {
+      appearance: base-select;
+    }
+
+    select {
+      display: inline-flex;
+      align-items: center;
+      transition: background-color 0.15s;
+    }
+
+    select:hover:not(:disabled) {
+      background-color: var(--hover);
+    }
+
+    select::picker-icon {
+      display: none;
+    }
+
+    ::picker(select) {
+      margin-block: 6px;
+      padding: 4px;
+      min-width: anchor-size(width);
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      background: linear-gradient(180deg, var(--card-top) 0%, var(--card-bot) 100%);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    select option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px 6px 8px;
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--body);
+      outline: none;
+    }
+
+    select option:hover,
+    select option:focus-visible {
+      background: var(--hover);
+      color: var(--fg);
+    }
+
+    select option:checked {
+      color: var(--fg);
+      font-weight: 500;
+    }
+
+    select option::checkmark {
+      order: 1;
+      margin-left: auto;
+      color: var(--fg);
+      font-size: 12px;
+    }
   }
 
   a.link {
