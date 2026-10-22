@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { CaretRight, Info, Sparkle } from "@phosphor-icons/react";
 import type { Sample } from "@contract/types";
 import { classifyInput } from "@/lib/input";
@@ -173,7 +174,7 @@ export function InspectBox({
 
       {!compact && (
         <>
-          <div className="flex flex-col gap-2">
+          <div className="enter flex flex-col gap-2" style={{ "--i": 2 } as CSSProperties}>
             <p className="px-1 text-[12.5px] text-dim">Or try a real transaction:</p>
             {samples.status === "error" && <Hint>Samples not available: {samples.message}</Hint>}
             <div className="flex flex-wrap gap-1.5" aria-busy={samples.status === "loading"}>
@@ -181,13 +182,14 @@ export function InspectBox({
                 [124, 136, 128, 132, 124].map((width, index) => (
                   <span key={index} className="skeleton h-8 rounded-chip" style={{ width }} aria-hidden />
                 ))}
-              {chips.map((sample) => (
+              {chips.map((sample, index) => (
                 <button
                   key={sample.txid}
+                  style={{ "--i": index } as CSSProperties}
                   type="button"
                   title={`${sample.why} (${NETWORK_LABEL[sample.network]}, height ${formatInt(sample.height)})`}
                   onClick={() => onPickSample(sample)}
-                  className="inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25"
+                  className="enter inline-flex h-8 items-center gap-1.5 rounded-chip bg-raised px-3 text-[13px] text-text outline-none transition-colors hover:bg-hover focus-visible:ring-2 focus-visible:ring-white/25"
                 >
                   {SAMPLE_CHIPS[sample.txid]}
                 </button>

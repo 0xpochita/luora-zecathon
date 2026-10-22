@@ -682,25 +682,27 @@ export function InspectorApp() {
       {mode === null && !looking ? (
         <main className="flex flex-1 flex-col items-center justify-center px-4 pt-6 pb-16">
           <div className="flex w-full max-w-2xl flex-col gap-5">
-            <div className="flex flex-col gap-1.5 px-1 text-center">
+            <div className="enter flex flex-col gap-1.5 px-1 text-center" style={stagger(0)}>
               <h1 className="text-ui-display font-medium">Inspect a Zcash transaction</h1>
               <p className="text-[14px] text-muted">See what it moves, which rules it passes, and why a node rejected it.</p>
             </div>
-            <InspectBox
-              input={input}
-              onInputChange={(value) => {
-                setInput(value);
-                setInputError(null);
-              }}
-              onInspect={inspect}
-              inputError={inputError}
-              lookup={lookup}
-              endpoints={endpoints}
-              samples={samples}
-              onPickSample={pickSample}
-              onPickError={pickError}
-              compact={false}
-            />
+            <div className="enter" style={stagger(1)}>
+              <InspectBox
+                input={input}
+                onInputChange={(value) => {
+                  setInput(value);
+                  setInputError(null);
+                }}
+                onInspect={inspect}
+                inputError={inputError}
+                lookup={lookup}
+                endpoints={endpoints}
+                samples={samples}
+                onPickSample={pickSample}
+                onPickError={pickError}
+                compact={false}
+              />
+            </div>
           </div>
         </main>
       ) : (
