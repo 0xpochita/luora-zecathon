@@ -1,3 +1,5 @@
+import { looksLikeNodeOutput } from "./stall";
+
 export type InputKind =
   | { kind: "empty" }
   | { kind: "txid"; txid: string }
@@ -5,6 +7,7 @@ export type InputKind =
   | { kind: "hex"; hex: string }
   | { kind: "pczt"; data: string }
   | { kind: "error"; text: string }
+  | { kind: "stall"; text: string }
   | { kind: "invalid"; reason: string };
 
 const PCZT_MAGIC_HEX = "50435a54";
@@ -14,6 +17,7 @@ const BLOCK_HEIGHT = /^[1-9]\d{0,9}$/;
 export function classifyInput(raw: string): InputKind {
   const compact = raw.replace(/\s+/g, "");
   if (!compact) return { kind: "empty" };
+  if (looksLikeNodeOutput(raw)) return { kind: "stall", text: raw };
   const lower = compact.toLowerCase();
   const digits = compact.replace(/[,_]/g, "");
   if (/^[\d,_]+$/.test(compact) && BLOCK_HEIGHT.test(digits)) return { kind: "block", block: digits };
