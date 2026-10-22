@@ -7,7 +7,7 @@ import { childCounts, EXPAND_LEVELS, expandedFor, visibleRows, type ExpandLevel,
 import { formatInt } from "@/lib/format";
 import { delayStyle } from "./anatomy-view";
 import { AskButton } from "./ask-ai";
-import { ExpandableCard } from "./expandable-card";
+import { ExpandableCard, type CardSwitch } from "./expandable-card";
 import { CopyButton, Dot, Hint, Inner, Input, Select } from "./ui";
 
 type BadgeTone = "neutral" | "blue" | "green" | "yellow" | "red";
@@ -188,6 +188,7 @@ export function TraceView({
   onOpen,
   onAsk,
   aside,
+  swap,
 }: {
   rows: TraceRow[];
   failing: Map<string, string[]>;
@@ -196,6 +197,7 @@ export function TraceView({
   onOpen: (id: string) => void;
   onAsk?: (row: TraceRow) => void;
   aside: string;
+  swap?: CardSwitch;
 }) {
   const [level, setLevel] = useState<ExpandLevel>("everything");
   const [expanded, setExpanded] = useState<Set<string>>(() => expandedFor(rows, "everything"));
@@ -240,7 +242,7 @@ export function TraceView({
   };
 
   return (
-    <ExpandableCard label="Trace" aside={aside}>
+    <ExpandableCard label="Trace" aside={aside} swap={swap}>
       {(full) => (
         <div className={`flex min-w-0 flex-col gap-3 px-4 pb-4 ${full ? "min-h-0 flex-1" : ""}`}>
           <div className="flex flex-wrap items-center gap-2">

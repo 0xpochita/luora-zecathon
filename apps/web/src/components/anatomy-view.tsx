@@ -6,7 +6,7 @@ import type { DecodedTx } from "@contract/types";
 import { buildNodes, poolFlows, type AnatomyNode, type NodeId } from "@/lib/anatomy";
 import { formatInt, formatZec } from "@/lib/format";
 import { NODE_ICON } from "./node-icons";
-import { ExpandableCard } from "./expandable-card";
+import { ExpandableCard, type CardSwitch } from "./expandable-card";
 import { Dot, Hint, Inner, Meter } from "./ui";
 
 interface Layout {
@@ -264,6 +264,7 @@ export function AnatomyView({
   selected,
   onSelect,
   onAsk,
+  swap,
 }: {
   tx: DecodedTx;
   feeZat: number | null;
@@ -273,12 +274,13 @@ export function AnatomyView({
   selected: NodeId | null;
   onSelect: (id: NodeId) => void;
   onAsk?: (id: NodeId) => void;
+  swap?: CardSwitch;
 }) {
   const nodes = buildNodes(tx, feeZat, failing, inputsPending);
   const flows = poolFlows(tx, inputValues, feeZat, inputsPending);
   const maxAbs = Math.max(1, ...flows.map((flow) => Math.abs(flow.valueZat ?? 0)));
   return (
-    <ExpandableCard label="Anatomy" aside={`v${tx.version} · ${formatInt(tx.sizeBytes)} bytes`}>
+    <ExpandableCard label="Anatomy" aside={`v${tx.version} · ${formatInt(tx.sizeBytes)} bytes`} swap={swap}>
       {(full) => {
         const graphSize = full ? "mx-auto max-h-[calc(100dvh-260px)] max-w-[980px]" : "";
         return (

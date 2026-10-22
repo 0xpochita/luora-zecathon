@@ -16,6 +16,7 @@ import { expiryText, feeText, mempoolStatus, stuckReason } from "@/lib/mempool";
 import { readShareFragment } from "@/lib/share-link";
 import { CopyIssue } from "./copy-issue";
 import { AnatomyView } from "./anatomy-view";
+import type { CardSwitch } from "./expandable-card";
 import { BlockTraceView } from "./block-view";
 import { TraceDetails, TraceSkeleton, TraceView } from "./trace-view";
 import { CheckAtControl, ChecksView, RulesSkeleton, type CheckAt } from "./checks-view";
@@ -137,6 +138,7 @@ export function InspectorApp() {
   const [view, setView] = useState<ViewId>("overview");
   const [selectedNode, setSelectedNode] = useState<NodeId | null>(null);
   const [overviewMode, setOverviewMode] = useState<OverviewMode>("trace");
+  const [overviewFull, setOverviewFull] = useState(false);
   const [activeTraceId, setActiveTraceId] = useState<string | null>(null);
   const [openTraceId, setOpenTraceId] = useState<string | null>(null);
   const [checkAtChoice, setCheckAtChoice] = useState<CheckAt | null>(null);
@@ -669,6 +671,11 @@ export function InspectorApp() {
         { value: "overview", label: "Overview" },
         { value: "rules", label: failCount > 0 ? `Rules · ${failCount} failing` : "Rules" },
       ];
+      const overviewSwap: CardSwitch = {
+        node: <Tabs label="Overview style" value={overviewMode} options={OVERVIEW_OPTIONS} onChange={setOverviewMode} size="sm" />,
+        full: overviewFull,
+        onFullChange: setOverviewFull,
+      };
       result = (
         <>
           {inputsPending ? (
@@ -752,6 +759,7 @@ export function InspectorApp() {
                     ai.ask(traceRowSubject(row, traceRowList!, checkList, tx.version));
                   }}
                   aside={`v${tx.version} · ${formatInt(tx.sizeBytes)} bytes`}
+                  swap={overviewSwap}
                 />
               ) : (
                 <EmptyState icon={<Warning />} title="Trace not available for this transaction">
@@ -769,6 +777,7 @@ export function InspectorApp() {
                 selected={selectedNode}
                 onSelect={setSelectedNode}
                 onAsk={(node) => ai.ask(nodeSubject(node, tx, feeZat, checkList))}
+                swap={overviewSwap}
               />
             ) : (
               <Panel label="Rules" aside={upgradeAtHeight ? `${NETWORK_LABEL[network]} · ${upgradeAtHeight.name}` : NETWORK_LABEL[network]} bodyClassName="gap-3 px-4 pb-4">

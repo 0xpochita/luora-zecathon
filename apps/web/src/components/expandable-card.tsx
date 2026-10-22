@@ -14,13 +14,19 @@ function reducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-export function useExpand() {
+export interface CardSwitch {
+  node: ReactNode;
+  full: boolean;
+  onFullChange: (full: boolean) => void;
+}
+
+export function useExpand(initial = false) {
   const ref = useRef<HTMLElement>(null);
   const placeholderRef = useRef<HTMLDivElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
   const firstRect = useRef<DOMRect | null>(null);
   const closingAnimation = useRef<Animation | null>(null);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(initial);
   const [placeholderHeight, setPlaceholderHeight] = useState(0);
 
   const open = () => {
@@ -34,7 +40,7 @@ export function useExpand() {
   const close = useCallback(() => {
     const element = ref.current;
     const target = placeholderRef.current?.getBoundingClientRect();
-    if (!element || !target || reducedMotion()) {
+    if (!element || !target || target.height === 0 || reducedMotion()) {
       setExpanded(false);
       return;
     }
@@ -94,14 +100,20 @@ export function ExpandableCard({
   label,
   aside,
   toolbar,
+  swap,
   children,
 }: {
   label: string;
   aside?: ReactNode;
   toolbar?: ReactNode;
+  swap?: CardSwitch;
   children: (full: boolean) => ReactNode;
 }) {
-  const { ref, placeholderRef, scrimRef, expanded, placeholderHeight, open, close } = useExpand();
+  const { ref, placeholderRef, scrimRef, expanded, placeholderHeight, open, close } = useExpand(swap?.full ?? false);
+  const onFullChange = swap?.onFullChange;
+  useEffect(() => {
+    onFullChange?.(expanded);
+  }, [expanded, onFullChange]);
   return (
     <>
       {expanded && (
@@ -123,6 +135,7 @@ export function ExpandableCard({
           <span className="size-1.5 flex-none rounded-full bg-fg" />
           <span className="font-medium text-fg">{label}</span>
           {aside != null && <span className="ml-auto truncate text-[12.5px] text-dim">{aside}</span>}
+          {expanded && swap?.node}
           {toolbar}
           <IconButton label={expanded ? "Exit full screen" : "Full screen"} size="sm" onClick={expanded ? close : open} className={aside == null && !toolbar ? "ml-auto" : ""}>
             {expanded ? <ArrowsIn /> : <ArrowsOut />}
