@@ -1,5 +1,6 @@
 import type { Network, Sample, ZebraErrorEntry } from "@contract/types";
 import type { BlockView } from "@/server/block";
+import type { Comparison } from "./diverge";
 
 export interface ChainInfo {
   network: Network;
@@ -8,6 +9,12 @@ export interface ChainInfo {
   upgrade: string;
   endpoint: string;
   fetchedAt: string;
+}
+
+export interface BackendComparison extends Comparison {
+  network: Network;
+  fetchedAt: string;
+  targets: Record<string, string>;
 }
 
 export interface TxLookup {
@@ -65,6 +72,8 @@ function listFrom<T>(body: unknown, key: string): T[] {
 
 export const api = {
   chain: (network: Network, signal?: AbortSignal) => getJson<ChainInfo>(`/api/chain?network=${network}`, signal),
+  compare: (network: Network, signal?: AbortSignal) =>
+    getJson<BackendComparison>(`/api/chain/compare?network=${network}`, signal),
   tx: (txid: string, network: Network, signal?: AbortSignal) => getJson<TxLookup>("/api/tx", signal, { txid, network }),
   block: (block: string, network: Network, signal?: AbortSignal) => getJson<BlockLookup>("/api/block", signal, { block, network }),
   prevouts: (txid: string, network: Network, signal?: AbortSignal) =>

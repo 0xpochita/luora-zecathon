@@ -34,6 +34,9 @@ export function TopBar({ network, chain, onHome, aside }: { network: Network; ch
         ) : (
           <span className="skeleton h-6 w-36 rounded-chip" role="status" aria-label={`${NETWORK_LABEL[network]} tip loading`} />
         )}
+        <Link href="/chains" className="link text-[13px]">
+          Chains
+        </Link>
         <Link href="/about" className="link text-[13px]">
           About
         </Link>

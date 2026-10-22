@@ -140,6 +140,7 @@ paste → classify (txid | hex | pczt | error | invalid)
 - **Auto-Detect Input**: one box for txid, raw hex, PCZT or error text; txids are tried on Mainnet, then Testnet
 - **Block Trace**: paste a block hash (copied from an explorer by mistake, or on purpose) or a height and see the header and every transaction with its pools; one click opens a transaction, and `?block=<hash|height>&net=main|test` links straight to it
 - **Live Chain Chip**: the network's current height and active upgrade, read from lightwalletd
+- **Do The Backends Agree**: `/chains` asks 11 public mainnet and 2 testnet lightwalletd and Zaino endpoints (Zebra, Zakura, Zaino, lightwalletd-rs) for their tip, shows each one's software and lag, and when two follow different chains, names the first differing height with both block hashes (Zebra #11675)
 - **Real Samples**: eleven real mainnet and testnet transactions, one click each
 - **In-Page Full Screen**: the Trace and the graph grow to fill the window; the detail drawer still opens
 - **Skeleton Loading And Motion**: shaped placeholders while data loads, staged entrance after; both respect reduced motion

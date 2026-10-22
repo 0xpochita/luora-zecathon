@@ -47,3 +47,28 @@ export function indexerEndpoint(network: Network): IndexerEndpoint {
   }
   return endpointFromSetting(network, setting);
 }
+
+const COMPARE_TARGETS: Record<"main" | "test", [string, string][]> = {
+  main: [
+    ["zec.rocks:443", "zec.rocks"],
+    ["na.zec.rocks:443", "zec.rocks NA"],
+    ["eu.zec.rocks:443", "zec.rocks EU"],
+    ["sa.zec.rocks:443", "zec.rocks SA"],
+    ["ap.zec.rocks:443", "zec.rocks AP"],
+    ["eu.zec.stardust.rest:443", "stardust EU"],
+    ["us.zec.stardust.rest:443", "stardust US"],
+    ["lightwalletd.mainnet.cipherscan.app:443", "CipherScan"],
+    ["mainnet.zainod.zingolabs.dev:443", "Zingo Labs Zaino"],
+    ["mainnet.lightwalletd-rs-beta.zecdev.org:443", "ZecDev lightwalletd-rs"],
+    ["zcash.mysideoftheweb.com:9067", "mysideoftheweb"],
+  ],
+  test: [
+    ["testnet.zec.rocks:443", "zec.rocks testnet"],
+    ["testnet.lightwalletd-rs-beta.zecdev.org:443", "ZecDev lightwalletd-rs testnet"],
+  ],
+};
+
+export function compareEndpoints(network: Network): IndexerEndpoint[] {
+  if (network === "regtest") throw new ApiError("network_disabled", "the backend comparison covers main and test only");
+  return COMPARE_TARGETS[network].map(([target, label]) => ({ network, target, tls: true, label }));
+}

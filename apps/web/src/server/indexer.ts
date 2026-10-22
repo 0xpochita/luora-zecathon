@@ -3,6 +3,7 @@ import path from "node:path";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import type { Network } from "../../../../contract/types";
+import type { BackendSource } from "../lib/diverge";
 import { ApiError } from "./api-error";
 import { indexerEndpoint, type IndexerEndpoint } from "./networks";
 import { displayTxidToInternalBytes, internalBytesToDisplayTxid } from "./txid";
@@ -129,12 +130,12 @@ function clientFor(endpoint: IndexerEndpoint): StreamerClient {
   return client;
 }
 
-function toApiError(error: grpc.ServiceError, method: string): ApiError {
+function toApiError(error: grpc.ServiceError, method: string, timeoutMs = INDEXER_TIMEOUT_MS): ApiError {
   switch (error.code) {
     case grpc.status.NOT_FOUND:
       return new ApiError("not_found", `${method}: the indexer has no record of this item`);
     case grpc.status.DEADLINE_EXCEEDED:
-      return new ApiError("indexer_timeout", `${method}: the indexer did not answer within ${INDEXER_TIMEOUT_MS / 1000} s`);
+      return new ApiError("indexer_timeout", `${method}: the indexer did not answer within ${timeoutMs / 1000} s`);
     case grpc.status.UNAVAILABLE:
       return new ApiError("indexer_unavailable", `${method}: the indexer is unreachable`);
     case grpc.status.INVALID_ARGUMENT:
@@ -145,30 +146,52 @@ function toApiError(error: grpc.ServiceError, method: string): ApiError {
   }
 }
 
-function unaryOnce<T>(client: StreamerClient, method: string, request: unknown): Promise<T> {
+function unaryOnce<T>(client: StreamerClient, method: string, request: unknown, timeoutMs: number): Promise<T> {
   return new Promise((resolve, reject) => {
     client[method](
       request,
       new grpc.Metadata(),
-      { deadline: Date.now() + INDEXER_TIMEOUT_MS },
+      { deadline: Date.now() + timeoutMs },
       (error, response) => (error ? reject(error) : resolve(response as T)),
     );
   });
 }
 
-async function unary<T>(network: Network, method: string, request: unknown): Promise<T> {
-  const client = clientFor(indexerEndpoint(network));
+async function unaryAt<T>(endpoint: IndexerEndpoint, method: string, request: unknown, timeoutMs = INDEXER_TIMEOUT_MS): Promise<T> {
+  const client = clientFor(endpoint);
   try {
-    return await unaryOnce<T>(client, method, request);
+    return await unaryOnce<T>(client, method, request, timeoutMs);
   } catch (firstError) {
     const serviceError = firstError as grpc.ServiceError;
-    if (!RETRYABLE_STATUS.has(serviceError.code)) throw toApiError(serviceError, method);
+    if (!RETRYABLE_STATUS.has(serviceError.code)) throw toApiError(serviceError, method, timeoutMs);
     try {
-      return await unaryOnce<T>(client, method, request);
+      return await unaryOnce<T>(client, method, request, timeoutMs);
     } catch (secondError) {
-      throw toApiError(secondError as grpc.ServiceError, method);
+      throw toApiError(secondError as grpc.ServiceError, method, timeoutMs);
     }
   }
+}
+
+function unary<T>(network: Network, method: string, request: unknown): Promise<T> {
+  return unaryAt<T>(indexerEndpoint(network), method, request);
+}
+
+export function backendSource(endpoint: IndexerEndpoint, timeoutMs: number): BackendSource {
+  return {
+    label: endpoint.label,
+    info: async () => {
+      const info = await unaryAt<LightdInfo>(endpoint, "GetLightdInfo", {}, timeoutMs);
+      return { vendor: info.vendor, version: info.version, build: info.zcashdBuild, subversion: info.zcashdSubversion, chain: info.chainName };
+    },
+    tip: async () => {
+      const tip = await unaryAt<BlockId>(endpoint, "GetLatestBlock", {}, timeoutMs);
+      return { height: Number(tip.height), hash: internalBytesToDisplayTxid(tip.hash) };
+    },
+    hashAt: async (height) => {
+      const block = await unaryAt<CompactBlock>(endpoint, "GetBlock", { height: String(height) }, timeoutMs);
+      return internalBytesToDisplayTxid(block.hash);
+    },
+  };
 }
 
 export function endpointLabel(network: Network): string {
