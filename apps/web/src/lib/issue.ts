@@ -96,7 +96,7 @@ export function issueTitle(subject: IssueSubject, network: Network): string {
     const warning = subject.checks.filter((check) => check.status === "warn");
     const where = subject.checkedAt !== null ? ` at height ${formatInt(subject.checkedAt)}` : "";
     const id = shortHash(subject.txid, 8, 4);
-    const state = subject.source === "mempool" ? " stuck in the mempool" : "";
+    const state = subject.source === "mempool" ? " (in the mempool)" : "";
     if (failing.length > 0) return `${net} transaction ${id}${state} fails ${failing.map((check) => check.title).join(", ")}${where}`;
     if (warning.length > 0) return `${net} transaction ${id}${state}: ${warning.map((check) => check.title).join(", ")} warns${where}`;
     return `${net} transaction ${id}${state} passes all rules${where}`;

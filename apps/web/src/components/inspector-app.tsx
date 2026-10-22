@@ -9,10 +9,12 @@ import { coreErrorMessage, loadCore, type CoreState } from "@/lib/core";
 import { failingNodes, type NodeId } from "@/lib/anatomy";
 import { failingRows, traceRows } from "@/lib/trace";
 import { classifyInput, isTxid } from "@/lib/input";
-import { formatInt, NETWORK_LABEL } from "@/lib/format";
+import { formatInt, formatZec, NETWORK_LABEL } from "@/lib/format";
 import { describeMovement, summarizeRules } from "@/lib/summary";
-import { withHonestFee } from "@/lib/fee";
-import { mempoolStatus } from "@/lib/mempool";
+import { FEE_UNAVAILABLE, withHonestFee } from "@/lib/fee";
+import { expiryText, feeText, mempoolStatus, stuckReason } from "@/lib/mempool";
+import { readShareFragment } from "@/lib/share-link";
+import { CopyIssue } from "./copy-issue";
 import { AnatomyView } from "./anatomy-view";
 import { TraceDetails, TraceSkeleton, TraceView } from "./trace-view";
 import { CheckAtControl, ChecksView, RulesSkeleton, type CheckAt } from "./checks-view";
@@ -230,6 +232,18 @@ export function InspectorApp() {
     },
     [runLookup],
   );
+
+  useEffect(() => {
+    const shared = initial ? null : readShareFragment(window.location.hash);
+    if (!shared) return;
+    queueMicrotask(() => {
+      setInput(shared.data);
+      setNetwork(shared.network);
+      if (shared.kind === "pczt") setPcztInput(shared.data);
+      else setLoaded({ hex: shared.data, origin: "pasted", txid: null, endpoint: null, minedHeight: null, networkNote: "from the link" });
+      showResult(shared.kind === "pczt" ? "pczt" : "tx");
+    });
+  }, [initial, showResult]);
 
   useEffect(() => {
     if (!initial) return;
@@ -469,6 +483,7 @@ export function InspectorApp() {
   );
 
   const tipUpgrade = chain.status === "ready" ? chain.data.upgrade : null;
+  const zebraCatalog = catalog.status === "ready" ? (catalog.entries[0]?.zebraVersion ?? null) : null;
   const askEnv = useMemo((): AskEnv | null => {
     if (mode === "tx" && tx && loaded)
       return {
@@ -577,6 +592,31 @@ export function InspectorApp() {
                 : null
             }
             mempool={mempool}
+            actions={
+              <CopyIssue
+                network={network}
+                zebraCatalog={zebraCatalog}
+                share={loaded.origin === "lookup" && loaded.txid ? { kind: "txid", txid: loaded.txid, network } : { kind: "hex", data: loaded.hex, network }}
+                subject={() =>
+                  checkList && {
+                    kind: "tx",
+                    txid: tx.txid,
+                    source: loaded.origin === "pasted" ? "pasted" : loaded.mempool ? "mempool" : loaded.minedHeight !== null ? "mined" : "side-chain",
+                    minedHeight: loaded.minedHeight,
+                    checkedAt: chosenHeight,
+                    heightLabel,
+                    verdict: [
+                      loaded.mempool ? "In the mempool, not mined yet." : "",
+                      describeMovement(tx, inputValues, inputsPending),
+                      feeZat !== null ? `Fee ${formatZec(feeZat)}.` : tx.transparent.inputs.some((input) => input.isCoinbase) ? "" : `Fee: ${FEE_UNAVAILABLE}.`,
+                      rulesLine.status === "ready" ? rulesLine.summary.text : rulesLine.text,
+                    ].filter(Boolean).join(" "),
+                    checks: checkList,
+                    mempool: mempool ? [expiryText(mempool), feeText(mempool), stuckReason(mempool)] : [],
+                  }
+                }
+              />
+            }
             onShowRules={() => setView("rules")}
             onShowDetails={() => setSelectedNode("tx")}
           />
@@ -656,7 +696,19 @@ export function InspectorApp() {
     result = (
       <Panel
         label="Partially created transaction (PCZT)"
-        aside={networkSelect}
+        aside={
+          <>
+            {pcztView && pcztInput && (
+              <CopyIssue
+                network={network}
+                zebraCatalog={zebraCatalog}
+                share={{ kind: "pczt", data: pcztInput, network }}
+                subject={() => ({ kind: "pczt", view: pcztView, checkedAt: liveHeight })}
+              />
+            )}
+            {networkSelect}
+          </>
+        }
         bodyClassName="gap-3 px-4 pb-4"
       >
         {coreBlocker ??
@@ -687,7 +739,20 @@ export function InspectorApp() {
     );
   } else if (mode === "error") {
     result = (
-      <Panel label="Why Zebra rejected it" bodyClassName="gap-3 px-4 pb-4">
+      <Panel
+        label="Why Zebra rejected it"
+        aside={
+          catalog.status === "ready" && (
+            <CopyIssue
+              network={network}
+              zebraCatalog={zebraCatalog}
+              share={{ kind: "none" }}
+              subject={() => ({ kind: "error", text: errorInput, matches: zebraMatches, checkedAt: liveHeight })}
+            />
+          )
+        }
+        bodyClassName="gap-3 px-4 pb-4"
+      >
         <WhyView catalog={catalog} text={errorInput} onAsk={(match) => ai.ask(zebraSubject(match.entry, match.reason))} />
       </Panel>
     );
