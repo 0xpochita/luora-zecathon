@@ -51,8 +51,16 @@ export interface CompactTx {
 export interface CompactBlock {
   height: string;
   hash: Buffer;
+  prevHash: Buffer;
   time: number;
   vtx: CompactTx[];
+}
+
+export interface TreeState {
+  network: string;
+  height: string;
+  hash: string;
+  time: number;
 }
 
 export interface RawTransaction {
@@ -177,6 +185,10 @@ export function getLatestBlock(network: Network): Promise<BlockId> {
 
 export function getBlock(network: Network, height: number): Promise<CompactBlock> {
   return unary<CompactBlock>(network, "GetBlock", { height: String(height) });
+}
+
+export function getTreeStateByHash(network: Network, hash: string): Promise<TreeState> {
+  return unary<TreeState>(network, "GetTreeState", { hash: Buffer.from(hash, "hex") });
 }
 
 export async function getTransaction(

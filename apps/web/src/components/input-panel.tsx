@@ -26,7 +26,9 @@ function kindHint(input: string, endpoints: Endpoints): string | null {
     case "empty":
       return null;
     case "txid":
-      return `txid · looked up through our server at ${endpoints.main ?? "the Mainnet indexer"}, then ${endpoints.test ?? "the Testnet indexer"} if not found`;
+      return `txid or block hash · looked up through our server at ${endpoints.main ?? "the Mainnet indexer"}, then ${endpoints.test ?? "the Testnet indexer"} if not found`;
+    case "block":
+      return `block height · looked up through our server at ${endpoints.main ?? "the Mainnet indexer"}, then ${endpoints.test ?? "the Testnet indexer"} if not found`;
     case "hex":
       return "raw transaction · decoded in this tab";
     case "pczt":
