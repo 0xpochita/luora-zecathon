@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { MagnifyingGlass } from "@phosphor-icons/react";
 import { childCounts, EXPAND_LEVELS, expandedFor, visibleRows, type ExpandLevel, type TraceRow, type TraceRowKind } from "@/lib/trace";
@@ -50,11 +51,21 @@ export function KindBadge({ depth, kind, failing }: { depth: number; kind: Trace
   );
 }
 
+function ZecText({ text }: { text: string }) {
+  if (!text.endsWith(" ZEC")) return <>{text}</>;
+  return (
+    <span className="inline-flex items-center gap-1">
+      {text}
+      <Image src="/brand/zec.png" alt="" width={14} height={14} className="inline-block size-3.5 shrink-0" />
+    </span>
+  );
+}
+
 function FieldInline({ name, display, encrypted }: { name: string; display: string; encrypted?: boolean }) {
   return (
     <span className="break-all sm:break-normal sm:whitespace-nowrap">
       <span className="text-muted">{name}=</span>
-      <span className={encrypted ? "text-dim italic" : "text-text"}>{display}</span>
+      <span className={encrypted ? "text-dim italic" : "text-text"}><ZecText text={display} /></span>
     </span>
   );
 }
@@ -134,7 +145,7 @@ function TraceRowView({
       )}
       <span className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[12.5px] sm:flex-nowrap">
         <KindBadge depth={row.depth} kind={row.kind} failing={!!failing} />
-        <span className={`min-w-0 break-words sm:whitespace-nowrap ${row.depth === 0 ? "font-medium text-fg" : "text-fg"}`}>{row.label}</span>
+        <span className={`min-w-0 break-words sm:whitespace-nowrap ${row.depth === 0 ? "font-medium text-fg" : "text-fg"}`}><ZecText text={row.label} /></span>
         {failing && <Dot tone="bad" />}
         {row.fields.length > 0 && (
           <span className="flex basis-full flex-wrap gap-x-2.5 gap-y-0.5 text-[12px] sm:basis-auto sm:flex-nowrap">
@@ -219,7 +230,7 @@ export function TraceView({
   return (
     <ExpandableCard label="Trace" aside={aside}>
       {(full) => (
-        <div className="flex min-w-0 flex-col gap-3 px-4 pb-4">
+        <div className={`flex min-w-0 flex-col gap-3 px-4 pb-4 ${full ? "min-h-0 flex-1" : ""}`}>
           <div className="flex flex-wrap items-center gap-2">
             <label className="flex items-center gap-2 text-[12.5px] text-muted">
               Expand
@@ -255,7 +266,7 @@ export function TraceView({
             tabIndex={0}
             onKeyDown={onKeyDown}
             className={`graph-canvas flex flex-col gap-px overflow-x-auto rounded-inner border border-border p-1.5 outline-none focus-visible:ring-2 focus-visible:ring-white/25 ${
-              full ? "max-h-[calc(100dvh-210px)] overflow-y-auto" : ""
+              full ? "min-h-0 flex-1 overflow-y-auto" : ""
             }`}
           >
             {visible.length === 0 ? (
