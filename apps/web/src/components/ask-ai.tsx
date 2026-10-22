@@ -118,7 +118,7 @@ export function useAskAi({ env, known, current }: { env: AskEnv | null; known: K
         setTurns((list) => (list.length ? [...list.slice(0, -1), patch(list[list.length - 1])] : list));
       };
       if (provider === "none") {
-        const text = builtinAnswer(prompt, question, about, env, excerpts, { txid: true, addresses: true, hashes: true, hex: false });
+        const text = builtinAnswer(prompt, question, about, env, excerpts);
         patchLast((turn) => ({ ...turn, content: text, streaming: false }));
         return;
       }

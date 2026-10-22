@@ -58,9 +58,9 @@ const BUNDLE_ZIPS: Record<NodeId, number[]> = {
   tx: [244, 225],
   header: [225, 244, 203],
   transparent: [244],
-  sapling: [225],
-  orchard: [225, 257],
-  ironwood: [229, 258],
+  sapling: [225, 244],
+  orchard: [225, 244, 257],
+  ironwood: [229, 244, 258],
   fee: [317, 2009],
 };
 

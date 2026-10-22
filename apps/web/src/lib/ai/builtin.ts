@@ -1,7 +1,6 @@
 import type { Check } from "@contract/types";
 import upgrades from "../../../../../data/upgrades.json";
 import { formatInt, NETWORK_LABEL } from "../format";
-import { renderField, type OptIns } from "./payload";
 import type { AskEnv, AskSubject } from "./subject";
 import type { ZipSection } from "./zips";
 
@@ -173,10 +172,10 @@ function upgradesAround(env: AskEnv): string[] {
   return lines;
 }
 
-export function builtinAnswer(prompt: QuickPrompt | null, question: string, subject: AskSubject, env: AskEnv, excerpts: ZipSection[], optIns: OptIns): string {
+export function builtinAnswer(prompt: QuickPrompt | null, question: string, subject: AskSubject, env: AskEnv, excerpts: ZipSection[]): string {
   const topic = topicFor(subject);
   const lines: string[] = [];
-  const fieldLines = subject.fields.slice(0, 8).map((field) => `- ${renderField(field, optIns).line}`);
+  const fieldLines = subject.fields.slice(0, 8).map((field) => `- ${field.name} = ${field.display === field.value ? field.value : `${field.display}${field.privacy === "public" && field.value.length <= 24 ? ` (${field.value})` : ""}`}`);
   const failing = subject.checks.filter((check) => check.status === "fail" || check.status === "warn");
   const where = subject.offset !== null ? ` at ${subject.key}` : "";
 
