@@ -19,6 +19,9 @@ input).
 | `v5-orchard.json` | `5f1c6bfa4e97c9aa5e918b6912dc70cb7a46aee01d91599bdb8e657306650e0a` | 2,900,000 | v5 (NU6), 2 Orchard actions unshielding to 1 transparent output |
 | `v6-ironwood.json` | `30cdd41fc24b39fa8b1e47078f17e0b56d4db2c09df44be6f7e484a9f1fc021c` | 3,495,600 | v6 (NU6.3), 2 transparent inputs shielded into 1 Ironwood action (shown as "0.0 ZEC" by explorers, lifinance/data-types#281) |
 | `v6-coinbase-ironwood.json` | `59e2314af4706aca7d40a303e80d960834dc3aecd1282c0bd397eb8b64f975f9` | 3,520,002 | v6 coinbase paying into 2 Ironwood actions |
+| `v6-zip318-transfer.json` | `385e6dc4dcde1c4ce9ac33b589b0dc194c3d8216a79e696ec6622f48b3118994` | 3,526,196 | v6, 2 Orchard actions to 1 Ironwood action, 10 ZEC crossing, fee 15,000 zat, expiry 3,594,240: the ZIP 318 canonical crossing shape |
+| `v6-zip318-odd-amount.json` | `ae5e2e90aa1b069b78f5c8e664192a7b7face18af78b1dfd232cd6790c574f3c` | 3,524,451 | v6, same 2-to-1 shape, but 0.09775 ZEC crosses, which is not a ZIP 318 denomination |
+| `v6-zip318-preparation.json` | `bf999d6ea0afb470585bf4d1e78ba0aa7f0ce902d350c4608ebcc1711d1e6737` | 3,524,246 | v6, Orchard only, 16 actions, fee 80,000 zat, expiry 3,559,680: the ZIP 318 preparation shape |
 
 Re-create or add one:
 
@@ -31,6 +34,12 @@ cargo build && python3 fetch.py prevouts <name>
 
 `fetch.py` needs `grpcurl` and reads the proto files from `$LIGHTWALLET_PROTO`
 (default `/tmp/luora-z-src/lightwallet-protocol/walletrpc`).
+
+The three `v6-zip318-*` transactions were found by scanning mainnet blocks 3,523,700 to 3,526,699
+with `fetch.py scan` (compact blocks from `zec.rocks:443`) for transactions with Orchard and Ironwood
+actions and no transparent or Sapling parts. That range held 49 transactions with 2 Orchard actions
+and 1 Ironwood action, all paying 15,000 zat, and 11 Orchard-only transactions with 16 actions. They
+were picked by shape only; nothing about their senders is known or looked up.
 
 ## Testnet transaction and PCZTs
 

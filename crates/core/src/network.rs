@@ -10,6 +10,7 @@ pub enum Net {
     Main,
     Test,
     Regtest,
+    MainWithNu7At(u32),
 }
 
 const REGTEST_ALL_UPGRADES_AT_HEIGHT_1: LocalNetwork = LocalNetwork {
@@ -41,7 +42,7 @@ impl Net {
 
     pub fn temporary_orchard_disabling_height(self) -> Option<u32> {
         match self {
-            Net::Main => Some(3_363_426),
+            Net::Main | Net::MainWithNu7At(_) => Some(3_363_426),
             Net::Test => Some(4_048_500),
             Net::Regtest => None,
         }
@@ -51,7 +52,7 @@ impl Net {
 impl Parameters for Net {
     fn network_type(&self) -> NetworkType {
         match self {
-            Net::Main => NetworkType::Main,
+            Net::Main | Net::MainWithNu7At(_) => NetworkType::Main,
             Net::Test => NetworkType::Test,
             Net::Regtest => NetworkType::Regtest,
         }
@@ -62,6 +63,8 @@ impl Parameters for Net {
             Net::Main => MAIN_NETWORK.activation_height(nu),
             Net::Test => TEST_NETWORK.activation_height(nu),
             Net::Regtest => REGTEST_ALL_UPGRADES_AT_HEIGHT_1.activation_height(nu),
+            Net::MainWithNu7At(height) if nu == NetworkUpgrade::Nu7 => Some(BlockHeight::from_u32(*height)),
+            Net::MainWithNu7At(_) => MAIN_NETWORK.activation_height(nu),
         }
     }
 }

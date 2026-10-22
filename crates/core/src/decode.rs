@@ -20,7 +20,7 @@ pub const ZIP2009_MARGINAL_FEE: u64 = 1_000;
 pub const ZIP2009_MAINNET_HEIGHT: u32 = 3_590_000;
 
 pub fn zip2009_active(net: Net, height: BlockHeight) -> bool {
-    matches!(net, Net::Main) && u32::from(height) >= ZIP2009_MAINNET_HEIGHT
+    matches!(net, Net::Main | Net::MainWithNu7At(_)) && u32::from(height) >= ZIP2009_MAINNET_HEIGHT
 }
 
 pub const HALO2_PROOF_BASE_BYTES: usize = 2720;

@@ -11,6 +11,28 @@
     ]
   },
   {
+    "label": "Ironwood migration transfer",
+    "network": "main",
+    "txid": "385e6dc4dcde1c4ce9ac33b589b0dc194c3d8216a79e696ec6622f48b3118994",
+    "height": 3526196,
+    "why": "Version 6 transaction with 2 Orchard actions and 1 Ironwood action moving exactly 10 ZEC across the turnstile with the canonical fee and rolling expiry: the ZIP 318 transfer shape that blends in with every other migration.",
+    "pools": [
+      "orchard",
+      "ironwood"
+    ]
+  },
+  {
+    "label": "Migration with an odd amount",
+    "network": "main",
+    "txid": "ae5e2e90aa1b069b78f5c8e664192a7b7face18af78b1dfd232cd6790c574f3c",
+    "height": 3524451,
+    "why": "Same 2 Orchard to 1 Ironwood shape, but 0.09775 ZEC crosses, which is not a {1,2,5}×10^k denomination, so ZIP 318 classifies it as nonconforming and the amount alone can single it out.",
+    "pools": [
+      "orchard",
+      "ironwood"
+    ]
+  },
+  {
     "label": "Orchard and Ironwood in one transaction",
     "network": "main",
     "txid": "1bee124c7e0038efff04947cb106b18e75e33ee08a595f1def84f71548319b62",

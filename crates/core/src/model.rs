@@ -109,6 +109,8 @@ pub struct Check {
     pub zip: Option<ZipRef>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub source: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub offset: Option<usize>,
 }
 
 #[derive(Serialize, Debug, Clone)]
@@ -186,4 +188,26 @@ pub struct TraceNode {
     pub offset: usize,
     pub length: usize,
     pub fields: Vec<TraceField>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Zip318Reason {
+    pub field: &'static str,
+    pub ok: Option<bool>,
+    pub detail: String,
+    pub zip: ZipRef,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Zip318View {
+    pub classification: &'static str,
+    pub reasons: Vec<Zip318Reason>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Nu7Run {
+    pub height: u32,
+    pub hypothetical: bool,
+    pub upgrade: UpgradeInfo,
+    pub checks: Vec<Check>,
 }

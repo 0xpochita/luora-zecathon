@@ -4,6 +4,7 @@ pub mod model;
 pub mod network;
 pub mod pczt_view;
 pub mod trace;
+pub mod zip318;
 #[cfg(feature = "verify")]
 pub mod verify;
 #[cfg(target_arch = "wasm32")]
@@ -30,6 +31,36 @@ pub fn check_tx(
     )
 }
 
+pub fn check_tx_at_nu7(
+    hex: &str,
+    network: &str,
+    tip_height: u32,
+    transparent_input_values_zat: &[Option<u64>],
+) -> Result<Nu7Run, CoreError> {
+    use zcash_protocol::consensus::{NetworkUpgrade, Parameters};
+    let bytes = decode::hex_to_bytes(hex)?;
+    let net = Net::parse(network)?;
+    let (net, height, hypothetical) = match net.activation_height(NetworkUpgrade::Nu7) {
+        Some(height) => (net, u32::from(height), false),
+        None if net == Net::Main => {
+            let height = tip_height.saturating_add(1);
+            (Net::MainWithNu7At(height), height, true)
+        }
+        None => {
+            return Err(CoreError::new(
+                "nu7-not-scheduled",
+                format!("NU7 has no activation height on {network}"),
+            ));
+        }
+    };
+    Ok(Nu7Run {
+        height,
+        hypothetical,
+        upgrade: network::upgrade_at(net, height),
+        checks: checks::run_checks(&bytes, net, height, transparent_input_values_zat)?,
+    })
+}
+
 pub fn fee_zat(hex: &str, transparent_input_values_zat: &[Option<u64>]) -> Result<Option<u64>, CoreError> {
     decode::fee_zat(&decode::hex_to_bytes(hex)?, transparent_input_values_zat)
 }
@@ -40,6 +71,10 @@ pub fn inspect_pczt(base64_or_hex: &str, network: &str) -> Result<PcztView, Core
 
 pub fn trace_tx(hex: &str, network: &str) -> Result<Vec<TraceNode>, CoreError> {
     trace::trace(&decode::hex_to_bytes(hex)?, Net::parse(network)?)
+}
+
+pub fn zip318_tx(hex: &str, network: &str, height: u32) -> Result<Zip318View, CoreError> {
+    zip318::zip318_view(&decode::hex_to_bytes(hex)?, Net::parse(network)?, height)
 }
 
 pub fn upgrade_at(network: &str, height: u32) -> Result<UpgradeInfo, CoreError> {
