@@ -11,6 +11,8 @@ import { failingRows, traceRows } from "@/lib/trace";
 import { classifyInput, isTxid } from "@/lib/input";
 import { formatInt, NETWORK_LABEL } from "@/lib/format";
 import { describeMovement, summarizeRules } from "@/lib/summary";
+import { withHonestFee } from "@/lib/fee";
+import { mempoolStatus } from "@/lib/mempool";
 import { AnatomyView } from "./anatomy-view";
 import { TraceDetails, TraceSkeleton, TraceView } from "./trace-view";
 import { CheckAtControl, ChecksView, RulesSkeleton, type CheckAt } from "./checks-view";
@@ -42,6 +44,7 @@ export interface LoadedTx {
   endpoint: string | null;
   minedHeight: number | null;
   networkNote: string | null;
+  mempool?: boolean;
 }
 
 type PrevoutState =
@@ -197,6 +200,7 @@ export function InspectorApp() {
               endpoint: body.endpoint,
               minedHeight: body.height,
               networkNote: noteFor(index),
+              mempool: body.mempool === true,
             });
             showResult("tx");
             replaceUrl(body.txid, net);
@@ -306,7 +310,8 @@ export function InspectorApp() {
   const checkAt: CheckAt = checkAtChoice ?? (minedHeight !== null ? "mined" : "tip");
   const customHeight = parseHeight(heightText);
   const heightInvalid = checkAt === "custom" && heightText.trim() !== "" && customHeight === null;
-  const chosenHeight = checkAt === "mined" ? minedHeight : checkAt === "tip" ? liveHeight : customHeight;
+  const nextBlock = loaded?.mempool && liveHeight !== null ? liveHeight + 1 : null;
+  const chosenHeight = checkAt === "mined" ? minedHeight : checkAt === "tip" ? (nextBlock ?? liveHeight) : customHeight;
 
   const upgradeAtHeight = useMemo(() => {
     if (!core || chosenHeight === null) return null;
@@ -347,11 +352,20 @@ export function InspectorApp() {
   const checks = useMemo((): { list: Check[] } | { error: string } | null => {
     if (!core || !loaded || !tx || !inputValues || chosenHeight === null) return null;
     try {
-      return { list: core.check_tx(loaded.hex, network, chosenHeight, inputValues) };
+      return { list: withHonestFee(core.check_tx(loaded.hex, network, chosenHeight, inputValues), feeZat) };
     } catch (error) {
       return { error: coreErrorMessage(error) };
     }
-  }, [core, loaded, tx, inputValues, network, chosenHeight]);
+  }, [core, loaded, tx, inputValues, network, chosenHeight, feeZat]);
+
+  const mempool = useMemo(() => {
+    if (!core || !loaded || !tx || !inputValues || nextBlock === null) return null;
+    try {
+      return mempoolStatus(tx, nextBlock - 1, feeZat, withHonestFee(core.check_tx(loaded.hex, network, nextBlock, inputValues), feeZat));
+    } catch {
+      return null;
+    }
+  }, [core, loaded, tx, inputValues, network, nextBlock, feeZat]);
 
   const checkList = checks && "list" in checks ? checks.list : null;
   const failing = useMemo(() => failingNodes(checkList), [checkList]);
@@ -387,7 +401,9 @@ export function InspectorApp() {
       : checkAt === "mined"
         ? `when mined at ${formatInt(chosenHeight)}`
         : checkAt === "tip"
-          ? `at the current tip (${formatInt(chosenHeight)})`
+          ? nextBlock !== null
+            ? `in the next block (${formatInt(chosenHeight)})`
+            : `at the current tip (${formatInt(chosenHeight)})`
           : `at height ${formatInt(chosenHeight)}`;
 
   const rulesLine: RulesLine =
@@ -560,6 +576,7 @@ export function InspectorApp() {
                   }
                 : null
             }
+            mempool={mempool}
             onShowRules={() => setView("rules")}
             onShowDetails={() => setSelectedNode("tx")}
           />
