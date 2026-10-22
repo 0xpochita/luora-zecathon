@@ -187,3 +187,17 @@ pub struct TraceNode {
     pub length: usize,
     pub fields: Vec<TraceField>,
 }
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Zip318Reason {
+    pub field: &'static str,
+    pub ok: Option<bool>,
+    pub detail: String,
+    pub zip: ZipRef,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct Zip318View {
+    pub classification: &'static str,
+    pub reasons: Vec<Zip318Reason>,
+}

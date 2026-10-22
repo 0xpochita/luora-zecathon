@@ -80,3 +80,8 @@ pub fn upgrade_at(network: &str, height: u32) -> Result<JsValue, JsValue> {
 pub fn trace_tx(hex: &str, network: &str) -> Result<JsValue, JsValue> {
     finish(crate::trace_tx(hex, network))
 }
+
+#[wasm_bindgen]
+pub fn zip318_tx(hex: &str, network: &str, height: u32) -> Result<JsValue, JsValue> {
+    finish(crate::zip318_tx(hex, network, height))
+}

@@ -4,6 +4,7 @@ pub mod model;
 pub mod network;
 pub mod pczt_view;
 pub mod trace;
+pub mod zip318;
 #[cfg(feature = "verify")]
 pub mod verify;
 #[cfg(target_arch = "wasm32")]
@@ -40,6 +41,10 @@ pub fn inspect_pczt(base64_or_hex: &str, network: &str) -> Result<PcztView, Core
 
 pub fn trace_tx(hex: &str, network: &str) -> Result<Vec<TraceNode>, CoreError> {
     trace::trace(&decode::hex_to_bytes(hex)?, Net::parse(network)?)
+}
+
+pub fn zip318_tx(hex: &str, network: &str, height: u32) -> Result<Zip318View, CoreError> {
+    zip318::zip318_view(&decode::hex_to_bytes(hex)?, Net::parse(network)?, height)
 }
 
 pub fn upgrade_at(network: &str, height: u32) -> Result<UpgradeInfo, CoreError> {

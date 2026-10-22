@@ -15,7 +15,7 @@ pub const MAX_EXPIRY_HEIGHT: u32 = 499_999_999;
 const ZEBRA_REV: &str = "zebra 6d1e414d";
 const LIBRUSTZCASH_REV: &str = "librustzcash 8672a4b2";
 
-fn zip(number: u32, clause: &str) -> Option<ZipRef> {
+pub(crate) fn zip(number: u32, clause: &str) -> Option<ZipRef> {
     Some(ZipRef {
         number,
         clause: Some(clause.to_string()),
@@ -23,7 +23,7 @@ fn zip(number: u32, clause: &str) -> Option<ZipRef> {
     })
 }
 
-fn group_thousands(digits: &str) -> String {
+pub(crate) fn group_thousands(digits: &str) -> String {
     let mut out = String::new();
     for (i, c) in digits.chars().enumerate() {
         if i > 0 && (digits.len() - i) % 3 == 0 {
@@ -48,7 +48,7 @@ pub fn fmt_zat(value: i128) -> String {
     format!("{sign}{} zat ({sign}{zec} ZEC)", group_thousands(&abs.to_string()))
 }
 
-fn fmt_height(height: u32) -> String {
+pub(crate) fn fmt_height(height: u32) -> String {
     group_thousands(&height.to_string())
 }
 
