@@ -13,3 +13,6 @@ next-env.d.ts
 *.tsbuildinfo
 .vitest/
 apps/web/AGENTS.md
+
+# demo video (Remotion), local only
+video/
